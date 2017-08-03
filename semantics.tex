@@ -39,7 +39,7 @@ Small-step operational semantics for enforcing IFC with a total order over the s
         {r}
         {\casethree{\tuple{e,S}, empty} {|S\!\downarrow_m| = 0}
                    {\tuple{max(e,l), S}, v} {|S\!\downarrow_m| = 1}
-                   {\mbox{error}}{|S\!\downarrow_m| > 1}} 
+                   {\mbox{error}}{|S\!\downarrow_m| > 1}}
         {\mbox{read to a cell in the data store}}\\
 \hline\hline
 \end{array}
@@ -49,5 +49,34 @@ Small-step operational semantics for enforcing IFC with a partial order over the
 \end{table}
 
 
-\section{Partial Order}
+\subsection{Properties of the Semantics}
 
+Below we state some properties of our proposed scheme which need to be verified w.r.t.
+a formal semantics of executions.
+
+\begin{conj}
+Our semantics is correct and termination-sensitive, i.e., whenever there exists
+a way to violate the information flow requirement, our semantics will yield
+an error.
+\end{conj}
+
+\begin{conj}
+Our semantics can be easily implemented for Javascript program using
+any key value DB with very low runtime overhead.
+\end{conj}
+
+\begin{conj}
+Our semantics can identify interesting bugs in real applications.
+\end{conj}
+
+\begin{conj}
+Our semantics is not transparent, i.e., there exists a correct programs for which our semantics
+will yield error.
+\end{conj}
+
+\begin{conj}
+Correct programs which are rejected by our semantics
+are not well behaved in certain sense.
+\end{conj}
+
+\section{Partial Order}
