@@ -55,13 +55,13 @@ Below we state some properties of our proposed scheme which need to be verified 
 a formal semantics of executions.
 
 \begin{conj}
-Our semantics is correct and termination-sensitive, i.e., whenever there exists
-a way to violate the information flow requirement, our semantics will yield
-an error.
+Our semantics enforces termination-sensitive noninterference, i.e., whenever there exists
+a way to violate the information flow requirement, it enforces noninterference by either yielding an error (the no-sensitive-upgrade case)
+or faceting the data store (the incomparable writes case).
 \end{conj}
 
 \begin{conj}
-Our semantics can be easily implemented for Javascript program using
+Our semantics can be easily implemented for Javascript programs using
 any key value DB with very low runtime overhead.
 \end{conj}
 
@@ -70,13 +70,17 @@ Our semantics can identify interesting bugs in real applications.
 \end{conj}
 
 \begin{conj}
-Our semantics is not transparent, i.e., there exists a correct programs for which our semantics
+Our semantics is not transparent, i.e., there exist correct programs for which our semantics
 will yield error.
 \end{conj}
 
 \begin{conj}
-Correct programs which are rejected by our semantics
-are not well behaved in certain sense.
+In practical serverless applications, the no-sensitive-upgrade semantics is preferable to transparency
+as it avoids data store corruption.
+\end{conj}
+
+\begin{conj}
+Correct programs which are rejected by our semantics can be modified to work with our IFC model with modest implementation effort.
 \end{conj}
 
 \section{Partial Order}
