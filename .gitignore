@@ -1,0 +1,8 @@
+*.pdf
+*.log
+*.out
+*.synctex.gz
+*.sublime-workspace
+*.aux
+*.fls
+*.fdb_latexmk
