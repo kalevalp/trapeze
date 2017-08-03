@@ -4,13 +4,48 @@
 \[
 \begin{array}{lclr}
 \hline\hline
-\semrule{\tuple{e,m,empty}}{w}{\tuple{e,m,e}}{\mbox{write to an empty cell in the data store}}
+\semrule{\tuple{e,empty}}{w}{\tuple{e,e}}{\mbox{write to an empty cell in the data store}}\\
 \hline
-\semrule{\tuple{e,m,empty}}{r}{\tuple{e,m,e}}{\mbox{read an empty cell in the data store}}
+\semrule{\tuple{e,l}}{w}{\case{\mbox{error}}{\mbox{if} ~ e > l}{\tuple{e,e}}{\mbox{otherwise}}} {\mbox{write to a cell in the data store}}\\
 \hline
+\semrule{\tuple{e,empty}}{r}{\tuple{e,empty}, empty}{\mbox{read an empty cell in the data store}}\\
+\hline
+\semrule{\tuple{e,l}}{r}{\case{\tuple{max(e,l),l}}{\mbox{if} ~ m \geq l}{\tuple{e,l}, empty}{\mbox{otherwise}}} {\mbox{read to a cell in the data store}}\\
+\hline\hline
 \end{array}
 \]
+\caption{\label{ta:ifc-total}%
+Small-step operational semantics for enforcing IFC with a total order over the security labels. $m$ is a paramater of the program execution s.t. m is the maximal security label allowed for the execution.}
+\end{table}
 
+\begin{table}
+\[
+\begin{array}{lclr}
+\hline\hline
+\semrule{\tuple{e,\emptyset}}{w(v)}{\tuple{e,\{\tuple{v,e}\}}}{\mbox{write to an empty cell in the data store}}\\
+\hline
+\semrule{\tuple{e,S}}
+        {w(v)}
+        {\case{\mbox{error}}
+              {\exists \tuple{v',l'} \in S. ~ l' < e}
+              {\tuple{e,(S \setminus \{\tuple{v',l'} | l' \geq e \}) \cup \{\tuple{v,e}\}}}
+              {\mbox{otherwise}}}
+        {\mbox{write to a cell in the data store}}\\
+\hline
+\semrule{\tuple{e,\emptyset}} {r} {\tuple{e,\emptyset}, empty} {\mbox{read an empty cell in the data store}}\\
+\hline
+\multicolumn{4} {l} {\mbox{let}~ S\!\downarrow_m = \{\tuple{v,l}\in S | l \leq m\} }\\
+\semrule{\tuple{e,S}}
+        {r}
+        {\casethree{\tuple{e,S}, empty} {|S\!\downarrow_m| = 0}
+                   {\tuple{max(e,l), S}, v} {|S\!\downarrow_m| = 1}
+                   {\mbox{error}}{|S\!\downarrow_m| > 1}} 
+        {\mbox{read to a cell in the data store}}\\
+\hline\hline
+\end{array}
+\]
+\caption{\label{ta:ifc-total}%
+Small-step operational semantics for enforcing IFC with a partial order over the security labels. $m$ is a paramater of the program execution s.t. m is the maximal security label allowed for the execution.}
 \end{table}
 
 
