@@ -1,4 +1,8 @@
-\section{Total Order}
+\section{Semantics}
+
+Tables~\ref{ta:ifc-total} and~\ref{ta:ifc-partial} summarize the 
+proposed operational semantics for totally and parially ordered
+security labels respectively.
 
 \begin{table}
 \[
@@ -39,7 +43,7 @@ Small-step operational semantics for enforcing IFC with a total order over the s
         {r}
         {\casethree{\tuple{e,S}, empty} {|S\!\downarrow_m| = 0}
                    {\tuple{max(e,l), S}, v} {|S\!\downarrow_m| = 1}
-                   {\mbox{error}}{|S\!\downarrow_m| > 1}} 
+                   {\mbox{error}}{|S\!\downarrow_m| > 1}}
         {\mbox{read to a cell in the data store}}\\
 \hline\hline
 \end{array}
@@ -48,6 +52,51 @@ Small-step operational semantics for enforcing IFC with a total order over the s
 Small-step operational semantics for enforcing IFC with a partial order over the security labels. $m$ is a paramater of the program execution s.t. m is the maximal security label allowed for the execution.}
 \end{table}
 
+\section{Discussion}
 
-\section{Partial Order}
+We employ two techniques to enforce confidentiality at the data-store
+level: (1) faceting and (2) the no-sensitive-upgrade (NSU) rule.  The former
+restricts information flow by presenting different views of the store
+to different observers.  We use it to isolate writes by incomparable 
+users.  The latter prevents the flow of information down the lattice by
+blocking high writes to low locations.  Both mechanisms preserve
+termination sensitivity.  NSU reduces faceting (which can be seen as a
+form of store corruption that requires manual intervention) by
+sacrificing transparency.  Without NSU, we would need to introduce
+facets for each label, not just incomparable ones.
 
+\section{Properties of the Semantics}
+
+Below we state some properties of our proposed scheme which need to be verified w.r.t.
+a formal semantics of executions.
+
+\begin{conj}
+Our semantics enforces termination-sensitive noninterference, i.e., whenever there exists
+a way to violate the information flow requirement, it enforces noninterference by either yielding an error (the no-sensitive-upgrade case)
+or faceting the data store (the incomparable writes case).
+\end{conj}
+
+\begin{conj}
+Our semantics can be easily implemented for Javascript programs using
+any key value DB with very low runtime overhead.
+\end{conj}
+
+\begin{conj}
+Our semantics can identify interesting bugs in real applications.
+\end{conj}
+
+\begin{conj}
+Our semantics is not transparent, i.e., there exist correct programs for which our semantics
+will yield error.
+\end{conj}
+
+\begin{conj}
+In practical serverless applications, the no-sensitive-upgrade semantics is preferable to transparency
+as it avoids data store corruption.
+\end{conj}
+
+\begin{conj}
+Correct programs which are rejected by our semantics can be modified to work with our IFC model with modest implementation effort.
+\end{conj}
+
+%\section{Partial Order}
