@@ -1,4 +1,8 @@
-\section{Total Order}
+\section{Semantics}
+
+Tables~\ref{ta:ifc-total} and~\ref{ta:ifc-partial} summarize the 
+proposed operational semantics for totally and parially ordered
+security labels respectively.
 
 \begin{table}
 \[
@@ -44,12 +48,24 @@ Small-step operational semantics for enforcing IFC with a total order over the s
 \hline\hline
 \end{array}
 \]
-\caption{\label{ta:ifc-total}%
+\caption{\label{ta:ifc-partial}%
 Small-step operational semantics for enforcing IFC with a partial order over the security labels. $m$ is a paramater of the program execution s.t. m is the maximal security label allowed for the execution.}
 \end{table}
 
+\section{Discussion}
 
-\subsection{Properties of the Semantics}
+We employ two techniques to enforce confidentiality at the data-store
+level: (1) faceting and (2) the no-sensitive-upgrade (NSU) rule.  The former
+restricts information flow by presenting different views of the store
+to different observers.  We use it to isolate writes by incomparable 
+users.  The latter prevents the flow of information down the lattice by
+blocking high writes to low locations.  Both mechanisms preserve
+termination sensitivity.  NSU reduces faceting (which can be seen as a
+form of store corruption that requires manual intervention) by
+sacrificing transparency.  Without NSU, we would need to introduce
+facets for each label, not just incomparable ones.
+
+\section{Properties of the Semantics}
 
 Below we state some properties of our proposed scheme which need to be verified w.r.t.
 a formal semantics of executions.
@@ -83,4 +99,4 @@ as it avoids data store corruption.
 Correct programs which are rejected by our semantics can be modified to work with our IFC model with modest implementation effort.
 \end{conj}
 
-\section{Partial Order}
+%\section{Partial Order}
