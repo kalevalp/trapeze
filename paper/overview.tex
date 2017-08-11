@@ -1,0 +1,67 @@
+\section{Overview} % (fold)
+\label{sec:overview}
+We are considering two alternative IFC algorithms.
+
+\subsection{Na\"ive Approach} % (fold)
+\label{sub:naive_approach}
+
+The first one directly applies the standard flow-insensitive IFC from the literature in the serverless setting outlined in the previous section. Recall that a function can be triggered by (1) an external event, e.g., user request, (2) a data store update, or (3) another lambda.
+
+We associate an effective security label (e) with each function activation.
+\begin{itemize}
+    \item The effective label is initially set to the confidentiality level of the source that triggered the activation (user's security label in case (1) above, the security label of the database update in case (2), or the effective security label of the caller in case (3).
+
+    \item The effective label increases monotonically during execution of the function as it reads confidential values from the data store.
+
+    \item The function can perform two types of I/O actions: (1) send a message to an external output channel (e.g., the end-user HTTP session) and (2) read or write the data store. Both actions are restricted by the following rules:
+
+    \item The send operation is only allowed if the security label of the output channel is greater than or equal than e. Otherwise the send operation fails and the function terminates.
+
+    \item Consider a data store location that contains value v with label l. The activation can:
+
+    \item Read v. The effective label is set to the least upper bound of e and l.
+
+    \item Write v if e≤l. The effective label does not change. The store location inherits label e. The write operation fails otherwise, terminating execution of the function.
+\end{itemize}
+
+The problem with this design is that it leaks information whenever a send or write operation fails. In the serverless setting, where a single request can spawn any number of concurrent functions, unbounded amount of information can leak in this way through a single request.
+
+% subsection naive_approach (end)
+
+\subsection{Max Label Flow Control} % (fold)
+\label{sub:max_label_flow_control}
+
+We therefore consider an alternative design that attempts to eliminate this channel. The key idea is to statically assign a maximal security level to each user request and modify the data store behavior to conceal the presence of any data with higher security labels.
+
+We associate two security labels with an activation: an effective label (e) and the maximal label (m).
+\begin{itemize}
+    \item As before, the effective label is initially set to the confidentiality level of the source that triggered the activation.
+
+    \item The effective label increases monotonically during execution of the function as it reads confidential values from the data store.
+
+    \item Our secure runtime ensures that the effective label may not exceed the maximal label (e≤m).
+
+    \item The maximal label is assigned at the beginning of the activation and remains constant throughout the activation. It must be greater than or equal to the initial value of the effective label. The maximal label is assigned by the secure runtime when the function is being triggered by the user or by a data store update and is inherited from the caller when the function is invoked by another function. Importantly, when the label is assigned by the runtime, its value must not depend on any secret data above the initial effective label (i.e., the confidentiality level of m is ≤e).
+
+    \item The function can perform two types of I/O actions: (1) send a message to an external output channel (e.g., the end-user HTTP session) and (2) read or write the data store. Both actions are restricted by the following rules, which (hopefully) enforce confidentiality:
+
+    \item The security label of the output channel must be greater than or equal to the maximal security label of the activation. Note that using the maximal security label, rather than the effective one, is essential to preventing information leaks.
+
+    \item Consider an activation with effective and maximal labels e and m respectively and a data store location that contains value v with label l. The activation can:
+
+    \item Read v if l≤m. The effective label is set to the maximum of e and l.
+
+    \item If l>m then the read operation produces the same result as if the given data store location was empty. The runtime alerts the administrator (at the highest security level) about attempted read violation.
+
+    \item Write v if e≤l. The effective label does not change. The store location inherits label e.
+
+    \item If e>l, then the write operation fails. Note that this failure does not leak any confidential information.
+\end{itemize}
+
+The above solution does not prevent information leaks between incomparable labels. Intuitively, when two incomparable users are trying to access the same store location, we must deny access to one of them, thus implicitly leaking one bit of information.
+
+To work around this problem, we instead mask such conflicts by forking the record in the data store, creating a separate copy for each incomparable user. While forking prevents the information leak, it also changes the semantics of the data store expected by the application; however such situations do not occur during normal operation. A conflict indicates an attempted security violation and is signaled to the administrator. While the issue is being resolved, the forking behavior ensures that information flow rules are satisfied.
+% subsection max_label_flow_control (end)
+
+
+% section overview (end)

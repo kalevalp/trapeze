@@ -17,12 +17,7 @@
                         %% http://ctan.org/pkg/subcaption
 \usepackage{mathtools}
 
-\newcommand{\semrule}[4]{ #1 & \xrightarrow[m]{#2} & #3 & #4 }
-\newcommand{\tuple}[1]{\langle #1 \rangle}
-\newcommand{\case}[4]{\left \{ \begin{array}{lr} #1 & #2 \\ #3 & #4 \end{array} \right.}
-\newcommand{\casethree}[6]{\left \{ \begin{array}{lr} #1 & #2 \\ #3 & #4 \\ #5 & #6 \end{array} \right.}
-\newtheorem{conj}{Conjucture}
-
+\input{macros}
 
 \makeatletter\if@ACM@journal\makeatother
 %% Journal information (used by PACMPL format)
@@ -188,10 +183,8 @@ Text of abstract \ldots.
 \maketitle
 
 
-\section{Introduction}
-
-Text of paper \ldots
-
+\input{intro}
+\input{overview}
 \input{semantics}
 
 %% Acknowledgments
