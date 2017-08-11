@@ -6,6 +6,6 @@
         }
     ],
     "settings": {
-        "TEXroot": "serverless-ifc.tex"
+        "TEXroot": "paper/serverless-ifc.tex"
     }
 }
