@@ -1,8 +1,8 @@
-\section{Semantics}
+%\section{Semantics}
 
-Tables~\ref{ta:ifc-total} and~\ref{ta:ifc-partial} summarize the 
-proposed operational semantics for totally and parially ordered
-security labels respectively.
+%Tables~\ref{ta:ifc-total} and~\ref{ta:ifc-partial} summarize the 
+%proposed operational semantics for totally and parially ordered
+%security labels respectively.
 
 \begin{table}
 \[
@@ -14,7 +14,7 @@ security labels respectively.
 \hline
 \semrule{\tuple{e,empty}}{r}{\tuple{e,empty}, empty}{\mbox{read an empty cell in the data store}}\\
 \hline
-\semrule{\tuple{e,l}}{r}{\case{\tuple{max(e,l),l}}{\mbox{if} ~ m \geq l}{\tuple{e,l}, empty}{\mbox{otherwise}}} {\mbox{read to a cell in the data store}}\\
+\semrule{\tuple{e,l}}{r}{\case{\tuple{max(e,l),l}, v}{\mbox{if} ~ m \geq l}{\tuple{e,l}, empty}{\mbox{otherwise}}} {\mbox{read a cell in the data store}}\\
 \hline\hline
 \end{array}
 \]
@@ -44,7 +44,7 @@ Small-step operational semantics for enforcing IFC with a total order over the s
         {\casethree{\tuple{e,S}, empty} {|S\!\downarrow_m| = 0}
                    {\tuple{max(e,l), S}, v} {|S\!\downarrow_m| = 1}
                    {\mbox{error}}{|S\!\downarrow_m| > 1}}
-        {\mbox{read to a cell in the data store}}\\
+        {\mbox{read a cell in the data store}}\\
 \hline\hline
 \end{array}
 \]
@@ -54,16 +54,23 @@ Small-step operational semantics for enforcing IFC with a partial order over the
 
 \section{Discussion}
 
-We employ two techniques to enforce confidentiality at the data-store
-level: (1) faceting and (2) the no-sensitive-upgrade (NSU) rule.  The former
-restricts information flow by presenting different views of the store
-to different observers.  We use it to isolate writes by incomparable 
-users.  The latter prevents the flow of information down the lattice by
-blocking high writes to low locations.  Both mechanisms preserve
-termination sensitivity.  NSU reduces faceting (which can be seen as a
-form of store corruption that requires manual intervention) by
-sacrificing transparency.  Without NSU, we would need to introduce
-facets for each label, not just incomparable ones.
+While faceting prevents leaking of information through termination, it 
+also changes the semantics of the data store expected by the 
+application.  However this should not occur during normal operation.  
+Creation of multiple facets indicates an attempted security violation 
+and is signaled to the administrator. While the issue is being 
+resolved, faceting continues to enforce confidentiality.
+
+%We employ two techniques to enforce confidentiality at the data-store
+%level: (1) faceting and (2) the no-sensitive-upgrade (NSU) rule.  The former
+%restricts information flow by presenting different views of the store
+%to different observers.  We use it to isolate writes by incomparable 
+%users.  The latter prevents the flow of information down the lattice by
+%blocking high writes to low locations.  Both mechanisms preserve
+%termination sensitivity.  NSU reduces faceting (which can be seen as a
+%form of store corruption that requires manual intervention) by
+%sacrificing transparency.  Without NSU, we would need to introduce
+%facets for each label, not just incomparable ones.
 
 \section{Properties of the Semantics}
 
