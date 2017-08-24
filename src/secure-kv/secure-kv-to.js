@@ -1,29 +1,35 @@
 var mysql = require('mysql');
 
-var con = mysql.createConnection({
-    host: "serverlessproject.c1kfax8igvaq.us-west-1.rds.amazonaws.com:3306",
-    user: "vmwuser",
-    password: "serverlessifc",
-    database: "securekv"
-});
+// "serverlessproject.c1kfax8igvaq.us-west-1.rds.amazonaws.com:3306"
+// "vmwuser"
+// "serverlessifc",
+class SecureKV_TO {
+    constructor(h, u, pwd) {
+        this.con = mysql.createConnection({
+            host: h,
+            user: u, 
+            password: pwd,
+            database: "securekv"
+        });
+        createTableIfTableExists();
 
-var createTableSql = `
-CREATE TABLE
-    kvstore (
-        rowkey VARCHAR(31) NOT NULL,
-        rowvalues VARCHAR(255),
-        label INTEGER NOT NULL,
-        PRIMARY KEY (rowkey)
-    );
-` 
-con.connect(createTableSql, function (err, result) {
-        if (err) throw err;
-        // console.log(result);
-    });
+        function createTable() {
+            var createTableSql = `
+CREATE TABLE kvstore (
+    rowkey VARCHAR(31) NOT NULL,
+    rowvalues VARCHAR(255),
+    label INTEGER NOT NULL,
+    PRIMARY KEY (rowkey)
+);
+            `
+            this.con.connect(createTableSql, function (err, result) {
+                    if (err) throw err;
+                    // console.log(result);
+                });
 
-var addUpdateTrigger = `
+            var addUpdateTrigger = `
 DELIMITER $$
-CREATE TRIGGER TO_put_semantics BEFORE UPDATE ON kvstore 
+CREATE TRIGGER TO_put_semantics BEFORE UPDATE ON ? 
     FOR EACH ROW
     BEGIN
         IF OLD.label < NEW.label THEN
@@ -34,43 +40,57 @@ CREATE TRIGGER TO_put_semantics BEFORE UPDATE ON kvstore
 $$
 DELIMITER ;
 `
+            this.con.connect(addUpdateTrigger, ['kvstore'], function (err, result) {
+                    if (err) throw err;
+                    // console.log(result);
+                });
+        }
 
-con.connect(addUpdateTrigger, function (err, result) {
-        if (err) throw err;
-        // console.log(result);
-    });
-
-modules.exports.put = function (k, v, l) {
-    var sql = `
+        function createTableIfTableExists() {
+            var tableSql = `
+SHOW TABLES like ?;
+        `
+            this.con.connect(tableSql, ['kvstore'], function (err, result) {
+                if (err) throw err;
+                if (result.length == 0) {
+                    createTable()
+                }
+            })
+        }
+    }
+    function put (k, v, l) {
+        var sql = `
 INSERT INTO kvstore (rowkey,rowvalues,label) 
     VALUES (?, ?, ?)
     ON DUPLICATE KEY UPDATE 
         rowvalues=VALUES(rowvalues), label=VALUES(label);
-    `
+        `
 
-    con.connect(sql,[k,v,l], function (err, result) {
-        if (err) throw err;
-        // console.log(result);
-    });
-}
-
-modules.exports.get = function (k, l) {
-    var sql = `
+        con.connect(sql,[k,v,l], function (err, result) {
+            if (err) throw err;
+            // console.log(result);
+        });
+    }
+    function get (k, l) {
+        var sql = `
 SELECT rowvalue 
 FROM kvstore 
 WHERE rowkey = ? AND
       label <= ?;
     `
 
-    con.connect(function(err) {
-        if (err) throw err;
-        con.query(sql, [k,l], function (err, result) {
+        con.connect(function(err) {
             if (err) throw err;
-            if (result.length == 0) return "";
-            if (result.length == 1) return result["rowvalue"];
-            if (result.length > 1) throw "Inconsistent KeyValueStore";
+            con.query(sql, [k,l], function (err, result) {
+                if (err) throw err;
+                if (result.length == 0) return "";
+                if (result.length == 1) return result["rowvalue"];
+                if (result.length > 1) throw "Inconsistent KeyValueStore";
 
-            // console.log(result);
+                // console.log(result);
+            });
         });
-    });
+    }
 }
+
+modules.exports.SecureKV_TO = SecureKV_TO;
