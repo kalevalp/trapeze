@@ -4,7 +4,6 @@
 *.log
 *.out
 *.synctex.gz
-*.sublime-workspace
 *.aux
 *.fls
 *.fdb_latexmk
@@ -12,6 +11,11 @@
 # Mac OS stuff
 ##############
 .DS_Store
+
+# Misc
+#######
+*.idea
+*.sublime-workspace
 
 # Node.JS stuff
 ###############
