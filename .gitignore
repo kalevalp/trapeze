@@ -14,7 +14,7 @@
 
 # Misc
 #######
-*.idea
+.idea
 *.sublime-workspace
 
 # Node.JS stuff
