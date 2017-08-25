@@ -141,4 +141,25 @@ WHERE rowkey = ? AND
     }
 }
 
-modules.exports.SecureKV_PO = SecureKV_PO;
+module.exports.SecureKV_PO = SecureKV_PO;
+
+
+
+
+/* ************************
+ *          Tests
+ * ************************ */
+
+var x = { '1': [ 2, 3 ], '2': [ 3 ], '3': [ 5, 6 ], '4': [] };
+var potc = getTransitiveClosure(x);
+console.log("************************")
+console.log("Transitive closure test:")
+console.log(x);
+console.log(potc);
+console.log("************************")
+console.log("**")
+console.log("************************")
+console.log("Condition test:");
+console.log(getCondFromPOTC(potc));
+console.log("************************")
+    
