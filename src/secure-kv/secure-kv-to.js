@@ -14,7 +14,6 @@ class SecureKV_TO {
     }
 
     init() {
-
         function createTable() {
             const createTableSql = `
 CREATE TABLE kvstore (
@@ -24,7 +23,7 @@ CREATE TABLE kvstore (
     PRIMARY KEY (rowkey)
 );
             `;
-            this.con.connect(createTableSql, function (err, result) {
+            this.con.query(createTableSql, function (err, result) {
                 if (err) throw err;
                 // console.log(result);
             });
@@ -42,20 +41,33 @@ CREATE TRIGGER TO_put_semantics BEFORE UPDATE ON ?
 $$
 DELIMITER ;
 `;
-            this.con.connect(addUpdateTrigger, ['kvstore'], function (err, result) {
+            this.con.query(addUpdateTrigger, ['kvstore'], function (err, result) {
                 if (err) throw err;
                 // console.log(result);
             });
         }
 
+        this.con.connect(function (err) {
+            if (err) throw err;
+            console.log("** Secure K-V (TO) Connected Successfully!")
+        });
+
         const tableSql = `
 SHOW TABLES like ?;
         `;
-        this.con.connect(tableSql, ['kvstore'], function (err, result) {
+        this.con.query(tableSql, ['kvstore'], function (err, result) {
             if (err) throw err;
             if (result.length === 0) {
                 createTable()
             }
+        })
+    }
+
+    close() {
+        this.con.end(function (err) {
+            if (err) throw err;
+            console.out("** Secure K-V (TO) Connection Closed Successfully!")
+
         })
     }
 
@@ -67,7 +79,7 @@ INSERT INTO kvstore (rowkey,rowvalues,label)
         rowvalues=VALUES(rowvalues), label=VALUES(label);
         `;
 
-        con.connect(sql,[k,v,l], function (err, result) {
+        this.con.query(sql,[k,v,l], function (err, result) {
             if (err) throw err;
             // console.log(result);
         });
@@ -80,16 +92,13 @@ WHERE rowkey = ? AND
       label <= ?;
     `;
 
-        con.connect(function(err) {
+        this.con.query(sql, [k,l], function (err, result) {
             if (err) throw err;
-            con.query(sql, [k,l], function (err, result) {
-                if (err) throw err;
-                if (result.length === 0) return "";
-                if (result.length === 1) return result["rowvalue"];
-                if (result.length > 1) throw "Inconsistent KeyValueStore";
+            if (result.length === 0) return "";
+            if (result.length === 1) return result["rowvalue"];
+            if (result.length > 1) throw "Inconsistent KeyValueStore";
 
-                // console.log(result);
-            });
+            // console.log(result);
         });
     }
 }
@@ -116,12 +125,12 @@ if (process.argv[2] === "test") {
     console.log("**");
     console.log("************************");
     console.log("Table Creation Test:");
-    kv.con.connect("SHOW TABLES;", function (err, result) {
+    kv.con.query("SHOW TABLES;", function (err, result) {
         if (err) throw err;
         console.log(result);
     });
     kv.init();
-    kv.con.connect("SHOW TABLES;", function (err, result) {
+    kv.con.query("SHOW TABLES;", function (err, result) {
         if (err) throw err;
         console.log(result);
     });
@@ -129,27 +138,27 @@ if (process.argv[2] === "test") {
     console.log("**");
     console.log("************************");
     console.log("Put Test:");
-    kv.con.connect("SELECT * FROM kvstore;", function (err, result) {
+    kv.con.query("SELECT * FROM kvstore;", function (err, result) {
         if (err) throw err;
         console.log(result);
     });
     kv.put('a', 'value for a', 5);
-    kv.con.connect("SELECT * FROM kvstore;", function (err, result) {
+    kv.con.query("SELECT * FROM kvstore;", function (err, result) {
         if (err) throw err;
         console.log(result);
     });
     kv.put('b', 'a value for b', 1);
-    kv.con.connect("SELECT * FROM kvstore;", function (err, result) {
+    kv.con.query("SELECT * FROM kvstore;", function (err, result) {
         if (err) throw err;
         console.log(result);
     });
     kv.put('a', 'another value for a', 5);
-    kv.con.connect("SELECT * FROM kvstore;", function (err, result) {
+    kv.con.query("SELECT * FROM kvstore;", function (err, result) {
         if (err) throw err;
         console.log(result);
     });
     kv.put('a', 'less sensitive value for a', 2);
-    kv.con.connect("SELECT * FROM kvstore;", function (err, result) {
+    kv.con.query("SELECT * FROM kvstore;", function (err, result) {
         if (err) throw err;
         console.log(result);
     });
@@ -158,7 +167,7 @@ if (process.argv[2] === "test") {
     } catch (err) {
         console.log(err)
     }
-    kv.con.connect("SELECT * FROM kvstore;", function (err, result) {
+    kv.con.query("SELECT * FROM kvstore;", function (err, result) {
         if (err) throw err;
         console.log(result);
     });
@@ -168,6 +177,13 @@ if (process.argv[2] === "test") {
     console.log("Get Test:");
     console.log("Stored value for key a : " + kv.get('a'));
     console.log("Stored value for key b : " + kv.get('b'));
+    console.log("************************");
+    console.log("**");
+    console.log("************************");
+    console.log("Close Test:");
+    console.log("Connection state : " + kv.con.state);
+    kv.close();
+    console.log("Connection state : " + kv.con.state);
     console.log("************************");
 
 
