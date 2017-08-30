@@ -37,14 +37,7 @@
 % \acmDOI{10.1145/nnnnnnn.nnnnnnn}
 % \startPage{1}
 % \fi
-\newcommand{\semrule}[4]{ #1 & \xrightarrow[m]{#2} & #3 & #4 }
-\newcommand{\semruletxt}[3]{ #1 \xrightarrow[m]{#2} #3}
-\newcommand{\tuple}[1]{\langle #1 \rangle}
-\newcommand{\case}[4]{\left \{ \begin{array}{lr} #1 & #2 \\ #3 & #4 \end{array} \right.}
-\newcommand{\casethree}[6]{\left \{ \begin{array}{lr} #1 & #2 \\ #3 & #4 \\ #5 & #6 \end{array} \right.}
-\newtheorem{conj}{Conjecture}
-
-
+\input{macros}
 %% Copyright information
 %% Supplied to authors (based on authors' rights management selection;
 %% see authors.acm.org) by publisher for camera-ready submission
@@ -182,6 +175,7 @@
 \input{intro}
 \input{design-overview}
 \input{semantics}
+\input{model}
 
 %% Acknowledgments
 \input{acks}

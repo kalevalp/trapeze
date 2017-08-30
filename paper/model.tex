@@ -1,0 +1,17 @@
+\section{Model} % (fold)
+\label{sec:model}
+
+In this section we present a model for describing information flow in a transactional system.
+
+\subsection{Computational Model} % (fold)
+\label{sub:computational_model}
+We begin by describing the non-IFC computational model.
+
+Our model consists of a set of memory locations $M=\{m_1,\dots,m_n\}$, a memory access function $r: M \rightarrow D$, where $D$ is the domain of data in our system, and a set of computations $\mathcal{F} = \{f_1,\ldots,f_k\}$ where each copmutation $f_i$ is a function from a vector of data elements to a single data element $f_i:\overline{D} \rightarrow D$.
+
+We define a \emph{transaction} operation that applies a given computation to the values stored in a vector of memory locations, and stores the result of the computation in another memory location. \TODO{Semantics for the transaction operation.}
+
+% subsection computational_model (end)
+
+
+% section model (end)
