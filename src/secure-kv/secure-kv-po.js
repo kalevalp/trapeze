@@ -36,12 +36,11 @@ function getTransitiveClosure(po) {
 }
 
 function getCondFromPOTC(potc) {
-    Object.keys(potc).map(function (x) {
-        if (potc[x].length > 0) {
-            
-        }
-
-    });
+    return "(" +
+        Object.keys(potc).map(function (x) {
+            return "NEW.label = " + x + " AND OLD.label NOT IN (" + [...potc[x]].join(", ") + ")";
+        }).join(") OR (") +
+        ")";
 }
 // "serverlessproject.c1kfax8igvaq.us-west-1.rds.amazonaws.com:3306"
 // "vmwuser"
@@ -73,14 +72,14 @@ CREATE TABLE kvstore (
                     // console.log(result);
                 });
 
-            const cond = "";
+            const cond = getCondFromPOTC(this.po);
 
             const addUpdateTrigger = `
 DELIMITER $$
 CREATE TRIGGER PO_put_semantics BEFORE UPDATE ON ? 
     FOR EACH ROW
     BEGIN
-        IF ? OLD.label < NEW.label THEN
+        IF ? THEN
             SIGNAL SQLSTATE '45000'
                 SET MESSAGE_TEXT = 'Security policy violation: Attempt to perform a sensitive upgrade (PO semantics).';
         END IF;
@@ -124,12 +123,12 @@ INSERT INTO kvstore (rowkey,rowvalues,label)
 SELECT rowvalue 
 FROM kvstore 
 WHERE rowkey = ? AND
-      label <= ?;
+      label IN ?;
     `;
 
         con.connect(function(err) {
             if (err) throw err;
-            con.query(sql, [k,l], function (err, result) {
+            con.query(sql, [k,"(" + [...this.po[l]].join(", ") + ")"], function (err, result) {
                 if (err) throw err;
                 if (result.length === 0) return "";
                 if (result.length === 1) return result["rowvalue"];
@@ -149,17 +148,17 @@ module.exports.SecureKV_PO = SecureKV_PO;
 /* ************************
  *          Tests
  * ************************ */
-
-var x = { '1': [ 2, 3 ], '2': [ 3 ], '3': [ 5, 6 ], '4': [] };
-var potc = getTransitiveClosure(x);
-console.log("************************")
-console.log("Transitive closure test:")
-console.log(x);
-console.log(potc);
-console.log("************************")
-console.log("**")
-console.log("************************")
-console.log("Condition test:");
-console.log(getCondFromPOTC(potc));
-console.log("************************")
-    
+if (process.argv[2] === "test") {
+    const x = {'1': [2, 3], '2': [3], '3': [5, 6], '4': []};
+    const potc = getTransitiveClosure(x);
+    console.log("************************");
+    console.log("Transitive closure test:");
+    console.log(x);
+    console.log(potc);
+    console.log("************************");
+    console.log("**");
+    console.log("************************");
+    console.log("Condition test:");
+    console.log(getCondFromPOTC(potc));
+    console.log("************************");
+}
