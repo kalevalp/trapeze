@@ -13,7 +13,7 @@ class SecureKV_TO {
         });
     }
 
-    init() {
+    init(callback) {
         function createTable() {
             const createTableSql = `
 CREATE TABLE kvstore (
@@ -24,7 +24,7 @@ CREATE TABLE kvstore (
 );
             `;
             this.con.query(createTableSql, function (err, result) {
-                if (err) throw err;
+                if (err) callback(err);
                 // console.log(result);
             });
 
@@ -42,13 +42,13 @@ $$
 DELIMITER ;
 `;
             this.con.query(addUpdateTrigger, ['kvstore'], function (err, result) {
-                if (err) throw err;
+                if (err) callback(err);
                 // console.log(result);
             });
         }
 
         this.con.connect(function (err) {
-            if (err) throw err;
+            if (err) callback(err);
             console.log("** Secure K-V (TO) Connected Successfully!")
         });
 
@@ -56,22 +56,23 @@ DELIMITER ;
 SHOW TABLES like ?;
         `;
         this.con.query(tableSql, ['kvstore'], function (err, result) {
-            if (err) throw err;
+            if (err) callback(err);
             if (result.length === 0) {
                 createTable()
             }
-        })
+        });
+        callback();
     }
 
-    close() {
+    close(callback) {
         this.con.end(function (err) {
-            if (err) throw err;
+            if (err) callback(err);
             console.out("** Secure K-V (TO) Connection Closed Successfully!")
-
+            callback();
         })
     }
 
-    put (k, v, l) {
+    put (k, v, l, callback) {
         const sql = `
 INSERT INTO kvstore (rowkey,rowvalues,label) 
     VALUES (?, ?, ?)
@@ -80,11 +81,12 @@ INSERT INTO kvstore (rowkey,rowvalues,label)
         `;
 
         this.con.query(sql,[k,v,l], function (err, result) {
-            if (err) throw err;
+            if (err) callback(err);
+            callback();
             // console.log(result);
         });
     }
-    get (k, l) {
+    get (k, l, callback) {
         const sql = `
 SELECT rowvalue 
 FROM kvstore 
@@ -93,10 +95,10 @@ WHERE rowkey = ? AND
     `;
 
         this.con.query(sql, [k,l], function (err, result) {
-            if (err) throw err;
-            if (result.length === 0) return "";
-            if (result.length === 1) return result["rowvalue"];
-            if (result.length > 1) throw "Inconsistent KeyValueStore";
+            if (err) callback(err);
+            if (result.length === 0) callback(null, "");
+            if (result.length === 1) callback(null, result["rowvalue"]);
+            if (result.length > 1) callback("Inconsistent KeyValueStore");
 
             // console.log(result);
         });
