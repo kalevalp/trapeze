@@ -1,5 +1,116 @@
 const mysql = require('mysql');
 
+// "serverlessproject.c1kfax8igvaq.us-west-1.rds.amazonaws.com:3306"
+// "vmwuser"
+// "serverlessifc",
+class SecureKV_PO {
+    constructor(h, u, pwd, partialOrder) {
+        this.con = mysql.createConnection({
+            host: h,
+            user: u,
+            password: pwd,
+            database: "securekv"
+        });
+        this.po = getTransitiveClosure(partialOrder);
+    }
+
+    init(callback) {
+        function createTable() {
+            const createTableSql = `
+CREATE TABLE kvstore (
+    rowkey VARCHAR(31) NOT NULL,
+    rowvalues VARCHAR(255),
+    label INTEGER NOT NULL,
+    PRIMARY KEY (rowkey)
+);
+            `;
+            this.con.query(createTableSql, function (err, result) {
+                if (err) callback(err);
+                // console.log(result);
+            });
+
+            const cond = getCondFromPOTC(this.po);
+
+            const addUpdateTrigger = `
+DELIMITER $$
+CREATE TRIGGER PO_put_semantics BEFORE UPDATE ON ? 
+    FOR EACH ROW
+    BEGIN
+        IF ? THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'Security policy violation: Attempt to perform a sensitive upgrade (PO semantics).';
+        END IF;
+    END;
+$$
+DELIMITER ;
+`;
+            this.con.query(addUpdateTrigger, ['kvstore', cond], function (err, result) {
+                if (err) callback(err);
+                // console.log(result);
+            });
+        }
+
+        this.con.connect(function (err) {
+            if (err) callback(err);
+            console.log("** Secure K-V (PO) Connected Successfully!")
+        });
+
+        const tableSql = `
+SHOW TABLES like ?;
+        `;
+        this.con.query(tableSql, ['kvstore'], function (err, result) {
+            if (err) callback(err);
+            if (result.length === 0) {
+                createTable()
+            }
+        })
+    }
+
+    close(callback) {
+        this.con.end(function (err) {
+            if (err) callback(err);
+            console.out("** Secure K-V (PO) Connection Closed Successfully!")
+
+        })
+    }
+
+    put (k, v, l, callback) {
+        const sql = `
+INSERT INTO kvstore (rowkey,rowvalues,label) 
+    VALUES (?, ?, ?)
+    ON DUPLICATE KEY UPDATE 
+        rowvalues=VALUES(rowvalues), label=VALUES(label);
+        `;
+
+        this.con.query(sql,[k,v,l], function (err, result) {
+            if (err) callback(err);
+            // console.log(result);
+        });
+    }
+    
+    get (k, l, callback) {
+        const sql = `
+SELECT rowvalue 
+FROM kvstore 
+WHERE rowkey = ? AND
+      label IN ?;
+    `;
+
+        con.query(sql, [k,"(" + [...this.po[l]].join(", ") + ")"], function (err, result) {
+            if (err) callback(err);
+            if (result.length === 0) callback(null,"");
+            else {
+                callback(null, result.map(function (r) {
+                    return r["rowvalue"];
+                }));
+            }
+        });
+    }
+
+}
+
+module.exports.SecureKV_PO = SecureKV_PO;
+
 function getTransitiveClosure(po) {
     let stack = [];
     const potc = {};
@@ -42,108 +153,6 @@ function getCondFromPOTC(potc) {
         }).join(") OR (") +
         ")";
 }
-// "serverlessproject.c1kfax8igvaq.us-west-1.rds.amazonaws.com:3306"
-// "vmwuser"
-// "serverlessifc",
-
-class SecureKV_PO {
-    constructor(h, u, pwd, partialOrder) {
-        this.con = mysql.createConnection({
-            host: h,
-            user: u, 
-            password: pwd,
-            database: "securekv"
-        });
-        createTableIfTableExists();
-
-        this.po = getTransitiveClosure(partialOrder);
-
-        function createTable() {
-            const createTableSql = `
-CREATE TABLE kvstore (
-    rowkey VARCHAR(31) NOT NULL,
-    rowvalues VARCHAR(255),
-    label INTEGER NOT NULL,
-    PRIMARY KEY (rowkey)
-);
-            `;
-            this.con.connect(createTableSql, function (err, result) {
-                    if (err) throw err;
-                    // console.log(result);
-                });
-
-            const cond = getCondFromPOTC(this.po);
-
-            const addUpdateTrigger = `
-DELIMITER $$
-CREATE TRIGGER PO_put_semantics BEFORE UPDATE ON ? 
-    FOR EACH ROW
-    BEGIN
-        IF ? THEN
-            SIGNAL SQLSTATE '45000'
-                SET MESSAGE_TEXT = 'Security policy violation: Attempt to perform a sensitive upgrade (PO semantics).';
-        END IF;
-    END;
-$$
-DELIMITER ;
-`;
-            this.con.connect(addUpdateTrigger, [cond, 'kvstore'], function (err, result) {
-                    if (err) throw err;
-                    // console.log(result);
-                });
-        }
-
-        function createTableIfTableExists() {
-            const tableSql = `
-SHOW TABLES like ?;
-        `;
-            this.con.connect(tableSql, ['kvstore'], function (err, result) {
-                if (err) throw err;
-                if (result.length === 0) {
-                    createTable()
-                }
-            })
-        }
-    }
-    put (k, v, l) {
-        const sql = `
-INSERT INTO kvstore (rowkey,rowvalues,label) 
-    VALUES (?, ?, ?)
-    ON DUPLICATE KEY UPDATE 
-        rowvalues=VALUES(rowvalues), label=VALUES(label);
-        `;
-
-        con.connect(sql,[k,v,l], function (err, result) {
-            if (err) throw err;
-            // console.log(result);
-        });
-    }
-    get (k, l) {
-        const sql = `
-SELECT rowvalue 
-FROM kvstore 
-WHERE rowkey = ? AND
-      label IN ?;
-    `;
-
-        con.connect(function(err) {
-            if (err) throw err;
-            con.query(sql, [k,"(" + [...this.po[l]].join(", ") + ")"], function (err, result) {
-                if (err) throw err;
-                if (result.length === 0) return "";
-                if (result.length === 1) return result["rowvalue"];
-                if (result.length > 1) throw "Inconsistent KeyValueStore";
-
-                // console.log(result);
-            });
-        });
-    }
-}
-
-module.exports.SecureKV_PO = SecureKV_PO;
-
-
-
 
 /* ************************
  *          Tests
