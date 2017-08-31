@@ -116,19 +116,7 @@ if (process.argv[2] === "test") {
         process.argv[5]
     );
     console.log("************************");
-    console.log("Connection Test:");
-    kv.con.connect(function (err) {
-       if (err) throw err;
-       console.log("Connected Successfully!")
-    });
-    console.log("************************");
-    console.log("**");
-    console.log("************************");
-    console.log("Table Creation Test:");
-    kv.con.query("SHOW TABLES;", function (err, result) {
-        if (err) throw err;
-        console.log(result);
-    });
+    console.log("Store Init Test:");
     kv.init();
     kv.con.query("SHOW TABLES;", function (err, result) {
         if (err) throw err;
