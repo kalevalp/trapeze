@@ -1,7 +1,8 @@
 "use strict";
 
-const fs = require('fs');
-const {NodeVM} = require('vm2');
+// const fs = require('fs');
+import {NodeVM} from "vm2";
+
 
 // rmFilesInDir = function(dirPath) {
 //     try { var files = fs.readdirSync(dirPath); }
@@ -49,7 +50,7 @@ module.exports.handler = function (externalEvent, externalContext, externalCallb
         delete module.exports.handler;
 
         `);
-}
+};
 
 // function(origLambda, handlerName, builtinLibraries, externalLibraries) {
 //     res = vm.require(origLambda);
