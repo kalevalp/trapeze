@@ -21,7 +21,7 @@ CREATE TABLE kvstore (
     rowkey VARCHAR(31) NOT NULL,
     rowvalues VARCHAR(255),
     label INTEGER NOT NULL,
-    PRIMARY KEY (rowkey)
+    PRIMARY KEY (rowkey, label)
 );
             `;
             this.con.query(createTableSql, function (err, result) {
@@ -31,20 +31,11 @@ CREATE TABLE kvstore (
 
             const cond = getCondFromPOTC(this.po);
 
-            const addUpdateTrigger = `
-DELIMITER $$
-CREATE TRIGGER PO_put_semantics BEFORE UPDATE ON ? 
-    FOR EACH ROW
-    BEGIN
-        IF ? THEN
-            SIGNAL SQLSTATE '45000'
-                SET MESSAGE_TEXT = 'Security policy violation: Attempt to perform a sensitive upgrade (PO semantics).';
-        END IF;
-    END;
-$$
-DELIMITER ;
+            const addInsertTrigger = `
+CREATE TRIGGER PO_put_semantics BEFORE INSERT ON ? 
+    DELETE FROM ? WHERE ?;
 `;
-            this.con.query(addUpdateTrigger, ['kvstore', cond], function (err, result) {
+            this.con.query(addInsertTrigger, ['kvstore', 'kvstore', cond], function (err, result) {
                 if (err) callback(err);
                 // console.log(result);
             });
@@ -79,7 +70,7 @@ SHOW TABLES like ?;
 INSERT INTO kvstore (rowkey,rowvalues,label) 
     VALUES (?, ?, ?)
     ON DUPLICATE KEY UPDATE 
-        rowvalues=VALUES(rowvalues), label=VALUES(label);
+        rowvalues=VALUES(rowvalues);
         `;
 
         this.con.query(sql,[k,v,l], function (err, result) {
@@ -87,7 +78,15 @@ INSERT INTO kvstore (rowkey,rowvalues,label)
             // console.log(result);
         });
     }
-    
+
+    /**
+     * Performs a get operation from the key-value store for a given key and label.
+     * Currently returns *all* values with label<=l. Should return the single value with max(label)<=l.
+     *
+     * @param k Key
+     * @param l Security label
+     * @param callback
+     */
     get (k, l, callback) {
         const sql = `
 SELECT rowvalue 
@@ -96,7 +95,12 @@ WHERE rowkey = ? AND
       label IN ?;
     `;
 
-        con.query(sql, [k,"(" + [...this.po[l]].join(", ") + ")"], function (err, result) {
+        // let gtLabels = new Set(this.po[l]);
+        // gtLabels.delete(l);
+
+        let leLabels = getAllLE(pl,l);
+
+        this.con.query(sql, [k,"(" + [...leLabels].join(", ") + ")"], function (err, result) {
             if (err) callback(err);
             if (result.length === 0) callback(null,"");
             else {
@@ -117,9 +121,11 @@ function getTransitiveClosure(po) {
 
     const allElems = new Set();
     for (const x in po) {
-        allElems.add(parseInt(x));
-        for (const y of po[x]) {
-            allElems.add(y);
+        if (po.hasOwnProperty(x)) {
+            allElems.add(parseInt(x));
+            for (const y of po[x]) {
+                allElems.add(y);
+            }
         }
     }
     for (const e of allElems) {
@@ -146,10 +152,24 @@ function getTransitiveClosure(po) {
     return potc;
 }
 
+function getAllLE (potc, label) {
+    const res = new Set();
+
+    for (const l in potc) {
+        if (potc.hasOwnProperty(l)) {
+            if (potc[l].has(label)) {
+                res.add(parseInt(l));
+            }
+        }
+    }
+
+    return res;
+}
+
 function getCondFromPOTC(potc) {
     return "(" +
         Object.keys(potc).map(function (x) {
-            return "NEW.label = " + x + " AND OLD.label NOT IN (" + [...potc[x]].join(", ") + ")";
+            return "NEW.label = " + x + " AND label IN (" + [...potc[x]].join(", ") + ")";
         }).join(") OR (") +
         ")";
 }
