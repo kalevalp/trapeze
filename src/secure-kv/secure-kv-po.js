@@ -81,7 +81,6 @@ INSERT INTO kvstore (rowkey,rowvalues,label)
 
     /**
      * Performs a get operation from the key-value store for a given key and label.
-     * Currently returns *all* values with label<=l. Should return the single value with max(label)<=l.
      *
      * @param k Key
      * @param l Security label
@@ -104,13 +103,17 @@ WHERE rowkey = ? AND
             if (err) callback(err);
             if (result.length === 0) callback(null,"");
             else {
-                callback(null, result.map(function (r) {
-                    return r["rowvalue"];
-                }));
+                callback(null,
+                    result.reduce(function(max, curr) {
+                        if (this.po[max["label"]].has(curr["label"])) {
+                            return curr;
+                        } else {
+                            return max;
+                        }
+                    })["rowvalue"]);
             }
         });
     }
-
 }
 
 module.exports.SecureKV_PO = SecureKV_PO;
