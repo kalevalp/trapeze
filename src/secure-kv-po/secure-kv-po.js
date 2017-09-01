@@ -1,4 +1,4 @@
-const mysql = require('mysql');
+import mysql from "mysql";
 
 // "serverlessproject.c1kfax8igvaq.us-west-1.rds.amazonaws.com:3306"
 // "vmwuser"

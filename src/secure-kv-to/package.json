@@ -1,0 +1,17 @@
+{
+  "name": "secure-kv-to",
+  "version": "0.0.1",
+  "description": "A mySQL backed key-value store with security labels (totally ordered)",
+  "main": "secure-kv-to.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "IFC"
+  ],
+  "author": "Kalev Alpernas <kalev.alp@gmail.com>",
+  "license": "ISC",
+  "dependencies": {
+    "mysql": "latest"
+  }
+}
