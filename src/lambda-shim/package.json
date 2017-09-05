@@ -1,6 +1,6 @@
 {
   "name": "lambda-shim",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "An secure execution shim for running AWS Lambda functions while monitoring and maintaining IFC",
   "main": "lambda-shim.js",
   "dependencies": {
