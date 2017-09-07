@@ -24,6 +24,10 @@ class PartialOrder {
         throw "Error: No top element in lattice";
     }
 
+    lte(val1,val2) {
+        return this.potc[val1].includes(val2);
+    }
+
     static getTransitiveClosure(po) {
         let stack = [];
         const potc = {};
@@ -61,6 +65,11 @@ class PartialOrder {
         return potc;
     }
 
+    /**
+     * Computes the set of all labels that are lesser then or equal to a given label according to the partial order.
+     * @param label - A single label element.
+     * @returns {Set} - All labels <= label.
+     */
     getAllLE(label) {
         const res = new Set();
 
