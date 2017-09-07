@@ -117,7 +117,7 @@ WHERE rowkey = ? AND
     }
 }
 
-module.exports.SecureKV_PO = SecureKV_PO;
+export {SecureKV_PO}
 
 function getCondFromPOTC(potc) {
     return "(" +
