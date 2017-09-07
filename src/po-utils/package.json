@@ -1,0 +1,11 @@
+{
+  "name": "po-utils",
+  "version": "1.0.0",
+  "description": "A set of utility methods for working with Partial Orders and Lattices.",
+  "main": "po-utils.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Kalev Alpernas <kalev.alp@gmail.com>",
+  "license": "ISC"
+}

@@ -12,6 +12,7 @@
   "author": "Kalev Alpernas <kalev.alp@gmail.com>",
   "license": "ISC",
   "dependencies": {
-    "mysql": "latest"
+    "mysql": "latest",
+    "po-utils": "file:../po-utils"
   }
 }
