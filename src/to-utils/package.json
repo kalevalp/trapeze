@@ -1,0 +1,11 @@
+{
+  "name": "to-utils",
+  "version": "1.0.0",
+  "description": "An interface-compatible module for working generically with total orders",
+  "main": "to-utils.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Kalev Alpernas <kalev.alp@gmail.com>",
+  "license": "ISC"
+}
