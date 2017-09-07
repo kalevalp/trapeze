@@ -1,5 +1,5 @@
 import mysql from "mysql";
-import {getAllLE, getTransitiveClosure} from "po-utils";
+import {PartialOrder} from "po-utils";
 
 // "serverlessproject.c1kfax8igvaq.us-west-1.rds.amazonaws.com:3306"
 // "vmwuser"
@@ -12,7 +12,7 @@ class SecureKV_PO {
             password: pwd,
             database: "securekv"
         });
-        this.po = getTransitiveClosure(partialOrder);
+        this.po = new PartialOrder(partialOrder)
     }
 
     init(callback) {
@@ -30,7 +30,7 @@ CREATE TABLE kvstore (
                 // console.log(result);
             });
 
-            const cond = getCondFromPOTC(this.po);
+            const cond = getCondFromPOTC(this.po.potc);
 
             const addInsertTrigger = `
 CREATE TRIGGER PO_put_semantics BEFORE INSERT ON ? 
@@ -98,7 +98,7 @@ WHERE rowkey = ? AND
         // let gtLabels = new Set(this.po[l]);
         // gtLabels.delete(l);
 
-        let leLabels = getAllLE(pl,l);
+        let leLabels = this.po.getAllLE(l);
 
         this.con.query(sql, [k,"(" + [...leLabels].join(", ") + ")"], function (err, result) {
             if (err) callback(err);
@@ -106,7 +106,7 @@ WHERE rowkey = ? AND
             else {
                 callback(null,
                     result.reduce(function(max, curr) {
-                        if (this.po[max["label"]].has(curr["label"])) {
+                        if (this.po.potc[max["label"]].has(curr["label"])) {
                             return curr;
                         } else {
                             return max;
@@ -132,15 +132,9 @@ function getCondFromPOTC(potc) {
  * ************************ */
 if (process.argv[2] === "test") {
     const x = {'1': [2, 3], '2': [3], '3': [5, 6], '4': []};
-    const potc = getTransitiveClosure(x);
-    console.log("************************");
-    console.log("Transitive closure test:");
-    console.log(x);
-    console.log(potc);
-    console.log("************************");
-    console.log("**");
+    const po = new PartialOrder(x);
     console.log("************************");
     console.log("Condition test:");
-    console.log(getCondFromPOTC(potc));
+    console.log(getCondFromPOTC(po.potc));
     console.log("************************");
 }
