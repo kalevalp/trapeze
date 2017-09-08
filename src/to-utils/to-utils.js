@@ -22,6 +22,14 @@ class TotalOrder {
         return this.max;
     }
 
+    getBottom() {
+        return this.getMin();
+    }
+
+    getMin() {
+        return this.min;
+    }
+
     getAllLE(label) {
         let res = new Set();
 

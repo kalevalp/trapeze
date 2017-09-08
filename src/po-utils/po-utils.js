@@ -1,5 +1,6 @@
 class PartialOrder {
-
+    top;
+    bottom;
 
     constructor(po) {
         this.potc = this.getTransitiveClosure(po)
@@ -14,14 +15,48 @@ class PartialOrder {
      * @throws An exception if top does not exist (i.e. the partial order is not a lattice)
      */
     getTop() {
-        for (const x in this.potc) {
-            if (this.potc.hasOwnProperty(x)) {
-                if (this.potc[x].length === 0) {
-                    return x;
+        if (this.top !== undefined)
+            return this.top;
+        else {
+            for (const label in this.potc) {
+                if (this.potc.hasOwnProperty(label)) {
+                    if (this.potc[label].length === 0) {
+                        this.top = label;
+                        return this.top;
+                    }
                 }
             }
         }
         throw "Error: No top element in lattice";
+    }
+
+    /**
+     * Returns the bottom element of the lattice.
+     * Note: This methods assumes the partial order is a lattice. If multiple local minima exist, it will return one of them.
+     *
+     * @returns {string} - the bottom element of the lattice.
+     * @throws An exception if bottom does not exist (i.e. the partial order is not a lattice)
+     */
+    getBottom() {
+        if (this.bottom !== undefined)
+            return this.bottom;
+        else {
+            const s = new Set();
+            for (const label in this.potc) {
+                if (this.potc.hasOwnProperty(label)) {
+                    s.add(...this.potc[label]);
+                }
+            }
+            for (const label in this.potc) {
+                if (this.potc.hasOwnProperty(label)) {
+                    if (!s.has(label)) {
+                        this.bottom = label;
+                        return this.bottom;
+                    }
+                }
+            }
+        }
+        throw "Error: No bottom element in lattice";
     }
 
     lte(val1,val2) {
