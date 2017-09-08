@@ -3,6 +3,8 @@
 import {NodeVM} from "vm2";
 import fs from "fs";
 import {PartialOrder} from "po-utils"
+import {TotalOrder} from "to-utils";
+import {auth} from "auth";
 
 const rmFilesInDir = function (dirPath) {
     try {
@@ -32,12 +34,20 @@ const conf = JSON.parse(fs.readFileSync('conf.json', 'utf8'));
 const unsecuredLambda = fs.readFileSync(conf.unsecLambda, 'utf8');
 let label;
 
-let po;
-if (conf.usingPO) {
-    po = new PartialOrder(conf.labels);
-}
+const labelOrdering = conf.usingPO ? new PartialOrder(conf.labels) : new TotalOrder(conf.min, conf.max);
 
 module.exports.handler = function (event, context, callback) {
+
+    if (notEmptyDir('/tmp/')) {
+        console.log("WARNING : /tmp/ dir not empty on fresh invocation of lambda. Might lead to data leak.")
+    }
+
+    // Run on behalf of invoking user.
+    label = auth(event.user, event.pass);
+    if (label === undefined) {
+        // In case getting the label failed, run on behalf of 'bottom' (completely unprivileged).
+        label = labelOrdering.getBottom();
+    }
 
     const vm = new NodeVM({
         // console: 'off',
@@ -47,12 +57,24 @@ module.exports.handler = function (event, context, callback) {
             externalContext : context,
             externalCallback :
                 function (err, value) {
-                    if (po.lte(label, conf.securityBound)) {
+                    if (labelOrdering.lte(label, conf.securityBound)) {
                         callback(err,value);
                     } else {
                         callback(null);
                     }
-
+                },
+            bumpLabelTo :
+                function (newLabel) {
+                    if (labelOrdering.lte(label, newLabel)) {
+                        label = newLabel;
+                        return true;
+                    } else {
+                        return false;
+                    }
+                },
+            bumpLabelToTop :
+                function () {
+                    label = labelOrdering.getTop();
                 }
             },
         require: {
@@ -62,18 +84,13 @@ module.exports.handler = function (event, context, callback) {
         }
     });
 
-     let callres = vm.run(`
+     vm.run(`
 /* ***********************************
 /* ** Original Lambda Code:
 ${unsecuredLambda}
 /* ** End of Original Lambda Code:
 /* ***********************************
 
-module.exports = module.exports.handler(externalEvent, externalContext, externalCallback);
+module.exports.${conf.handler}(externalEvent, externalContext, externalCallback);
         `);
 };
-
-// function(origLambda, handlerName, builtinLibraries, externalLibraries) {
-//     res = vm.require(origLambda);
-//     return res[handlerName];
-// }

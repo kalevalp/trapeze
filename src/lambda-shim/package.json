@@ -4,8 +4,10 @@
   "description": "An secure execution shim for running AWS Lambda functions while monitoring and maintaining IFC",
   "main": "lambda-shim.js",
   "dependencies": {
-    "vm2": "latest",
-    "po-utils": "file:../po-utils"
+    "po-utils": "file:../po-utils",
+    "to-utils": "file:../to-utils",
+    "auth": "file:../auth",
+    "vm2": "latest"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
