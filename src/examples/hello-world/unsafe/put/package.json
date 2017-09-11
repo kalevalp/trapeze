@@ -1,0 +1,14 @@
+{
+  "name": "put",
+  "version": "1.0.0",
+  "description": "Hello-World AWS Lambda example that stores a key-value pair in the key-value store.",
+  "main": "put.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Kalev Alpernas <kalev.alp@gmail.com>",
+  "license": "ISC",
+  "dependencies": {
+    "kv-store": "file:../../../../kv-store"
+  }
+}
