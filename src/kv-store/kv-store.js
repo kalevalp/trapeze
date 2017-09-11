@@ -1,6 +1,6 @@
 import mysql from "mysql";
 
-class KV_STORE {
+class KV_Store {
     constructor(h, u, pwd) {
         this.con = mysql.createConnection({
             host: h,
@@ -82,14 +82,14 @@ WHERE rowkey = ?;
     }
 }
 
-module.exports.KV_STORE = KV_STORE;
+module.exports.KV_Store = KV_Store;
 
 /* ************************
  *          Tests
  * ************************ */
 
 if (process.argv[2] === "test") {
-    const kv = new KV_STORE(
+    const kv = new KV_Store(
         process.argv[3],
         process.argv[4],
         process.argv[5]
