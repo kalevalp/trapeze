@@ -1,0 +1,11 @@
+{
+  "name": "identity",
+  "version": "1.0.0",
+  "description": "The identity AWS Lambda function. Executes the callback with the event as a parameter.",
+  "main": "identity.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Kalev Alpernas <kalev.alp@gmail.com>",
+  "license": "ISC"
+}
