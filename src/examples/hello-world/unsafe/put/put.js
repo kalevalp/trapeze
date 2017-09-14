@@ -1,5 +1,5 @@
-import {KV_Store} from "kv-store";
-import fs from "fs";
+const {KV_Store} = require ("kv-store");
+const fs = require ("fs");
 
 const conf = JSON.parse(fs.readFileSync('conf.json', 'utf8'));
 

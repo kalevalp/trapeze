@@ -1,4 +1,4 @@
-import mysql from "mysql";
+const mysql = require("mysql");
 
 class KV_Store {
     constructor(h, u, pwd) {

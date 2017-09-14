@@ -1,5 +1,6 @@
-function auth(user, pass) {
+function auth(user, pass, callback) {
     // TODO: compute (somehow) the label relating to the user.
+    callback(user);
 }
 
-export {auth}
+module.exports.auth = auth;

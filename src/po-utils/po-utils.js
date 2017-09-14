@@ -121,7 +121,7 @@ class PartialOrder {
 
 }
 
-export {PartialOrder};
+module.exports.PartialOrder = PartialOrder;
 
 
 

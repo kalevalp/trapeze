@@ -54,7 +54,7 @@ class TotalOrder {
     }
 }
 
-export {TotalOrder};
+module.exports.TotalOrder = TotalOrder;
 
 
 

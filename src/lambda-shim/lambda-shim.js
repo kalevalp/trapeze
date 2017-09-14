@@ -1,10 +1,10 @@
 "use strict";
 
-import {NodeVM} from "vm2";
-import fs from "fs";
-import {PartialOrder} from "po-utils"
-import {TotalOrder} from "to-utils";
-import {auth} from "auth";
+const NodeVM = require("vm2");
+const fs = require("fs");
+const PartialOrder = require("po-utils");
+const TotalOrder = require("to-utils");
+const auth = require("auth");
 
 const rmFilesInDir = function (dirPath) {
     try {

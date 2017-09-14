@@ -1,5 +1,5 @@
-import mysql from "mysql";
-import {PartialOrder} from "po-utils";
+const mysql = require ("mysql");
+const {PartialOrder} = require ("po-utils");
 
 // "serverlessproject.c1kfax8igvaq.us-west-1.rds.amazonaws.com:3306"
 // "vmwuser"
@@ -117,7 +117,7 @@ WHERE rowkey = ? AND
     }
 }
 
-export {SecureKV_PO}
+module.exports.SecureKV_PO = SecureKV_PO;
 
 function getCondFromPOTC(potc) {
     return "(" +
