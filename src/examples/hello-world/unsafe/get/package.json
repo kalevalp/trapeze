@@ -1,6 +1,6 @@
 {
   "name": "get",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Hello-World AWS Lambda example that returns a value stored in the key-value store.",
   "main": "get.js",
   "scripts": {

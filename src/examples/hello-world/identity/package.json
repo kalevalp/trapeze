@@ -1,6 +1,6 @@
 {
   "name": "identity",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "The identity AWS Lambda function. Executes the callback with the event as a parameter.",
   "main": "identity.js",
   "scripts": {
