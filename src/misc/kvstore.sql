@@ -70,3 +70,5 @@ USE <name>; -- Setting the DB for the next commands
 
 SET GLOBAL log_bin_trust_function_creators = 1;
 
+DESC <table_name>;
+
