@@ -49,6 +49,9 @@ CREATE TABLE kvstore (
                                     callback();
                                 }
                             });
+                        } else {
+                            console.log("** DEBUG: kvstore table already exists in the database. No need to create it.");
+                            callback();
                         }
                     }
                 });
