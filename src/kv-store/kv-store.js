@@ -24,28 +24,49 @@ CREATE TABLE kvstore (
 );
             `;
 
+        console.log("** DEBUG: Call to init.");
         this.con.connect((err) => {
-            if (err) callback(err);
-            console.log("** K-V Store Connected Successfully!");
-            this.con.query(showTablesSql, ['kvstore'], (err, result) => {
-                if (err) callback(err);
-                if (result.length === 0) {
-                    this.con.query(createTableSql, (err, result) => {
-                        if (err) callback(err);
-                        // console.log(result);
-                        callback();
-                    });
-                }
-            });
+            if (err) {
+                console.log("** DEBUG: K-V store connection failed.");
+                callback(err);
+            } else {
+                console.log("** DEBUG: K-V store connected successfully.");
+                this.con.query(showTablesSql, ['kvstore'], (err, result) => {
+                    if (err) {
+                        console.log("** DEBUG: Failed getting list of tables in database.");
+                        callback(err);
+                    } else {
+                        console.log("** DEBUG: Query successful - getting list of tables in database.");
+                        if (result.length === 0) {
+                            console.log("** DEBUG: No kvstore table in database. Calling query to create table.");
+                            this.con.query(createTableSql, (err, result) => {
+                                if (err) {
+                                    console.log("** DEBUG: Failed creating table.");
+                                    callback(err);
+                                } else {
+                                    console.log("** DEBUG: Query successful - creating table.");
+                                    // console.log(result);
+                                    callback();
+                                }
+                            });
+                        }
+                    }
+                });
+            }
         });
 
     }
 
     close(callback) {
+        console.log("** DEBUG: Call to close.");
         this.con.end((err) => {
-            if (err) callback(err);
-            console.out("** K-V Store Connection Closed Successfully!")
-            callback();
+            if (err) {
+                console.log("** DEBUG: Failed closing the database connection.");
+                callback(err);
+            } else {
+                console.out("** DEBUG: K-V store connection closed successfully.");
+                callback();
+            }
         })
     }
 
@@ -56,11 +77,21 @@ INSERT INTO kvstore (rowkey,rowvalues)
     ON DUPLICATE KEY UPDATE 
         rowvalues = VALUES(rowvalues);
         `;
+        console.log("** DEBUG: Call to put.");
+        console.log("** DEBUG:   Key:   " + k + ".");
+        console.log("** DEBUG:   Value: " + v + ".");
 
         this.con.query(putQuerySql,[k,v], (err, result) => {
-            if (err) callback(err);
-            callback();
-            // console.log(result);
+            if (err) {
+                console.log("** DEBUG: Query failed - inserting values.");
+                callback(err);
+            } else {
+                console.log("** DEBUG: Query successful - inserting values.");
+                console.log("** DEBUG: Query result:");
+                console.log(result);
+                console.log("** DEBUG: Query result />");
+                callback();
+            }
         });
     }
     get (k, callback) {
@@ -69,14 +100,23 @@ SELECT rowvalues
 FROM kvstore 
 WHERE rowkey = ?;
     `;
+        console.log("** DEBUG: Call to get.");
+        console.log("** DEBUG:   Key:   " + k + ".");
 
         this.con.query(getQuerySql, [k], (err, result) => {
-            if (err) callback(err);
-            if (result.length === 0) callback(null, "");
-            if (result.length === 1) callback(null, result["rowvalues"]);
-            if (result.length > 1) callback("Inconsistent KeyValueStore");
+            if (err) {
+                console.log("** DEBUG: Query failed - getting values.");
+                callback(err);
+            } else {
+                console.log("** DEBUG: Query successful - getting values.");
+                console.log("** DEBUG: Query result:");
+                console.log(result);
+                console.log("** DEBUG: Query result />");
 
-            // console.log(result);
+                if (result.length === 0) callback(null, "");
+                if (result.length === 1) callback(null, result["rowvalues"]);
+                if (result.length > 1) callback("Inconsistent KeyValueStore");
+            }
         });
     }
 }
