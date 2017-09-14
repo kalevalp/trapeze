@@ -10,40 +10,39 @@ class KV_Store {
         });
     }
 
+
+
     init(callback) {
-        function createTable() {
-            const createTableSql = `
+        const showTablesSql = `
+SHOW TABLES like ?;
+        `;
+        const createTableSql = `
 CREATE TABLE kvstore (
     rowkey VARCHAR(31) NOT NULL,
     rowvalues VARCHAR(255),
     PRIMARY KEY (rowkey)
 );
             `;
-            this.con.query(createTableSql, function (err, result) {
+
+        this.con.connect((err) => {
+            if (err) callback(err);
+            console.log("** K-V Store Connected Successfully!");
+            this.con.query(showTablesSql, ['kvstore'], (err, result) => {
                 if (err) callback(err);
-                // console.log(result);
+                if (result.length === 0) {
+                    this.con.query(createTableSql, (err, result) => {
+                        if (err) callback(err);
+                        // console.log(result);
+                        callback();
+                    });
+                }
             });
-        }
-
-        this.con.connect(function (err) {
-            if (err) callback(err);
-            console.log("** K-V Store Connected Successfully!")
         });
 
-        const tableSql = `
-SHOW TABLES like ?;
-        `;
-        this.con.query(tableSql, ['kvstore'], function (err, result) {
-            if (err) callback(err);
-            if (result.length === 0) {
-                createTable()
-            }
-        });
-        callback();
     }
 
     close(callback) {
-        this.con.end(function (err) {
+        this.con.end((err) => {
             if (err) callback(err);
             console.out("** K-V Store Connection Closed Successfully!")
             callback();
@@ -51,27 +50,27 @@ SHOW TABLES like ?;
     }
 
     put (k, v, callback) {
-        const sql = `
+        const putQuerySql = `
 INSERT INTO kvstore (rowkey,rowvalues) 
     VALUES (?, ?)
     ON DUPLICATE KEY UPDATE 
         rowvalues;
         `;
 
-        this.con.query(sql,[k,v], function (err, result) {
+        this.con.query(putQuerySql,[k,v], (err, result) => {
             if (err) callback(err);
             callback();
             // console.log(result);
         });
     }
     get (k, callback) {
-        const sql = `
+        const getQuerySql = `
 SELECT rowvalue 
 FROM kvstore 
 WHERE rowkey = ?;
     `;
 
-        this.con.query(sql, [k], function (err, result) {
+        this.con.query(getQuerySql, [k], (err, result) => {
             if (err) callback(err);
             if (result.length === 0) callback(null, "");
             if (result.length === 1) callback(null, result["rowvalue"]);
