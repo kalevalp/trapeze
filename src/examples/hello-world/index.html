@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hello World</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+
+<script type="application/javascript" src="script.js"></script>
+
+<body>
+<h1>Serverless IFC - Hello World Example</h1>
+<p>
+    On this page you will find a simple serverless application that consists of two function - storing and retrieving values from a key-value store. <br/>
+</p>
+
+<div class="tab">
+    <button class="tablinks" onclick="openExample(event, 'Identity')">Identity</button>
+    <button class="tablinks" onclick="openExample(event, 'Unsafe')">Unsafe</button>
+    <button class="tablinks" onclick="openExample(event, 'TO')">Total Order</button>
+    <button class="tablinks" onclick="openExample(event, 'PO')">Partial Order</button>
+</div>
+
+<div id="Identity" class="tabcontent">
+    <h2>Identity Lambda Function</h2>
+    <p>
+        This application calls an <em>identity</em> lambda function, and prints the output.
+    </p>
+
+    <h3>Put:</h3>
+    <form>
+        <label for="idenPutKey">Key: </label> <input type="text" id="idenPutKey"><br/>
+        <label for="idenPutValue">Value: </label> <input type="text" id="idenPutValue"><br/>
+    </form>
+    <br/>
+
+    <button onclick="doStoreAction('idenPutKey', 'idenPutValue', 'idenPutRes', identity)">Submit</button>
+
+    <div id="idenPutRes"></div>
+
+    <h3>Get:</h3>
+
+    <form>
+        <label for="idenGetKey">Key: </label> <input type="text" id="idenGetKey"><br/>
+    </form>
+    <br/>
+
+    <button onclick="doRetrieveAction('idenGetKey', 'idenGetRes', identity)">Submit</button>
+
+    <div id="idenGetRes"></div>
+</div>
+
+<div id="Unsafe" class="tabcontent">
+    <h2>Simple Store (No Security Policy) Lambda Function</h2>
+    <p>
+        This application calls stores and retrieves values from a simple key-value store that doesn't have any security enforcement.
+    </p>
+
+    <h3>Put:</h3>
+    <form>
+        <label for="unsafePutKey">Key: </label> <input type="text" id="unsafePutKey"><br/>
+        <label for="unsafePutValue">Value: </label> <input type="text" id="unsafePutValue"><br/>
+    </form>
+    <br/>
+
+    <button onclick="doStoreAction('unsafePutKey', 'unsafePutValue', 'unsafePutRes', unsafe)">Submit</button>
+
+    <div id="unsafePutRes"></div>
+
+    <h3>Get:</h3>
+
+    <form>
+        <label for="unsafeGetKey">Key: </label> <input type="text" id="unsafeGetKey"><br/>
+    </form>
+    <br/>
+
+    <button onclick="doRetrieveAction('unsafeGetKey', 'unsafeGetRes', unsafe)">Submit</button>
+
+    <div id="unsafeGetRes"></div>
+</div>
+
+</body>
+</html>
