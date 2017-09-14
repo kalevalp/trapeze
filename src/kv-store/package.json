@@ -1,6 +1,6 @@
 {
   "name": "kv-store",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "A simple SQL-backed key-value store.",
   "main": "kv-store.js",
   "scripts": {

@@ -54,7 +54,7 @@ CREATE TABLE kvstore (
 INSERT INTO kvstore (rowkey,rowvalues) 
     VALUES (?, ?)
     ON DUPLICATE KEY UPDATE 
-        rowvalues;
+        rowvalues = VALUES(rowvalues);
         `;
 
         this.con.query(putQuerySql,[k,v], (err, result) => {
