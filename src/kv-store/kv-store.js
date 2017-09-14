@@ -67,7 +67,7 @@ CREATE TABLE kvstore (
                 console.log("** DEBUG: Failed closing the database connection.");
                 callback(err);
             } else {
-                console.out("** DEBUG: K-V store connection closed successfully.");
+                console.log("** DEBUG: K-V store connection closed successfully.");
                 callback();
             }
         })
