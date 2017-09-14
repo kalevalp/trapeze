@@ -7,11 +7,11 @@ module.exports.handler = function (event, context, callback) {
     let kv = new KV_Store(conf.host, conf.user, conf.pass);
 
     kv.init(function (err) {
-        if (err) throw err;
+        if (err) callback(err);
         kv.put(event.key, event.value, function (err, result) {
-            if (err) throw err;
+            if (err) callback(err);
             kv.close(function (err) {
-                if (err) throw err;
+                if (err) callback(err);
                 callback(null, result);
             })
         })

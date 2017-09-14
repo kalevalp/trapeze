@@ -1,6 +1,6 @@
 {
   "name": "put",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Hello-World AWS Lambda example that stores a key-value pair in the key-value store.",
   "main": "put.js",
   "scripts": {
