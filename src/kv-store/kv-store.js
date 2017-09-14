@@ -65,7 +65,7 @@ INSERT INTO kvstore (rowkey,rowvalues)
     }
     get (k, callback) {
         const getQuerySql = `
-SELECT rowvalue 
+SELECT rowvalues 
 FROM kvstore 
 WHERE rowkey = ?;
     `;
@@ -73,7 +73,7 @@ WHERE rowkey = ?;
         this.con.query(getQuerySql, [k], (err, result) => {
             if (err) callback(err);
             if (result.length === 0) callback(null, "");
-            if (result.length === 1) callback(null, result["rowvalue"]);
+            if (result.length === 1) callback(null, result["rowvalues"]);
             if (result.length > 1) callback("Inconsistent KeyValueStore");
 
             // console.log(result);
