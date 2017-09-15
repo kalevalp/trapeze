@@ -117,7 +117,7 @@ WHERE rowkey = ?;
                 console.log("** DEBUG: Query result />");
 
                 if (result.length === 0) callback(null, "");
-                if (result.length === 1) callback(null, result["rowvalues"]);
+                if (result.length === 1) callback(null, result[0]["rowvalues"]);
                 if (result.length > 1) callback("Inconsistent KeyValueStore");
             }
         });
