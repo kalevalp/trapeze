@@ -83,21 +83,21 @@ const {NodeVM} = require('vm2');
 // };
 // x.foo();
 
-const vmNoConsole = new NodeVM({
-    console: 'off',
-    sandbox: {},
-    require: {
-        external: false,
-        builtin: ['fs', 'path'],
-        root: "./",
-        // mock: {
-        //     fs: {
-        //         readFileSync() { return 'Nice try!'; }
-        //     }
-        // }
-    }
-});
-
+// const vmNoConsole = new NodeVM({
+//     console: 'off',
+//     sandbox: {},
+//     require: {
+//         external: false,
+//         builtin: ['fs', 'path'],
+//         root: "./",
+//         // mock: {
+//         //     fs: {
+//         //         readFileSync() { return 'Nice try!'; }
+//         //     }
+//         // }
+//     }
+// });
+//
 // vmNoConsole.run(`
 //     x.foo()
 //     x.foo = function () {
@@ -107,20 +107,20 @@ const vmNoConsole = new NodeVM({
 //     `);
 
 // x.foo();
-
-var o = vmNoConsole.run(`
-    var x = {};
-    x.foo = function() {
-        return "Hello world from function defined in sandbox!!";
-    };
-    x.foo();
-
-    module.exports.x = x;
-
-    // console.log (module)
-    `);
-
-console.log(o.x.foo());
+//
+// var o = vmNoConsole.run(`
+//     var x = {};
+//     x.foo = function() {
+//         return "Hello world from function defined in sandbox!!";
+//     };
+//     x.foo();
+//
+//     module.exports.x = x;
+//
+//     // console.log (module)
+//     `);
+//
+// console.log(o.x.foo());
 
 // var a = vmNoConsole.run(`
 //     module.exports.foo = function () {
@@ -131,3 +131,31 @@ console.log(o.x.foo());
 //     `)
 // a.foo()
 
+const vmNoConsole = new NodeVM({
+    console: 'inherit',
+    sandbox: {},
+    require: {
+        external: false,
+        builtin: [],
+        // root: "./",
+        mock: {
+            'a' : {
+                A: class {
+                    constructor() {this.b = 10}
+                }
+            },
+            mysql: {
+                connect() { console.log("Nope!"); }
+            }
+        }
+    }
+});
+
+vmNoConsole.run(`
+    const m = require('mysql');
+    m.connect();
+    // const fs = require('fs');
+    const {A} = require('a');
+    const a = new A();
+    console.log(a.b);
+`);
