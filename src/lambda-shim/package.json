@@ -1,12 +1,14 @@
 {
   "name": "lambda-shim",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "An secure execution shim for running AWS Lambda functions while monitoring and maintaining IFC",
   "main": "lambda-shim.js",
   "dependencies": {
-    "po-utils": "file:../po-utils",
-    "to-utils": "file:../to-utils",
     "auth": "file:../auth",
+    "po-utils": "file:../po-utils",
+    "secure-kv-po": "file:../secure-kv-po",
+    "secure-kv-to": "file:../secure-kv-to",
+    "to-utils": "file:../to-utils",
     "vm2": "latest"
   },
   "scripts": {
