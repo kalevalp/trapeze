@@ -6,8 +6,8 @@ identity = {
     get : "https://xarygspldj.execute-api.us-west-1.amazonaws.com/helloWorld/identity/retrieve"
 };
 unsafe = {
-    put : "https://xarygspldj.execute-api.us-west-1.amazonaws.com/helloWorld/identity/store",
-    get : "https://xarygspldj.execute-api.us-west-1.amazonaws.com/helloWorld/identity/retrieve"
+    put : "https://xarygspldj.execute-api.us-west-1.amazonaws.com/helloWorld/no-sec/store",
+    get : "https://xarygspldj.execute-api.us-west-1.amazonaws.com/helloWorld/no-sec/retrieve"
 };
 total = {
     put : "https://xarygspldj.execute-api.us-west-1.amazonaws.com/helloWorld/identity/store",
@@ -39,7 +39,7 @@ function doStoreAction(keyId, valueId, outId, api) {
     request.setRequestHeader('Content-Type', 'application/json');
     request.send(JSON.stringify({
         key: reqKey,
-        val: reqVal
+        value: reqVal
     }));
 }
 function doRetrieveAction(keyId, outId, api) {
