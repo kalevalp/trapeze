@@ -1,8 +1,5 @@
 const mysql = require("mysql");
 
-// "serverlessproject.c1kfax8igvaq.us-west-1.rds.amazonaws.com:3306"
-// "vmwuser"
-// "serverlessifc",
 class SecureKV_TO {
     constructor(h, u, pwd) {
         this.con = mysql.createConnection({
@@ -14,21 +11,16 @@ class SecureKV_TO {
     }
 
     init(callback) {
-        function createTable() {
-            const createTableSql = `
+        const createTableSql = `
 CREATE TABLE kvstore (
     rowkey VARCHAR(31) NOT NULL,
     rowvalues VARCHAR(255),
     label INTEGER NOT NULL,
     PRIMARY KEY (rowkey)
 );
-            `;
-            this.con.query(createTableSql, function (err, result) {
-                if (err) callback(err);
-                // console.log(result);
-            });
+        `;
 
-            const addUpdateTrigger = `
+        const addUpdateTrigger = `
 DELIMITER $$
 CREATE TRIGGER TO_put_semantics BEFORE UPDATE ON ? 
     FOR EACH ROW
@@ -40,35 +32,54 @@ CREATE TRIGGER TO_put_semantics BEFORE UPDATE ON ?
     END;
 $$
 DELIMITER ;
-`;
-            this.con.query(addUpdateTrigger, ['kvstore'], function (err, result) {
-                if (err) callback(err);
-                // console.log(result);
-            });
-        }
-
-        this.con.connect(function (err) {
-            if (err) callback(err);
-            console.log("** Secure K-V (TO) Connected Successfully!")
-        });
+        `;
 
         const tableSql = `
 SHOW TABLES like ?;
         `;
-        this.con.query(tableSql, ['kvstore'], function (err, result) {
-            if (err) callback(err);
-            if (result.length === 0) {
-                createTable()
+
+
+        this.con.connect((err) => {
+            if (err) {
+                callback(err);
+            } else {
+                console.log("** Secure K-V (TO) Connected Successfully!");
+
+                this.con.query(tableSql, ['kvstore'], (err, result) => {
+                    if (err) {
+                        callback(err);
+                    } else {
+                        if (result.length === 0) {
+                            this.con.query(createTableSql, (err, result) => {
+                                if (err) {
+                                    callback(err);
+                                } else {
+                                    this.con.query(addUpdateTrigger, ['kvstore'], (err, result) => {
+                                        if (err) {
+                                            callback(err);
+                                        }
+                                        callback();
+                                    });
+                                }
+                            });
+                        } else {
+                            callback();
+                        }
+                    }
+                });
+
             }
         });
-        callback();
     }
 
     close(callback) {
-        this.con.end(function (err) {
-            if (err) callback(err);
-            console.out("** Secure K-V (TO) Connection Closed Successfully!")
-            callback();
+        this.con.end((err) => {
+            if (err) {
+                callback(err);
+            } else {
+                console.out("** Secure K-V (TO) Connection Closed Successfully!")
+                callback();
+            }
         })
     }
 
@@ -80,27 +91,33 @@ INSERT INTO kvstore (rowkey,rowvalues,label)
         rowvalues=VALUES(rowvalues), label=VALUES(label);
         `;
 
-        this.con.query(sql,[k,v,l], function (err, result) {
-            if (err) callback(err);
-            callback();
-            // console.log(result);
+        this.con.query(sql,[k,v,l], (err, result) => {
+            if (err) {
+                callback(err);
+            } else {
+                callback();
+            }
         });
     }
+
     get (k, l, callback) {
         const sql = `
 SELECT rowvalue 
 FROM kvstore 
 WHERE rowkey = ? AND
       label <= ?;
-    `;
+        `;
 
-        this.con.query(sql, [k,l], function (err, result) {
-            if (err) callback(err);
-            if (result.length === 0) callback(null, "");
-            if (result.length === 1) callback(null, result["rowvalue"]);
-            if (result.length > 1) callback("Inconsistent KeyValueStore");
-
-            // console.log(result);
+        this.con.query(sql, [k,l], (err, result) => {
+            if (err) {
+                callback(err);
+            } else if (result.length === 0) {
+                callback(null, "");
+            } else if (result.length === 1) {
+                callback(null, result[0]["rowvalue"]);
+            } else if (result.length > 1) {
+                callback("Inconsistent KeyValueStore");
+            }
         });
     }
 }
@@ -175,7 +192,5 @@ if (process.argv[2] === "test") {
     kv.close();
     console.log("Connection state : " + kv.con.state);
     console.log("************************");
-
-
 
 }
