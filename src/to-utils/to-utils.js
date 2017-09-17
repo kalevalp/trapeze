@@ -1,6 +1,4 @@
 class TotalOrder {
-    lte;
-
     constructor(min, max, succ, lte) {
         this.min = min;
         this.max = max;
@@ -8,7 +6,7 @@ class TotalOrder {
         if (lte !== undefined) {
             this.lte = lte;
         } else {
-            this.lte = function (val1,val2) {
+            this.lte = (val1,val2) => {
                 return val1 <= val2;
             }
         }
