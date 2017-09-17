@@ -1,6 +1,4 @@
 class PartialOrder {
-    top;
-    bottom;
 
     constructor(po) {
         this.potc = this.getTransitiveClosure(po)

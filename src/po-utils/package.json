@@ -1,6 +1,6 @@
 {
   "name": "po-utils",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "A set of utility methods for working with Partial Orders and Lattices.",
   "main": "po-utils.js",
   "scripts": {
