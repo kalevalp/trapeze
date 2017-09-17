@@ -4,7 +4,7 @@ const NodeVM = require("vm2");
 const fs = require("fs");
 const {PartialOrder} = require("po-utils");
 const {TotalOrder} = require("to-utils");
-const auth = require("auth");
+const {auth} = require("auth");
 const {SecureKV_PO} = require("secure-kv-po");
 const {SecureKV_TO} = require("secure-kv-to");
 
