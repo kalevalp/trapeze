@@ -38,31 +38,39 @@ DELIMITER ;
 SHOW TABLES like ?;
         `;
 
-
+        console.log("** DEBUG: Secure K-V (TO) - Call to init.");
         this.con.connect((err) => {
             if (err) {
+                console.log("** DEBUG: Secure K-V (TO) - Connection failed.");
                 callback(err);
             } else {
-                console.log("** Secure K-V (TO) Connected Successfully!");
-
+                console.log("** DEBUG: Secure K-V (TO) - Connection successful.");
                 this.con.query(tableSql, ['kvstore'], (err, result) => {
                     if (err) {
+                        console.log("** DEBUG: Secure K-V (TO) - Failed getting list of tables.");
                         callback(err);
                     } else {
+                        console.log("** DEBUG: Secure K-V (TO) - Succeeded getting list of tables.");
                         if (result.length === 0) {
+                            console.log("** DEBUG: Secure K-V (TO) - Table does not exists in database. Creating table.");
                             this.con.query(createTableSql, (err, result) => {
                                 if (err) {
+                                    console.log("** DEBUG: Secure K-V (TO) - Failed creating table.");
                                     callback(err);
                                 } else {
+                                    console.log("** DEBUG: Secure K-V (TO) - Successfully created table.");
                                     this.con.query(addUpdateTrigger, ['kvstore'], (err, result) => {
                                         if (err) {
+                                            console.log("** DEBUG: Secure K-V (TO) - Failed adding update trigger to table.");
                                             callback(err);
                                         }
+                                        console.log("** DEBUG: Secure K-V (TO) - Successfully added update trigger to table.");
                                         callback();
                                     });
                                 }
                             });
                         } else {
+                            console.log("** DEBUG: Secure K-V (TO) - Table exists in database.");
                             callback();
                         }
                     }
@@ -73,11 +81,13 @@ SHOW TABLES like ?;
     }
 
     close(callback) {
+        console.log("** DEBUG: Secure K-V (TO) - Call to close.");
         this.con.end((err) => {
             if (err) {
+                console.log("** DEBUG: Secure K-V (TO) - Failed closing connectionß.");
                 callback(err);
             } else {
-                console.out("** Secure K-V (TO) Connection Closed Successfully!")
+                console.log("** DEBUG: Secure K-V (TO) - Connection close successful.");
                 callback();
             }
         })
@@ -91,10 +101,20 @@ INSERT INTO kvstore (rowkey,rowvalues,label)
         rowvalues=VALUES(rowvalues), label=VALUES(label);
         `;
 
+        console.log("** DEBUG: Secure K-V (TO) - Call to put.");
+        console.log("** DEBUG: Secure K-V (TO) -   Key:   " + k + ".");
+        console.log("** DEBUG: Secure K-V (TO) -   Value: " + v + ".");
+
         this.con.query(sql,[k,v,l], (err, result) => {
             if (err) {
+                console.log("** DEBUG: Secure K-V (TO) - Query failed - inserting values.");
                 callback(err);
             } else {
+                console.log("** DEBUG: Secure K-V (TO) - Query successful - inserting values.");
+                console.log("** DEBUG: Secure K-V (TO) - Query result:");
+                console.log(result);
+                console.log("** DEBUG: Secure K-V (TO) - Query result />");
+
                 callback();
             }
         });
@@ -108,15 +128,21 @@ WHERE rowkey = ? AND
       label <= ?;
         `;
 
+        console.log("** DEBUG: Secure K-V (TO) - Call to get.");
+        console.log("** DEBUG: Secure K-V (TO) -   Key:   " + k + ".");
         this.con.query(sql, [k,l], (err, result) => {
             if (err) {
+                console.log("** DEBUG: Secure K-V (TO) - Query failed - getting values.");
                 callback(err);
-            } else if (result.length === 0) {
-                callback(null, "");
-            } else if (result.length === 1) {
-                callback(null, result[0]["rowvalue"]);
-            } else if (result.length > 1) {
-                callback("Inconsistent KeyValueStore");
+            } else {
+                console.log("** DEBUG: Secure K-V (TO) - Query successful - getting values.");
+                console.log("** DEBUG: Secure K-V (TO) - Query result:");
+                console.log(result);
+                console.log("** DEBUG: Secure K-V (TO) - Query result />");
+
+                if (result.length === 0) callback(null, "");
+                if (result.length === 1) callback(null, result[0]["rowvalue"]);
+                if (result.length > 1) callback("Inconsistent KeyValueStore");
             }
         });
     }
