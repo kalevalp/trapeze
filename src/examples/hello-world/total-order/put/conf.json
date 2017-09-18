@@ -1,0 +1,10 @@
+{
+  "unsecLambda" : "put.js",
+  "min" : 0,
+  "max" : 2,
+  "securityBound" : 1,
+  "handler" : "handler",
+  "host": "serverless-ifc.cs6543lupbsv.us-west-1.rds.amazonaws.com",
+  "user": "vmwuser",
+  "pass": "serverlessifc"
+}
