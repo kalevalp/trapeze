@@ -14,5 +14,14 @@
 
 
 ### RDS Configuration
-Need to make sure that the RDS mysql server is running with the option log_bin_trust_function_creators = 1.
-Otherwise, creating tables with update triggers will fail.
+There are certain options that need to be enabled in RDS.
+
+Allow creation of triggers:
+
+    log_bin_trust_function_creators = 1
+
+Logging of all queries (useful for debug):
+
+    general_log = 1
+
+    
