@@ -1,6 +1,6 @@
 "use strict";
 
-const NodeVM = require("vm2");
+const {NodeVM} = require("vm2");
 const fs = require("fs");
 const {PartialOrder} = require("po-utils");
 const {TotalOrder} = require("to-utils");
