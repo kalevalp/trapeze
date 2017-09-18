@@ -1,11 +1,11 @@
 const {KV_Store} = require("kv-store");
 const fs = require("fs");
 const crypto = require('crypto');
-const md5sum = crypto.createHash('md5');
 
 const conf = JSON.parse(fs.readFileSync('conf.json', 'utf8'));
 
 function auth(user, pass, callback) {
+    const md5sum = crypto.createHash('md5');
     md5sum.update(user + pass, 'utf8');
     const h = md5sum.digest('hex');
 
@@ -37,6 +37,7 @@ function auth(user, pass, callback) {
 }
 
 function storeCredentials(user, pass, label, callback) {
+    const md5sum = crypto.createHash('md5');
     md5sum.update(user + pass, 'utf8');
     const h = md5sum.digest('hex');
 
