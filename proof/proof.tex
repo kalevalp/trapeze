@@ -1,0 +1,488 @@
+\documentclass{article}
+
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{color}
+\usepackage[margin=2cm]{geometry}
+
+\newcommand{\store}{\Delta}
+\newcommand{\storeupdate}[3]{#1[#2\,{:}{=}\,#3]}
+\newcommand{\storeaccess}[2]{#1(#2)}
+\newcommand{\indomain}[2]{#1\in\text{\textsf{dom}}(#2)}
+\newcommand{\notindomain}[2]{#1\notin\text{\textsf{dom}}(#2)}
+
+\newcommand{\facet}[3]{\langle#1\,{?}\,#2\,{:}\,#3\rangle}
+\newcommand{\ffacet}[3]{\langle\!\facet{#1}{#2}{#3}\!\rangle}
+\newcommand{\splits}[4]{(\!\!\facet{\genfrac{}{}{0pt}{1}{#1}{#2}}{#3}{#4}\!\!)}
+
+\newlength{\longrightarrowlength}
+\settowidth{\longrightarrowlength}{$\longrightarrow$}
+\newlength{\notlength}
+\settowidth{\notlength}{$\not$}
+
+\newcommand{\startrules}{\begin{array}{l@{~{,}~}lcl@{~{,}~}l|ll}}
+\newcommand{\finishrules}{\end{array}}
+\newcommand{\rn}[1]{\text{\textsc{[#1]}}}
+\newcommand{\mrule}[3]{%
+      \multicolumn{6}{c}{
+        \dfrac{
+          \begin{array}{c}
+            #2
+          \end{array}
+        }{#3}
+      }
+    &
+      \rn{#1}
+  \\
+      \multicolumn{7}{c}{}
+  \\%
+}
+\newcommand{\steprule}[5]{%
+      \multicolumn{2}{l}{ #3 }
+    &
+      {#4}
+    &
+      \multicolumn{2}{l|}{ #5 }
+    &
+      #2
+    &
+      \rn{#1}
+  \\%
+}
+\newcommand{\tsteparrow}[1]{\overset{#1}{\longrightarrow}}
+\newcommand{\tstep}[3]{#2\tsteparrow{#1}#3}
+\newcommand{\tsteprule}[5]{\steprule{#1}{#2}{#4}{\tsteparrow{#3}}{#5}}
+\newcommand{\ssteparrow}[1]{\overset{#1}{\longrightarrow}}
+\newcommand{\sstep}[3]{#2\ssteparrow{#1}#3}
+\newcommand{\ssteprule}[5]{\steprule{#1}{#2}{#4}{\ssteparrow{#3}}{#5}}
+\newcommand{\ltsteparrow}[2]{\overset{#2}{\underset{#1}{\longrightarrow}}}
+\newcommand{\ltstep}[4]{#3\ltsteparrow{#1}{#2}#4}
+\newcommand{\ltsteprule}[6]{\steprule{#1}{#2}{#5}{\ltsteparrow{#3}{#4}}{#6}}
+\newcommand{\lssteparrow}[2]{\overset{#2}{\underset{#1}{\longrightarrow}}}
+\newcommand{\lsstep}[4]{#3\lssteparrow{#1}{#2}#4}
+\newcommand{\lssteprule}[6]{\steprule{#1}{#2}{#5}{\lssteparrow{#3}{#4}}{#6}}
+
+\newcommand{\hole}{{\bullet}}
+\newcommand{\hash}[2]{\##1\,{:}{=}\,#2}
+\newcommand{\replace}[3]{\storeupdate{#1}{#2}{#3}}
+\newcommand{\upd}[3]{\replace{#1}{#2}{#3}}
+\newcommand{\ret}[1]{\text{\textsf{return}}~#1}
+\newcommand{\bindIO}[2]{%
+  #1\,
+  \overset{\text{\texttt{IO}}}
+    {{>}\!\!{>}\!{=}}
+  \,#2
+  %
+}
+\newcommand{\bind}[2]{%
+  #1\,
+  \overset{\text{\texttt{FIO}}}
+    {{>}\!\!{>}\!{=}}
+  \,#2
+  %
+}
+\newcommand{\newref}[1]{\text{\textsf{new}}~#1}
+\newcommand{\readref}[1]{\text{\textsf{read}}~#1}
+\newcommand{\writeref}[2]{\text{\textsf{write}}~#1~#2}
+\newcommand{\Raw}[1]{\text{\textsf{Raw}}~#1}
+\newcommand{\bindFac}[2]{\text{\textsf{BindFac}}~#1~#2}
+%\newcommand{\bindFac}[2]{%
+%  #1\,
+%  \overset{\text{\texttt{Fac}}}
+%    {{>}\!\!{>}\!{=}}
+%  \,#2
+%  %
+%}
+\newcommand{\prodd}[1]{\text{\textsf{runFacFIO}}~#1}
+\newcommand{\threads}[3]{\,[\!\!\!\ffacet{#1}{#2}{#3}\!\!\!]\,}
+\newcommand{\yield}[2]{\text{\textsf{yield}}~#1~#2}
+\newcommand{\readfile}[1]{\text{\textsf{get}}~#1}
+\newcommand{\readfilen}[2]{\text{\textsf{get}}~#1~#2}
+\newcommand{\writefile}[2]{\text{\textsf{put}}~#1~#2}
+\newcommand{\readevent}[2]{\text{\textsf{R}}(#1,#2)}
+\newcommand{\writeevent}[2]{\text{\textsf{W}}(#1,#2)}
+\newcommand{\notbr}[1]{\overline{#1}}
+\newcommand{\concat}[2]{#1\,{{+}\!\!{+}}\,#2}
+
+\newcommand{\letrec}[3]{\mu x{:}T.t}
+\newcommand{\ifPositive}[3]{\text{\textsf{ifPositive $#1$ $#2$ $#3$}}}
+\newcommand{\IntType}{\text{\textsf{Int}}}
+\newcommand{\FacetedType}[1]{\text{\textsf{Faceted}}~#1}
+\newcommand{\FIOType}[1]{\text{\textsf{FIO}}~#1}
+\newcommand{\FIORefType}[1]{\text{\textsf{FIORef}}~#1}
+\newcommand{\agree}[2]{#2\vdash#1}
+\newcommand{\stdize}[1]{\s{standardize}{#1}}
+
+\newcommand{\s}[1]{\text{\textit{#1}}}
+
+\newcommand{\startsyntax}{\begin{array}{rclrll}}
+\newcommand{\sepsyntax}{\\&&&|&}
+\newcommand{\finishsyntax}{\end{array}}
+
+\newcommand{\thread}[2]{(#1,#2)}
+\newcommand{\opread}[2]{\textsf{read}~#1~#2}
+\newcommand{\opwrite}[3]{\textsf{write}~#1~#2~#3}
+\newcommand{\opsend}[3]{\textsf{send}~#1~#2~#3}
+\newcommand{\opfork}[2]{\textsf{fork}~#1~#2}
+\newcommand{\opstuck}{\textsf{stuck}}
+\newcommand{\evstart}[1]{\textsf{input}~#1}
+\newcommand{\evsend}[2]{\textsf{output}~#1~#2}
+\newcommand{\proj}[2]{#1{\downarrow_{#2}}}
+\newcommand{\lequiv}[3]{#2\approx_{#1}#3}
+
+
+\begin{document}
+
+
+$\startsyntax
+  l     & \in & \s{Label}  \\
+  ch    & \in & \s{Channel}  \\
+  &           & \s{label} & : & \s{Channel}\to\s{Label}  \\
+  v     & \in & \s{Value}  \\
+  S     & \in & \s{LabeledValueSet} & = & \multicolumn{2}{l}{2^{\s{Value}\times\s{Label}}}  \\
+  k     & \in & \s{Key}  \\
+  \sigma& \in & \s{Store} & = & \s{Key}\to\s{LabeledValueSet}  \\
+  c     & \in & \s{Code}  \\
+  t     & \in & \s{Thread} & ::= & \thread{c}{l}  \\
+  ts    & \in & \s{Threads} & = & \text{multisets of threads}  \\
+  f     & \in & \s{ReadContinuation} & = & \s{LabeledValueSet}\to\s{Code}  \\
+  op    & \in & \s{Operation} & ::= &
+      \opread{k}{f}
+    \sepsyntax
+      \opwrite{k}{v}{c}
+    \sepsyntax
+      \opsend{ch}{v}{c}
+    \sepsyntax
+      \opfork{c}{c}
+    \sepsyntax
+      \opstuck
+    \\
+  e     & \in & \s{Event} & ::= &
+      \evstart{t}
+    \sepsyntax
+      \evsend{ch}{v}
+    \sepsyntax
+      \epsilon
+    \\
+  \Sigma& \in & \s{State} & ::= & (\sigma,ts)  \\
+  &           & \s{run} & : & \s{Code}\to\s{Operation}  \\
+  &           & \s{write} & : & \s{LabeledValueSet}\times\s{Value}\times\s{Label}\to\s{LabeledValueSet}  \\
+  &           & \s{write}(S,v,l) & = & (S\setminus\{(v',l')\in S~|~l\sqsubseteq l'\})\cup\{(v,l)\}  \\
+  &           & \proj{\hole}{\hole}
+                  & : & \text{``Various things''}\to\s{Label}\to\text{``Various things''}  \\
+  &           & \proj{S}{l} & = & \{(v,l')\in S~|~l'\sqsubseteq l\}  \\
+  &           & \proj{ts}{l} & = & \text{multiset}\{\thread{c}{l'}\in ts~|~l'\sqsubseteq l\}  \\
+  &           & \proj{\sigma}{l} & = & \lambda k. \proj{\sigma(k)}{l}  \\
+  &           & \proj{e}{l} & = &
+    \begin{cases}
+      e  & \exists c,l'.~e=\evstart{\thread{c}{l'}}\text{ and }l'\sqsubseteq l  \\
+      e  & \exists ch,v.~e=\evsend{ch}{v}\text{ and }\s{label}(ch)\sqsubseteq l  \\
+      \epsilon & \text{otherwise.}
+    \end{cases}  \\
+  &           & \proj{(\sigma,ts)}{l} & = & (\proj{\sigma}{l},\proj{ts}{l})   \\
+  &           & \lequiv{l}{\hole_1}{\hole_2} & \text{means} & \proj{\hole_1}{l}=\proj{\hole_2}{l}  \\
+\finishsyntax$
+\\
+\fbox{$\tstep{e}{(\sigma,t)}{\Sigma}$} Thread transition relation
+\\
+$\startrules
+  \tsteprule{send}
+        {\s{run}(c)=\opsend{ch}{v}{c'}\qquad l\sqsubseteq\s{label}(ch)}
+        {\evsend{ch}{v}}
+        {(\sigma,\thread{c}{l})}
+        {(\sigma,\{\thread{c'}{l}\})}
+  \tsteprule{read}
+        {\s{run}(c)=\opread{k}{f}}
+        {\epsilon}
+        {(\sigma,\thread{c}{l})}
+        {(\sigma,\{\thread{f(\proj{\sigma(k)}{l})}{l}\})}
+  \tsteprule{write}
+        {\s{run}(c)=\opwrite{k}{v}{c'}}
+        {\epsilon}
+        {(\sigma,\thread{c}{l})}
+        {(\upd{\sigma}{k}{\s{write}(\sigma(k),v,l)},\{\thread{c'}{l}\})}
+  \tsteprule{fork}
+        {\s{run}(c) = \opfork{c_1}{c_2}}
+        {\epsilon}
+        {(\sigma,\thread{c}{l})}
+        {(\sigma,\{\thread{c_1}{l},\thread{c_2}{l}\})}
+\finishrules$
+\\
+\fbox{$\sstep{e}{\Sigma}{\Sigma}$} State transition relation
+\\
+$\startrules
+  \ssteprule{start}
+        {}
+        {\evstart{t}}
+        {(\sigma,ts)}
+        {(\sigma,ts+t)}
+  \ssteprule{skip}
+        {}
+        {\epsilon}
+        {(\sigma,ts)}
+        {(\sigma,ts)}
+  \ssteprule{thread}
+        {\tstep{e}{(\sigma,\thread{c}{l})}{(\sigma',ts')}}
+        {e}
+        {(\sigma,ts\uplus\{\thread{c}{l}\})}
+        {(\sigma',ts\uplus ts')}
+\finishrules$
+\\
+\textbf{Theorem (TSNI).}
+\\
+If $\lequiv{l}{\Sigma_1}{\Sigma_2}$
+and $\sstep{e_1}{\Sigma_1}{\Sigma_1'}$,
+\\
+then $\exists \Sigma_2'.\exists e_2.~\sstep{e_2}{\Sigma_2}{\Sigma_2'}$
+and $\lequiv{l}{\Sigma_1'}{\Sigma_2'}$
+and $\lequiv{l}{e_1}{e_2}$.
+\\
+\textit{Proof.}
+Please continue reading below.
+
+
+\newpage
+\noindent
+%
+%
+\fbox{$\ltstep{l}{e}{(\sigma,t)}{\Sigma}$} Projected thread transition relation
+\\
+$\startrules
+  \ltsteprule{l-send}
+        {\s{run}(c)=\opsend{ch}{v}{c'}\qquad l\sqsubseteq\s{label}(ch){\color{red}{}\sqsubseteq l'}}
+        {{\color{red}l'}}
+        {\evsend{ch}{v}}
+        {(\sigma,\thread{c}{l})}
+        {(\sigma,\{\thread{c'}{l}\})}
+  \ltsteprule{l-censor}
+        {\s{run}(c)=\opsend{ch}{v}{c'}\qquad l\sqsubseteq\s{label}(ch){\color{red}{}\not\sqsubseteq l'}}
+        {{\color{red}l'}}
+        {{\color{red}\epsilon}}
+        {(\sigma,\thread{c}{l})}
+        {(\sigma,\{\thread{c'}{l}\})}
+  \ltsteprule{l-read}
+        {\s{run}(c)=\opread{k}{f}}
+        {{\color{red}l'}}
+        {\epsilon}
+        {(\sigma,\thread{c}{l})}
+        {(\sigma,\{\thread{f(\proj{\sigma(k)}{l})}{l}\})}
+  \ltsteprule{l-write}
+        {\s{run}(c)=\opwrite{k}{v}{c'}}
+        {{\color{red}l'}}
+        {\epsilon}
+        {(\sigma,\thread{c}{l})}
+        {(\upd{\sigma}{k}{\s{write}(\sigma(k),v,l)},\{\thread{c'}{l}\})}
+  \ltsteprule{l-fork}
+        {\s{run}(c) = \opfork{c_1}{c_2}}
+        {{\color{red}l'}}
+        {\epsilon}
+        {(\sigma,\thread{c}{l})}
+        {(\sigma,\{\thread{c_1}{l},\thread{c_2}{l}\})}
+\finishrules$
+\\
+\fbox{$\lsstep{l}{e}{\Sigma}{\Sigma}$} Projected state transition relation
+\\
+$\startrules
+  \lssteprule{l-start}
+        {{\color{red}l\sqsubseteq l'}}
+        {{\color{red}l'}}
+        {\evstart{\thread{c}{l}}}
+        {(\sigma, ts)}
+        {(\sigma, ts+\thread{c}{l})}
+  \lssteprule{l-skip}
+        {}
+        {{\color{red}l'}}
+        {\epsilon}
+        {(\sigma,ts)}
+        {(\sigma,ts)}
+  \lssteprule{l-thread}
+        {\tstep{e}{(\sigma,\thread{c}{l})}{(\sigma',ts')}}
+        {{\color{red}l'}}
+        {e}
+        {(\sigma,ts\uplus\{\thread{c}{l}\})}
+        {(\sigma',ts\uplus ts')}
+\finishrules$
+\\
+\textbf{Lemma (Invisibility).}
+\\
+If $l'\not\sqsubseteq l$
+and $\tstep{e}{(\sigma,\thread{c}{l'})}{(\sigma',ts')}$,
+\\
+then $\proj{\sigma'}{l}=\proj{\sigma}{l}$
+and $\proj{e}{l}=\epsilon$
+and $\proj{ts'}{l}=\{\}$.
+\\
+\textit{Proof.}
+Omitted.
+\\
+\textbf{Theorem (Projection 1).}
+\\
+\begin{tabular}{l@{$\qquad$}l}
+  (1) & If $\sstep{e}{\Sigma}{\Sigma'}$,
+\\
+      & then $\lsstep{l}{\proj{e}{l}}{\proj{\Sigma}{l}}{\proj{\Sigma'}{l}}$.
+\end{tabular}
+\\
+\textit{Proof.}
+\\
+\newcommand{\z}{$\quad$}
+\begin{tabular}{l@{$\qquad$}l@{\qquad}l}
+        & Proceed by cases (ie inversion) on (1).
+\\
+  (2)   & Case: $\rn{start}$.
+\\
+        & \z Let $\evstart{\thread{c}{l'}}=e$.
+        & Justified by (2).
+\\
+        & \z Proceed by cases.
+\\
+        & \z Case where $l'\sqsubseteq l$.
+\\
+        & \z \z QED
+        & by applying $\rn{l-start}$.
+\\
+        & \z Case where $l'\not\sqsubseteq l$.
+\\
+        & \z \z QED
+        & by applying $\rn{l-skip}$.
+\\
+        & Case: $\rn{skip}$.
+\\
+        & \z QED
+        & by applying $\rn{l-skip}$.
+\\
+  (2)   & Case: $\rn{thread}$.
+\\
+        & \z Let $c,l',\sigma',ts'$ be such that:
+        & Justified by (2).
+\\
+  (3)   & \z \z $\tstep{e}{(\sigma,\thread{c}{l'})}{(\sigma',ts')}$
+\\
+        & \z Proceed by cases.
+\\
+  (4)   & \z Case where $l'\not\sqsubseteq l$.
+\\
+        & \z \z $\proj{\sigma'}{l}=\proj{\sigma}{l}$ and $\proj{e}{l}=\epsilon$ and $\proj{ts'}{l}=\{\}$
+        & by Invisibility with (4) and (3).
+\\
+        & \z \z QED
+        & by applying $\rn{l-skip}$.
+\\
+        & \z Case where $l'\sqsubseteq l$.
+\\
+        & \z \z Proceed by cases (ie inversion) on (3).
+\\
+  (4)   & \z \z Case: $\rn{send}$.
+\\
+        & \z \z \z Let $\evsend{ch}{v} = e$.
+        & Justified by (4).
+\\
+        & \z \z \z Proceed by cases.
+\\
+        & \z \z \z Case where $label(ch)\sqsubseteq l$.
+\\
+        & \z \z \z \z QED
+        & by applying $\rn{l-send}$.
+\\
+        & \z \z \z Case where $label(ch)\not\sqsubseteq l$.
+\\
+        & \z \z \z \z QED
+        & by applying $\rn{l-censor}$.
+\\
+        & \z \z Cases: $\rn{read}$, $\rn{write}$, and $\rn{fork}$.
+\\
+        & \z \z \z Fairly straightforward.
+\end{tabular}
+\\
+\textbf{Theorem (Projection 2).}
+\\
+\begin{tabular}{l@{$\qquad$}l}
+  (1) & If $\lsstep{l}{e_1}{\proj{\Sigma}{l}}{\Sigma_1}$,
+\\
+      & then $\exists \Sigma_2.\exists e_2.~\sstep{e_2}{\Sigma}{\Sigma_2}$
+        and $\Sigma_1 = \proj{\Sigma_2}{l}$
+        and $e_1 = \proj{e_2}{l}$.
+\end{tabular}
+\\
+\textit{Proof.}
+\\
+\begin{tabular}{l@{$\qquad$}l@{\qquad}l}
+        & Let $(\sigma,ts)=\Sigma$.
+\\
+        & Proceed by cases (ie inversion) on (1).
+\\
+  (2)   & Case: $\rn{l-start}$.
+\\
+        & \z Let $\evstart{\thread{c}{l'}}=e_1$.
+        & Justified by (2).
+\\
+        & \z Pick $\Sigma_2 = (\sigma,ts+\thread{c}{l'})$ and $e_2=e_1$.
+\\
+        & \z QED
+        & by applying $\rn{start}$.
+\\
+        & \multicolumn{2}{l}{\z (Fairly straightforward because $\rn{start}$ is the same as $\rn{l-start}$, except without the side condition.)}
+\\
+        & Case: $\rn{l-skip}$.
+\\
+        & \multicolumn{2}{l}{\z (Fairly straightforward because $\rn{skip}$ is the same as $\rn{l-skip}$.)}
+\\
+  (2)   & Case: $\rn{l-thread}$.
+\\
+        & \z Let $c,l',\sigma_1,ts_1$ be such that:
+        & Justified by (2).
+\\
+  (3)   & \z \z $\thread{c}{l'}\in\proj{ts}{l}$
+\\
+  (4)   & \z \z $\ltstep{l}{e_1}{(\sigma,\thread{c}{l'})}{(\sigma_1,ts_1)}$
+\\
+        & \z $l'\sqsubseteq l$
+        & due to (3) and the definition of $\proj{\hole}{\hole}$.
+\\
+        & \z Proceed by cases (ie inversion) on (4).
+\\
+  (5)   & \z Cases: $\rn{l-send}$ and $\rn{l-censor}$.
+\\
+        & \z \z Let $\opsend{ch}{v}{c'}=run(c)$.
+        & Justified by (5).
+\\
+        & \z \z Pick $\Sigma_2 = (\sigma,ts-\thread{c}{l'}+\thread{c'}{l'})$
+\\
+        & \z \z and pick $e_2 = \evsend{ch}{v}$.
+\\
+        & \z \z QED
+        & by applying $\rn{send}$.
+\\
+        & \z Cases: $\rn{l-read}$, $\rn{l-write}$, and $\rn{l-fork}$.
+\\
+        & \multicolumn{2}{l}{\z \z (Fairly straightforward because the corresponding rules are the same.)}
+\end{tabular}
+\\
+\textbf{Theorem (TSNI).}
+\\
+\begin{tabular}{l@{$\qquad$}l}
+  (1) & If $\lequiv{l}{\Sigma_1}{\Sigma_2}$
+\\
+  (2) & and $\sstep{e_1}{\Sigma_1}{\Sigma_1'}$,
+\\
+      & then $\exists \Sigma_2'.\exists e_2.~\sstep{e_2}{\Sigma_2}{\Sigma_2'}$
+        and $\lequiv{l}{\Sigma_1'}{\Sigma_2'}$
+        and $\lequiv{l}{e_1}{e_2}$.
+\end{tabular}
+\\
+\textit{Proof.}
+\\
+\begin{tabular}{l@{$\qquad$}l@{\qquad}l}
+  (3) & $\lsstep{l}{\proj{e_1}{l}}{\proj{\Sigma_1}{l}}{\proj{\Sigma_1'}{l}}$
+      & by applying Projection 1 to (2).
+\\
+  (4) & $\lsstep{l}{\proj{e_1}{l}}{\proj{\Sigma_2}{l}}{\proj{\Sigma_1'}{l}}$
+      & by substituting (1) in (3).
+\\
+      & QED
+      & by applying Projection 2 to (4).
+\end{tabular}
+
+
+\end{document}
