@@ -38,10 +38,6 @@ let label;
 
 const labelOrdering = conf.usingPO ? new PartialOrder(conf.labels) : new TotalOrder(conf.min, conf.max);
 
-const skv = conf.usingPO ?
-    new SecureKV_PO(conf.host, conf.user, conf.pass, labelOrdering) :
-    new SecureKV_TO(conf.host, conf.user, conf.pass);
-
 module.exports.makeShim = function (exp) {
 
     exp.handler = function (event, context, callback) {
@@ -55,6 +51,10 @@ module.exports.makeShim = function (exp) {
             if (err) {
                 callback(err);
             } else {
+                const skv = conf.usingPO ?
+                    new SecureKV_PO(conf.host, conf.user, conf.pass, labelOrdering) :
+                    new SecureKV_TO(conf.host, conf.user, conf.pass);
+
                 if (label === undefined) {
                     // In case getting the label failed, run on behalf of 'bottom' (completely unprivileged).
                     label = labelOrdering.getBottom();
