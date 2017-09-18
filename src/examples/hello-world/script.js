@@ -10,8 +10,8 @@ unsafe = {
     get : "https://xarygspldj.execute-api.us-west-1.amazonaws.com/helloWorld/no-sec/retrieve"
 };
 total = {
-    put : "https://xarygspldj.execute-api.us-west-1.amazonaws.com/helloWorld/identity/store",
-    get : "https://xarygspldj.execute-api.us-west-1.amazonaws.com/helloWorld/identity/retrieve"
+    put : "https://xarygspldj.execute-api.us-west-1.amazonaws.com/helloWorld/total-order/store",
+    get : "https://xarygspldj.execute-api.us-west-1.amazonaws.com/helloWorld/total-order/retrieve"
 };
 partial = {
     put : "https://xarygspldj.execute-api.us-west-1.amazonaws.com/helloWorld/identity/store",
@@ -22,12 +22,22 @@ partial = {
 *   Tab Code
 */
 
-function doStoreAction(keyId, valueId, outId, api) {
+function doStoreAction(keyId, valueId, outId, api, userId, passId) {
 
     let request = new XMLHttpRequest();
     let reqKey = document.getElementById(keyId).value;
     let reqVal = document.getElementById(valueId).value;
+    let requestJson = {
+        key: reqKey,
+        value: reqVal
+    };
+    if (userId !== undefined && passId !== undefined) {
+        let reqUser = document.getElementById(userId).value;
+        let reqPass = document.getElementById(passId).value;
 
+        requestJson.user = reqUser;
+        requestJson.pass = reqPass;
+    }
     request.onreadystatechange = function () {
 
         if (request.readyState === 4 && request.status === 200) {
@@ -37,15 +47,23 @@ function doStoreAction(keyId, valueId, outId, api) {
 
     request.open("POST", api.put, true);
     request.setRequestHeader('Content-Type', 'application/json');
-    request.send(JSON.stringify({
-        key: reqKey,
-        value: reqVal
-    }));
+    request.send(JSON.stringify(requestJson));
 }
-function doRetrieveAction(keyId, outId, api) {
+
+function doRetrieveAction(keyId, outId, api, userId, passId) {
 
     let request = new XMLHttpRequest();
     let reqKey = document.getElementById(keyId).value;
+    let requestJson = {
+        key: reqKey
+    };
+    if (userId !== undefined && passId !== undefined) {
+        let reqUser = document.getElementById(userId).value;
+        let reqPass = document.getElementById(passId).value;
+
+        requestJson.user = reqUser;
+        requestJson.pass = reqPass;
+    }
 
     request.onreadystatechange = function () {
 
@@ -56,9 +74,7 @@ function doRetrieveAction(keyId, outId, api) {
 
     request.open("POST", api.get, true);
     request.setRequestHeader('Content-Type', 'application/json');
-    request.send(JSON.stringify({
-        key: reqKey
-    }));
+    request.send(JSON.stringify(requestJson));
 }
 
 /* *******************************************

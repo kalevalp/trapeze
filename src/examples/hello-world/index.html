@@ -81,5 +81,60 @@
     <div id="unsafeGetRes"></div>
 </div>
 
+<div id="TO" class="tabcontent">
+    <h2>Simple Store (Total Order) Lambda Function</h2>
+    <p>
+        This application calls stores and retrieves values from a simple key-value store that enforces IFC with a
+        total ordering over the labels.
+    </p>
+    <p>
+        Users and their corresponding security labels:
+    </p>
+    <table>
+        <tr>
+            <th>User</th> <th>Password</th> <th>Label</th>
+        </tr>
+        <tr>
+            <td>super</td>  <td>superpass</td>  <td>4</td>
+        </tr>
+        <tr>
+            <td>admin</td>  <td>adminpass</td>  <td>3</td>
+        </tr>
+        <tr>
+            <td>user</td>   <td>userpass</td>   <td>2</td>
+        </tr>
+        <tr>
+            <td>guest</td>  <td>guestpass</td>  <td>1</td>
+        </tr>
+    </table>
+    <br>
+    <form>
+        <label for="TOUser">User: </label> <input type="text" id="TOUser"><br/>
+        <label for="TOPass">Password: </label> <input type="password" id="TOPass"><br/>
+    </form>
+
+    <h3>Put:</h3>
+    <form>
+        <label for="TOPutKey">Key: </label> <input type="text" id="TOPutKey"><br/>
+        <label for="TOPutValue">Value: </label> <input type="text" id="TOPutValue"><br/>
+    </form>
+    <br/>
+
+    <button onclick="doStoreAction('TOPutKey', 'TOPutValue', 'TOPutRes', total, 'TOUser', 'TOPass')">Submit</button>
+
+    <div id="TOPutRes"></div>
+
+    <h3>Get:</h3>
+
+    <form>
+        <label for="TOGetKey">Key: </label> <input type="text" id="TOGetKey"><br/>
+    </form>
+    <br/>
+
+    <button onclick="doRetrieveAction('TOGetKey', 'TOGetRes', total, 'TOUser', 'TOPass')">Submit</button>
+
+    <div id="TOGetRes"></div>
+</div>
+
 </body>
 </html>
