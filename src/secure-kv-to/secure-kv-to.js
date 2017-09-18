@@ -22,7 +22,7 @@ CREATE TABLE kvstore (
 
         const addUpdateTrigger = `
 DELIMITER $$
-CREATE TRIGGER TO_put_semantics BEFORE UPDATE ON ? 
+CREATE TRIGGER TO_put_semantics BEFORE UPDATE ON kvstore 
     FOR EACH ROW
     BEGIN
         IF OLD.label < NEW.label THEN
@@ -59,7 +59,7 @@ SHOW TABLES like ?;
                                     callback(err);
                                 } else {
                                     console.log("** DEBUG: Secure K-V (TO) - Successfully created table.");
-                                    this.con.query(addUpdateTrigger, ['kvstore'], (err, result) => {
+                                    this.con.query(addUpdateTrigger, (err, result) => {
                                         if (err) {
                                             console.log("** DEBUG: Secure K-V (TO) - Failed adding update trigger to table.");
                                             callback(err);
