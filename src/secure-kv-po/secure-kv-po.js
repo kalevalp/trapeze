@@ -19,7 +19,7 @@ class SecureKV_PO {
         function createTable() {
             const createTableSql = `
 CREATE TABLE kvstore (
-    rowkey VARCHAR(31) NOT NULL,
+    rowkey VARCHAR(32) NOT NULL,
     rowvalues VARCHAR(255),
     label INTEGER NOT NULL,
     PRIMARY KEY (rowkey, label)
