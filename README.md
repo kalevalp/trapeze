@@ -12,3 +12,7 @@
     $ mysql -u vmwuser -h serverlessproject.c1kfax8igvaq.us-west-1.rds.amazonaws.com -P 3306 -p
     >> [password] serverlessifc
 
+
+### RDS Configuration
+Need to make sure that the RDS mysql server is running with the option log_bin_trust_function_creators = 1.
+Otherwise, creating tables with update triggers will fail.
