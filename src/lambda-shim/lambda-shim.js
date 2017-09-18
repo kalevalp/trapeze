@@ -114,12 +114,23 @@ module.exports.makeShim = function (exp) {
             }
         });
 
-        vm.run(`
-/* ***********************************
-/* ** Original Lambda Code:
+        console.log(`
+//  ***********************************
+//  ** Original Lambda Code:
 ${unsecuredLambda}
-/* ** End of Original Lambda Code:
-/* ***********************************
+//  ** End of Original Lambda Code:
+//  ***********************************
+
+module.exports.${conf.handler}(externalEvent, externalContext, externalCallback);
+
+        `);
+
+        vm.run(`
+//  ***********************************
+//  ** Original Lambda Code:
+${unsecuredLambda}
+//  ** End of Original Lambda Code:
+//  ***********************************
 
 module.exports.${conf.handler}(externalEvent, externalContext, externalCallback);
         `);
