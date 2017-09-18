@@ -51,88 +51,97 @@ module.exports.makeShim = function (exp) {
         }
 
         // Run on behalf of invoking user.
-        label = auth(event.user, event.pass);
-        if (label === undefined) {
-            // In case getting the label failed, run on behalf of 'bottom' (completely unprivileged).
-            label = labelOrdering.getBottom();
-        }
-
-        const vm = new NodeVM({
-            // console: 'off',
-            console: 'inherit',
-            sandbox: {
-                externalEvent: event,
-                externalContext: context,
-                externalCallback:
-                    function (err, value) {
-                        if (labelOrdering.lte(label, conf.securityBound)) {
-                            callback(err, value);
-                        } else {
-                            callback(null);
-                        }
-                    },
-                bumpLabelTo:
-                    function (newLabel) {
-                        if (labelOrdering.lte(label, newLabel)) {
-                            label = newLabel;
-                            return true;
-                        } else {
-                            return false;
-                        }
-                    },
-                bumpLabelToTop:
-                    function () {
-                        label = labelOrdering.getTop();
-                    }
-            },
-            require: {
-                external: false,
-                builtin: ['fs'],
-                root: "./",
-                mock: {
-                    'kv-store' : {
-                        KV_Store : class {
-                            constructor(h, u, pwd) {}
-
-                            init(callback) {
-                                skv.init(callback);
-                            }
-
-                            close(callback) {
-                                skv.close(callback);
-                            }
-
-                            put (k, v, callback) {
-                                skv.put(k,v,label,callback);
-                            }
-                            get (k, callback) {
-                                skv.get(k,label,callback);
-                            }
-                        }
-                    }
+        auth(event.user, event.pass, (err, label) => {
+            if (err) {
+                callback(err);
+            } else {
+                if (label === undefined) {
+                    // In case getting the label failed, run on behalf of 'bottom' (completely unprivileged).
+                    label = labelOrdering.getBottom();
                 }
+
+                const vm = new NodeVM({
+                    // console: 'off',
+                    console: 'inherit',
+                    sandbox: {
+                        externalEvent: event,
+                        externalContext: context,
+                        externalCallback:
+                            function (err, value) {
+                                if (labelOrdering.lte(label, conf.securityBound)) {
+                                    callback(err, value);
+                                } else {
+                                    callback(null);
+                                }
+                            },
+                        bumpLabelTo:
+                            function (newLabel) {
+                                if (labelOrdering.lte(label, newLabel)) {
+                                    label = newLabel;
+                                    return true;
+                                } else {
+                                    return false;
+                                }
+                            },
+                        bumpLabelToTop:
+                            function () {
+                                label = labelOrdering.getTop();
+                            }
+                    },
+                    require: {
+                        external: false,
+                        builtin: ['fs'],
+                        root: "./",
+                        mock: {
+                            'kv-store': {
+                                KV_Store: class {
+                                    constructor(h, u, pwd) {
+                                    }
+
+                                    init(callback) {
+                                        skv.init(callback);
+                                    }
+
+                                    close(callback) {
+                                        skv.close(callback);
+                                    }
+
+                                    put(k, v, callback) {
+                                        skv.put(k, v, label, callback);
+                                    }
+
+                                    get(k, callback) {
+                                        skv.get(k, label, callback);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                console.log(`
+//  ***********************************
+//  ** Original Lambda Code:
+${unsecuredLambda}
+//  ** End of Original Lambda Code:
+//  ***********************************
+
+module.exports.${conf.handler}(externalEvent, externalContext, externalCallback);
+
+        `);
+
+                vm.run(`
+//  ***********************************
+//  ** Original Lambda Code:
+${unsecuredLambda}
+//  ** End of Original Lambda Code:
+//  ***********************************
+
+module.exports.${conf.handler}(externalEvent, externalContext, externalCallback);
+        `);
             }
         });
-
-        console.log(`
-//  ***********************************
-//  ** Original Lambda Code:
-${unsecuredLambda}
-//  ** End of Original Lambda Code:
-//  ***********************************
-
-module.exports.${conf.handler}(externalEvent, externalContext, externalCallback);
-
-        `);
-
-        vm.run(`
-//  ***********************************
-//  ** Original Lambda Code:
-${unsecuredLambda}
-//  ** End of Original Lambda Code:
-//  ***********************************
-
-module.exports.${conf.handler}(externalEvent, externalContext, externalCallback);
-        `);
     };
-};
+}
+
+
