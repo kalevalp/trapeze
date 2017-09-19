@@ -31,8 +31,9 @@ CREATE TRIGGER TO_put_semantics BEFORE UPDATE ON kvstore
                 SET MESSAGE_TEXT = "Security policy violation: Attempt to perform a sensitive upgrade (TO semantics).";
         END IF;
     END;
-$$
-        `;
+    `;
+// $$
+//         `;
 
         const tableSql = `
 SHOW TABLES like ?;
@@ -59,31 +60,31 @@ SHOW TABLES like ?;
                                     callback(err);
                                 } else {
                                     console.log("** DEBUG: Secure K-V (TO) - Successfully created table.");
-                                    this.con.query(delimiterDollar, (err, result) => {
-                                        if (err) {
-                                            console.log("** DEBUG: Secure K-V (TO) - Failed setting the delimiter to $$.");
-                                            callback(err);
-                                        } else {
-                                            console.log("** DEBUG: Secure K-V (TO) - Successfully set the delimiter to $$.");
+                                    // this.con.query(delimiterDollar, (err, result) => {
+                                    //     if (err) {
+                                    //         console.log("** DEBUG: Secure K-V (TO) - Failed setting the delimiter to $$.");
+                                    //         callback(err);
+                                    //     } else {
+                                    //         console.log("** DEBUG: Secure K-V (TO) - Successfully set the delimiter to $$.");
                                             this.con.query(addUpdateTrigger, (err, result) => {
                                                 if (err) {
                                                     console.log("** DEBUG: Secure K-V (TO) - Failed adding update trigger to table.");
                                                     callback(err);
                                                 } else {
                                                     console.log("** DEBUG: Secure K-V (TO) - Successfully added update trigger to table.");
-                                                    this.con.query(delimiterSemi, (err, result) => {
-                                                        if (err) {
-                                                            console.log("** DEBUG: Secure K-V (TO) - Failed setting the delimiter to ;.");
-                                                            callback(err);
-                                                        } else {
-                                                            console.log("** DEBUG: Secure K-V (TO) - Successfully set the delimiter to ;.");
+                                                    // this.con.query(delimiterSemi, (err, result) => {
+                                                    //     if (err) {
+                                                    //         console.log("** DEBUG: Secure K-V (TO) - Failed setting the delimiter to ;.");
+                                                    //         callback(err);
+                                                    //     } else {
+                                                    //         console.log("** DEBUG: Secure K-V (TO) - Successfully set the delimiter to ;.");
                                                             callback();
-                                                        }
-                                                    })
+                                                        // }
+                                                    // })
                                                 }
                                             });
-                                        }
-                                    });
+                                        // }
+                                    // });
                                 }
                             });
                         } else {
