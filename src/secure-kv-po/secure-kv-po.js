@@ -1,9 +1,6 @@
 const mysql = require ("mysql");
 const {PartialOrder} = require ("po-utils");
 
-// "serverlessproject.c1kfax8igvaq.us-west-1.rds.amazonaws.com:3306"
-// "vmwuser"
-// "serverlessifc",
 class SecureKV_PO {
     constructor(h, u, pwd, partialOrder) {
         this.con = mysql.createConnection({
@@ -16,67 +13,105 @@ class SecureKV_PO {
     }
 
     init(callback) {
-        function createTable() {
-            const createTableSql = `
-CREATE TABLE kvstore (
+        const tableSql = `
+SHOW TABLES like ?;
+        `;
+
+        const createTableSql = `
+CREATE TABLE kvstore_po (
     rowkey VARCHAR(32) NOT NULL,
     rowvalues VARCHAR(255),
     label INTEGER NOT NULL,
     PRIMARY KEY (rowkey, label)
 );
-            `;
-            this.con.query(createTableSql, function (err, result) {
-                if (err) callback(err);
-                // console.log(result);
-            });
-
-            const cond = getCondFromPOTC(this.po.potc);
-
-            const addInsertTrigger = `
-CREATE TRIGGER PO_put_semantics BEFORE INSERT ON ? 
-    DELETE FROM ? WHERE ?;
-`;
-            this.con.query(addInsertTrigger, ['kvstore', 'kvstore', cond], function (err, result) {
-                if (err) callback(err);
-                // console.log(result);
-            });
-        }
-
-        this.con.connect(function (err) {
-            if (err) callback(err);
-            console.log("** Secure K-V (PO) Connected Successfully!")
-        });
-
-        const tableSql = `
-SHOW TABLES like ?;
         `;
-        this.con.query(tableSql, ['kvstore'], function (err, result) {
-            if (err) callback(err);
-            if (result.length === 0) {
-                createTable()
+        const cond = getCondFromPOTC(this.po.potc);
+        const addInsertTrigger = `
+CREATE TRIGGER PO_put_semantics BEFORE INSERT ON kvstore_po 
+    DELETE FROM kvstore_po WHERE ${cond};
+        `;
+
+        console.log("** DEBUG: Secure K-V (PO) - Call to init.");
+        this.con.connect((err) => {
+            if (err) {
+                console.log("** DEBUG: Secure K-V (PO) - Connection failed.");
+                callback(err);
+            } else {
+                console.log("** DEBUG: Secure K-V (PO) - Connection successful.");
+                this.con.query(tableSql, ['kvstore_po'], (err, result) => {
+                    if (err) {
+                        console.log("** DEBUG: Secure K-V (PO) - Failed getting list of tables.");
+                        callback(err);
+                    }
+                    else {
+                        console.log("** DEBUG: Secure K-V (PO) - Succeeded getting list of tables.");
+                        if (result.length === 0) {
+                            console.log("** DEBUG: Secure K-V (PO) - Table does not exists in database. Creating table.");
+                            this.con.query(createTableSql, (err, result) => {
+                                if (err) {
+                                    console.log("** DEBUG: Secure K-V (PO) - Failed creating table.");
+                                    callback(err);
+                                } else {
+                                    console.log("** DEBUG: Secure K-V (PO) - Successfully created table.");
+                                    this.con.query(addInsertTrigger, (err, result) => {
+                                        if (err) {
+                                            console.log("** DEBUG: Secure K-V (PO) - Failed adding insert trigger to table.");
+                                            callback(err);
+                                        }
+                                        else {
+                                            console.log("** DEBUG: Secure K-V (PO) - Successfully added insert trigger to table.");
+                                            callback();
+                                        }
+                                    });
+                                }
+                            });
+                        } else {
+                            console.log("** DEBUG: Secure K-V (PO) - Table exists in database.");
+                            callback();
+                        }
+                    }
+                })
             }
-        })
+        });
     }
 
     close(callback) {
+        console.log("** DEBUG: Secure K-V (PO) - Call to close.");
         this.con.end(function (err) {
-            if (err) callback(err);
-            console.out("** Secure K-V (PO) Connection Closed Successfully!")
-
+            if (err) {
+                console.log("** DEBUG: Secure K-V (PO) - Failed closing connectionß.");
+                callback(err);
+            } else {
+                console.log("** DEBUG: Secure K-V (PO) - Connection close successful.");
+                callback();
+            }
         })
     }
 
     put (k, v, l, callback) {
         const sql = `
-INSERT INTO kvstore (rowkey,rowvalues,label) 
+INSERT INTO kvstore_po (rowkey,rowvalues,label) 
     VALUES (?, ?, ?)
     ON DUPLICATE KEY UPDATE 
         rowvalues=VALUES(rowvalues);
         `;
 
+        console.log("** DEBUG: Secure K-V (PO) - Call to put.");
+        console.log("** DEBUG: Secure K-V (PO) -   Key:   " + k + ".");
+        console.log("** DEBUG: Secure K-V (PO) -   Value: " + v + ".");
+
         this.con.query(sql,[k,v,l], function (err, result) {
-            if (err) callback(err);
-            // console.log(result);
+            if (err) {
+                console.log("** DEBUG: Secure K-V (PO) - Query failed - inserting values.");
+                callback(err);
+            } else {
+                console.log("** DEBUG: Secure K-V (PO) - Query successful - inserting values.");
+                console.log("** DEBUG: Secure K-V (PO) - Query result:");
+                console.log(result);
+                console.log("** DEBUG: Secure K-V (PO) - Query result />");
+
+                callback();
+            }
         });
     }
 
@@ -88,30 +123,40 @@ INSERT INTO kvstore (rowkey,rowvalues,label)
      * @param callback
      */
     get (k, l, callback) {
+        let leLabels = this.po.getAllLE(l);
         const sql = `
-SELECT rowvalue 
-FROM kvstore 
+SELECT rowvalue, label 
+FROM kvstore_po 
 WHERE rowkey = ? AND
-      label IN ?;
+      label IN ${"(" + [...leLabels].join(", ") + ")"};
     `;
 
-        // let gtLabels = new Set(this.po[l]);
-        // gtLabels.delete(l);
-
-        let leLabels = this.po.getAllLE(l);
-
-        this.con.query(sql, [k,"(" + [...leLabels].join(", ") + ")"], function (err, result) {
-            if (err) callback(err);
-            if (result.length === 0) callback(null,"");
+        console.log("** DEBUG: Secure K-V (PO) - Call to get.");
+        console.log("** DEBUG: Secure K-V (PO) -   Key:   " + k + ".");
+        this.con.query(sql, [k], function (err, result) {
+            if (err) {
+             console.log("** DEBUG: Secure K-V (PO) - Query failed - getting values.");
+                callback(err);
+            }
             else {
-                callback(null,
-                    result.reduce(function(max, curr) {
-                        if (this.po.potc[max["label"]].has(curr["label"])) {
-                            return curr;
-                        } else {
-                            return max;
-                        }
-                    })["rowvalue"]);
+                console.log("** DEBUG: Secure K-V (PO) - Query successful - getting values.");
+                console.log("** DEBUG: Secure K-V (PO) - Query result:");
+                console.log(result);
+                console.log("** DEBUG: Secure K-V (PO) - Query result />");
+
+                callback(result);
+
+                // if (result.length === 0) callback(null,"");
+                // else {
+                //     callback(null,
+                //         result.reduce(function(max, curr) {
+                //             if (this.po.potc[max["label"]].has(curr["label"])) {
+                //                 return curr;
+                //             } else {
+                //                 return max;
+                //             }
+                //         })["rowvalue"]);
+                // }
             }
         });
     }
