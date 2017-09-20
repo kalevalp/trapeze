@@ -1,7 +1,9 @@
 class PartialOrder {
 
+    // Note: Currently, partial order only supports string elements.
+    // TODO: Handle numeric elements.
     constructor(po) {
-        this.potc = this.getTransitiveClosure(po)
+        this.potc = PartialOrder.getTransitiveClosure(po)
     }
 
 
@@ -68,7 +70,7 @@ class PartialOrder {
         const allElems = new Set();
         for (const x in po) {
             if (po.hasOwnProperty(x)) {
-                allElems.add(parseInt(x));
+                allElems.add(x);
                 for (const y of po[x]) {
                     allElems.add(y);
                 }
@@ -80,7 +82,7 @@ class PartialOrder {
         }
 
         Object.keys(po).forEach((k) => {
-            stack = stack.concat(parseInt(k));
+            stack = stack.concat(k);
 
             while (stack.length > 0) {
                 const elem = stack.pop();
@@ -109,7 +111,7 @@ class PartialOrder {
         for (const l in this.potc) {
             if (this.potc.hasOwnProperty(l)) {
                 if (this.potc[l].has(label)) {
-                    res.add(parseInt(l));
+                    res.add(l);
                 }
             }
         }
@@ -127,11 +129,26 @@ module.exports.PartialOrder = PartialOrder;
  *          Tests
  * ************************ */
 if (process.argv[2] === "test") {
-    const x = {'1': [2, 3], '2': [3], '3': [5, 6], '4': []};
-    const po = new PartialOrder(x);
+    let x = {'1': ['2', '3'], '2': ['3'], '3': ['5', '6'], '4': []};
+    let po = new PartialOrder(x);
     console.log("************************");
-    console.log("Transitive closure test:");
+    console.log("Transitive closure test 1:");
     console.log(x);
     console.log(po.potc);
     console.log("************************");
+
+    x =  {
+        "bottom" : ["userA", "userB"],
+        "userA" : ["admin"],
+        "userB" : ["admin"],
+        "admin" : ["top"]
+    };
+    po = new PartialOrder(x);
+    console.log("************************");
+    console.log("Transitive closure test 2:");
+    console.log(x);
+    console.log(po.potc);
+    console.log("************************");
+
+
 }
