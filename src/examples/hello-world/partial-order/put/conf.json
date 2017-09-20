@@ -1,0 +1,15 @@
+{
+  "unsecLambda" : "put.js",
+  "usingPO" : true,
+  "labels" : {
+    "bottom" : ["userA", "userB"],
+    "userA" : ["admin"],
+    "userB" : ["admin"],
+    "admin" : ["top"]
+  },
+  "securityBound" : "admin",
+  "handler" : "handler",
+  "host": "serverless-ifc.cs6543lupbsv.us-west-1.rds.amazonaws.com",
+  "user": "vmwuser",
+  "pass": "serverlessifc"
+}
