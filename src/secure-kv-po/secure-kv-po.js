@@ -99,7 +99,7 @@ CREATE TABLE kvstore_po (
                 callback(err);
             } else {
                 console.log("** DEBUG: Secure K-V (PO) - Successfully started transaction.");
-                this.con.query(`DELETE FROM kvstore_po WHERE ${cond}`, (err) => {
+                this.con.query(`DELETE FROM kvstore_po WHERE rowkey = ? AND ${cond}`, [k], (err) => {
                     if (err) {
                         console.log("** DEBUG: Secure K-V (PO) - Failed deleting.");
                         callback(err);
