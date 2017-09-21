@@ -9,7 +9,7 @@ class SecureKV_PO {
             password: pwd,
             database: "securekv"
         });
-        this.po = new PartialOrder(partialOrder)
+        this.po = partialOrder;
     }
 
     init(callback) {
