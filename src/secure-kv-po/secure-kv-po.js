@@ -167,7 +167,7 @@ module.exports.SecureKV_PO = SecureKV_PO;
 function getCondFromPOTC(potc) {
     return "(" +
         Object.keys(potc).map(function (x) {
-            return "NEW.label = " + x + " AND label IN (" + [...potc[x]].join(", ") + ")";
+            return "NEW.label = '" + x + "' AND label IN ('" + [...potc[x]].join("', '") + "')";
         }).join(") OR (") +
         ")";
 }
@@ -176,7 +176,12 @@ function getCondFromPOTC(potc) {
  *          Tests
  * ************************ */
 if (process.argv[2] === "test") {
-    const x = {'1': [2, 3], '2': [3], '3': [5, 6], '4': []};
+    const x =  {
+        "bottom" : ["userA", "userB"],
+        "userA" : ["admin"],
+        "userB" : ["admin"],
+        "admin" : ["top"]
+    };
     const po = new PartialOrder(x);
     console.log("************************");
     console.log("Condition test:");
