@@ -21,14 +21,9 @@ SHOW TABLES like ?;
 CREATE TABLE kvstore_po (
     rowkey VARCHAR(32) NOT NULL,
     rowvalues VARCHAR(255),
-    label INTEGER NOT NULL,
+    label VARCHAR(32) NOT NULL,
     PRIMARY KEY (rowkey, label)
 );
-        `;
-        const cond = getCondFromPOTC(this.po.potc);
-        const addInsertTrigger = `
-CREATE TRIGGER PO_put_semantics BEFORE INSERT ON kvstore_po FOR EACH ROW
-    DELETE FROM kvstore_po WHERE ${cond};
         `;
 
         console.log("** DEBUG: Secure K-V (PO) - Call to init.");
@@ -53,16 +48,7 @@ CREATE TRIGGER PO_put_semantics BEFORE INSERT ON kvstore_po FOR EACH ROW
                                     callback(err);
                                 } else {
                                     console.log("** DEBUG: Secure K-V (PO) - Successfully created table.");
-                                    this.con.query(addInsertTrigger, (err, result) => {
-                                        if (err) {
-                                            console.log("** DEBUG: Secure K-V (PO) - Failed adding insert trigger to table.");
-                                            callback(err);
-                                        }
-                                        else {
-                                            console.log("** DEBUG: Secure K-V (PO) - Successfully added insert trigger to table.");
-                                            callback();
-                                        }
-                                    });
+                                    callback();
                                 }
                             });
                         } else {
@@ -79,7 +65,7 @@ CREATE TRIGGER PO_put_semantics BEFORE INSERT ON kvstore_po FOR EACH ROW
         console.log("** DEBUG: Secure K-V (PO) - Call to close.");
         this.con.end(function (err) {
             if (err) {
-                console.log("** DEBUG: Secure K-V (PO) - Failed closing connectionß.");
+                console.log("** DEBUG: Secure K-V (PO) - Failed closing connection.");
                 callback(err);
             } else {
                 console.log("** DEBUG: Secure K-V (PO) - Connection close successful.");
@@ -89,11 +75,12 @@ CREATE TRIGGER PO_put_semantics BEFORE INSERT ON kvstore_po FOR EACH ROW
     }
 
     put (k, v, l, callback) {
+        let cond = getCondFromPOTC(this.po.potc, l);
         const sql = `
-INSERT INTO kvstore_po (rowkey,rowvalues,label) 
-    VALUES (?, ?, ?)
-    ON DUPLICATE KEY UPDATE 
-        rowvalues=VALUES(rowvalues);
+START TRANSACTION;
+DELETE FROM kvstore_po WHERE ${cond};
+INSERT INTO kvstore_po (rowkey,rowvalues,label) VALUES (?, ?, ?);
+COMMIT;
         `;
 
         console.log("** DEBUG: Secure K-V (PO) - Call to put.");
@@ -164,12 +151,8 @@ WHERE rowkey = ? AND
 
 module.exports.SecureKV_PO = SecureKV_PO;
 
-function getCondFromPOTC(potc) {
-    return "(" +
-        Object.keys(potc).map(function (x) {
-            return "NEW.label = '" + x + "' AND label IN ('" + [...potc[x]].join("', '") + "')";
-        }).join(") OR (") +
-        ")";
+function getCondFromPOTC(potc, label) {
+    return "label IN ('" + [...potc[label]].join("', '") + "')";
 }
 
 /* ************************
@@ -185,6 +168,6 @@ if (process.argv[2] === "test") {
     const po = new PartialOrder(x);
     console.log("************************");
     console.log("Condition test:");
-    console.log(getCondFromPOTC(po.potc));
+    console.log(getCondFromPOTC(po.potc, "admin"));
     console.log("************************");
 }
