@@ -125,20 +125,6 @@ CREATE TABLE kvstore_po (
                 });
             }
         });
-
-        this.con.query(sql,[k,v,l], function (err, result) {
-            if (err) {
-                console.log("** DEBUG: Secure K-V (PO) - Query failed - inserting values.");
-                callback(err);
-            } else {
-                console.log("** DEBUG: Secure K-V (PO) - Query successful - inserting values.");
-                console.log("** DEBUG: Secure K-V (PO) - Query result:");
-                console.log(result);
-                console.log("** DEBUG: Secure K-V (PO) - Query result />");
-
-                callback();
-            }
-        });
     }
 
     /**
