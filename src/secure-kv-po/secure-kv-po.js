@@ -74,18 +74,57 @@ CREATE TABLE kvstore_po (
         })
     }
 
+    /* ***********************************************
+     *   This method uses sql transactions. I'm not
+     * sure transactions are needed here at all.
+     *   It's very likely that even having separate
+     * operations, the entire thing is still
+     * serializable.
+     *   Would probably need to reverse the order of
+     * delete and update operations. Which would
+     * also require an addition of am ON DUPLICATE
+     * clause to the insert.
+     */
     put (k, v, l, callback) {
         let cond = getCondFromPOTC(this.po.potc, l);
-        const sql = `
-START TRANSACTION;
-DELETE FROM kvstore_po WHERE ${cond};
-INSERT INTO kvstore_po (rowkey,rowvalues,label) VALUES (?, ?, ?);
-COMMIT;
-        `;
 
         console.log("** DEBUG: Secure K-V (PO) - Call to put.");
         console.log("** DEBUG: Secure K-V (PO) -   Key:   " + k + ".");
         console.log("** DEBUG: Secure K-V (PO) -   Value: " + v + ".");
+
+        this.con.beginTransaction((err) => {
+            console.log("** DEBUG: Secure K-V (PO) - Starting transaction.");
+            if (err) {
+                console.log("** DEBUG: Secure K-V (PO) - Failed starting transaction.");
+                callback(err);
+            } else {
+                console.log("** DEBUG: Secure K-V (PO) - Successfully started transaction.");
+                this.con.query(`DELETE FROM kvstore_po WHERE ${cond}`, (err) => {
+                    if (err) {
+                        console.log("** DEBUG: Secure K-V (PO) - Failed deleting.");
+                        callback(err);
+                    } else {
+                        console.log("** DEBUG: Secure K-V (PO) - Delete successful.");
+                        this.con.query('INSERT INTO kvstore_po (rowkey,rowvalues,label) VALUES (?, ?, ?)', [k,v,l],  (err, results, fields) => {
+                            if (err) {
+                                console.log("** DEBUG: Secure K-V (PO) - Failed inserting.");
+                                callback(err);
+                            } else {
+                                this.con.commit((err) => {
+                                    if (err) {
+                                        console.log("** DEBUG: Secure K-V (PO) - Failed committing transaction.");
+                                        callback(err);
+                                    } else {
+                                        console.log("** DEBUG: Secure K-V (PO) - Transaction committed successfully.");
+                                        callback();
+                                    }
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+        });
 
         this.con.query(sql,[k,v,l], function (err, result) {
             if (err) {
