@@ -27,7 +27,7 @@ CREATE TABLE kvstore_po (
         `;
         const cond = getCondFromPOTC(this.po.potc);
         const addInsertTrigger = `
-CREATE TRIGGER PO_put_semantics BEFORE INSERT ON kvstore_po 
+CREATE TRIGGER PO_put_semantics BEFORE INSERT ON kvstore_po FOR EACH ROW
     DELETE FROM kvstore_po WHERE ${cond};
         `;
 
