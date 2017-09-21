@@ -60,7 +60,7 @@ class PartialOrder {
     }
 
     lte(val1,val2) {
-        return this.potc[val1].includes(val2);
+        return this.potc[val1].has(val2);
     }
 
     static getTransitiveClosure(po) {
