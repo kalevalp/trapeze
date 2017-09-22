@@ -19,7 +19,7 @@ partial = {
 };
 
 /* *******************************************
-*   Tab Code
+*   Button handler Code
 */
 
 function doStoreAction(keyId, valueId, outId, api, userId, passId) {
@@ -75,6 +75,12 @@ function doRetrieveAction(keyId, outId, api, userId, passId) {
     request.open("POST", api.get, true);
     request.setRequestHeader('Content-Type', 'application/json');
     request.send(JSON.stringify(requestJson));
+}
+
+function clearElements(...elements) {
+    for (let elem of elements) {
+        document.getElementById(elem).innerHTML = "";
+    }
 }
 
 /* *******************************************
