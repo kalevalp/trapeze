@@ -14,8 +14,8 @@ total = {
     get : "https://xarygspldj.execute-api.us-west-1.amazonaws.com/helloWorld/total-order/retrieve"
 };
 partial = {
-    put : "https://xarygspldj.execute-api.us-west-1.amazonaws.com/helloWorld/identity/store",
-    get : "https://xarygspldj.execute-api.us-west-1.amazonaws.com/helloWorld/identity/retrieve"
+    put : "https://xarygspldj.execute-api.us-west-1.amazonaws.com/helloWorld/partial-order/store",
+    get : "https://xarygspldj.execute-api.us-west-1.amazonaws.com/helloWorld/partial-order/retrieve"
 };
 
 /* *******************************************
