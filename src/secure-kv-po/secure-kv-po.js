@@ -145,9 +145,12 @@ WHERE rowkey = ? AND
 
         console.log("** DEBUG: Secure K-V (PO) - Call to get.");
         console.log("** DEBUG: Secure K-V (PO) -   Key:   " + k + ".");
+        console.log("** DEBUG: Secure K-V (PO) - Get Query:");
+        console.log(sql);
+        console.log("** DEBUG: Secure K-V (PO) - Get Query /> ");
         this.con.query(sql, [k], function (err, result) {
             if (err) {
-             console.log("** DEBUG: Secure K-V (PO) - Query failed - getting values.");
+                console.log("** DEBUG: Secure K-V (PO) - Query failed - getting values.");
                 callback(err);
             }
             else {
