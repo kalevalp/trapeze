@@ -137,7 +137,7 @@ CREATE TABLE kvstore_po (
     get (k, l, callback) {
         let leLabels = this.po.getAllLE(l);
         const sql = `
-SELECT rowvalue, label 
+SELECT rowvalues, label 
 FROM kvstore_po 
 WHERE rowkey = ? AND
       label IN ${"(" + [...leLabels].join(", ") + ")"};
