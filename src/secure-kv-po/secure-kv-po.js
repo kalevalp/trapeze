@@ -140,7 +140,7 @@ CREATE TABLE kvstore_po (
 SELECT rowvalues, label 
 FROM kvstore_po 
 WHERE rowkey = ? AND
-      label IN ${"(" + [...leLabels].join(", ") + ")"};
+      label IN ${"('" + [...leLabels].join("', '") + "')"};
     `;
 
         console.log("** DEBUG: Secure K-V (PO) - Call to get.");
