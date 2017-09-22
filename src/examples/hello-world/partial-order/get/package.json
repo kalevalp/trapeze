@@ -1,6 +1,6 @@
 {
   "name": "po-get",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
   "main": "po-get.js",
   "scripts": {
