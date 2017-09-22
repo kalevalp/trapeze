@@ -1,6 +1,6 @@
 {
   "name": "secure-kv-po",
-  "version": "1.4.5",
+  "version": "1.4.6",
   "description": "A mySQL backed key-value store with security labels (partially ordered) ",
   "main": "secure-kv-po.js",
   "scripts": {

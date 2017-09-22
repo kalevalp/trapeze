@@ -159,7 +159,7 @@ WHERE rowkey = ? AND
                 console.log(result);
                 console.log("** DEBUG: Secure K-V (PO) - Query result />");
 
-                callback(result);
+                callback(null,result);
 
                 // if (result.length === 0) callback(null,"");
                 // else {
