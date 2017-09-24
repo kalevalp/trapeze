@@ -20,6 +20,7 @@ Inductive Operation :=
   | Write : Key -> Value -> Code -> Operation
   | Send : Channel -> Value -> Code -> Operation
   | Fork : Code -> Code -> Operation
+  | RaiseLabel : Label -> Code -> Operation
   | Stuck : Operation
   .
 Inductive Event :=
@@ -129,6 +130,10 @@ Inductive Step : Store -> Thread -> Event -> State -> Prop :=
   | SFork : forall x c l c1 c2,
       run c = Fork c1 c2 ->
       Step x (Thrd c l) Epsilon (St x (multi_two (Thrd c1 l) (Thrd c2 l)))
+  | SRaiseLabel : forall c l' c' x l,
+      run c = RaiseLabel l' c' ->
+      Flows l l' ->
+      Step x (Thrd c l) Epsilon (St x (multi_one (Thrd c' l')))
   .
 Definition multi_cons (ts:Threads) t : Threads :=
   fun t' =>
@@ -183,6 +188,16 @@ Inductive LStep : Store -> Thread -> Event -> Label -> State -> Prop :=
   | LSFork : forall x c l c1 c2 L,
       run c = Fork c1 c2 ->
       LStep x (Thrd c l) Epsilon L (St x (multi_two (Thrd c1 l) (Thrd c2 l)))
+  | LSRaiseLabel : forall c l' c' x l L,
+      run c = RaiseLabel l' c' ->
+      Flows l l' ->
+      Flows l' L ->
+      LStep x (Thrd c l) Epsilon L (St x (multi_one (Thrd c' l')))
+  | LSCensor2 : forall c l' c' x l L,
+      run c = RaiseLabel l' c' ->
+      Flows l l' ->
+      ~Flows l' L ->
+      LStep x (Thrd c l) Epsilon L (St x (fun t => 0))
   .
 Inductive LSStep : State -> Event -> Label -> State -> Prop :=
   | LSSStart : forall x ts c l L,
@@ -355,6 +370,13 @@ Proof.
     destruct (eqdec (Thrd c'' l'') (Thrd c1 l'))
     ; destruct (eqdec (Thrd c'' l'') (Thrd c2 l'))
     ; congruence.
+  - unfold multi_one.
+    destruct (eqdec (Thrd c'' l'') (Thrd c' l'0)).
+      injection e0; intros.
+      rewrite H8 in *.
+      pose (Flows_trans l' l'0 l).
+      intuition.  (* it's a contradiction *)
+    reflexivity.
 Qed.
 
 Lemma lemma_px_upd : forall l' l x k v,
@@ -457,6 +479,22 @@ Proof.
         rewrite lemma_pts_multitwo; auto.
         apply LSFork.
         assumption.
+      *
+        destruct (Flows_dec l'0 l).
+          rewrite lemma_pts_multione; auto.
+          apply LSRaiseLabel; auto.
+        assert ((pts (multi_one (Thrd c' l'0)) l) = fun t => 0) as T3.
+          apply extensionality; intro t.
+          destruct t.
+          unfold pts, multi_one, thread_label.
+          destruct (Flows_dec l1 l); destruct (eqdec (Thrd c1 l1) (Thrd c' l'0)); auto.
+          injection e0; intros.
+          congruence.  (* it's a contradiction *)
+        rewrite T3.
+        eapply LSCensor2.
+            exact H4.
+          auto.
+        auto.
 Qed.
 
 Lemma apply_equation : forall {A}{B} {f g:A->B},
@@ -519,7 +557,7 @@ Proof.
       destruct (eqdec (Thrd c l0) (Thrd c0 l1)); try omega.
       destruct (Flows_dec l1 l); omega.
     inversion T3.
-    +
+    + (* This case is copy-pasted and copy-paste-edited below. *)
       rewrite T5.
       do 2 eexists.
       repeat split.
@@ -588,9 +626,48 @@ Proof.
         rewrite T6.
         reflexivity.
       * reflexivity.
+    + (* This case is copy-paste-edited from a previous case. *)
+      rewrite T5.
+      do 2 eexists.
+      repeat split.
+      * apply SSThread.
+        apply SRaiseLabel.
+          exact H12.
+        assumption.
+      * simpl.
+        rewrite lemma_pts_multiplus.
+        rewrite lemma_pts_multione; auto.
+        rewrite T6.
+        reflexivity.
+      * unfold pe.
+        destruct (Flows_dec l0 l); congruence.
+    + (* This case is copy-paste-edited from a previous case. *)
+      rewrite T5.
+      do 2 eexists.
+      repeat split.
+      * apply SSThread.
+        apply SRaiseLabel.
+          exact H12.
+        assumption.
+      * simpl.
+        rewrite lemma_pts_multiplus.
+        rewrite T6.
+        assert (pts (multi_one (Thrd c' l')) l = fun t => 0) as T7.
+          (* This tactic sequence is copy-paste-edited from part of the projection_1 proof. *)
+          apply extensionality; intro t.
+          destruct t.
+          unfold pts, multi_one, thread_label.
+          destruct (Flows_dec l2 l); destruct (eqdec (Thrd c1 l2) (Thrd c' l')); auto.
+          injection e0; intros.
+          congruence.  (* it's a contradiction *)
+        rewrite T7.
+        reflexivity.
+      * unfold pe.
+        destruct (Flows_dec l0 l); congruence.
 Qed.
 
 Theorem tsni : ConjectureTSNI.
+Proof.
   unfold ConjectureTSNI.
   intros.
   rename H into T1, H0 into T2.
