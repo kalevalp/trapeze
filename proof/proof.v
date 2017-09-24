@@ -155,6 +155,7 @@ Inductive SStep : State -> Event -> State -> Prop :=
       Step x (Thrd c l) e (St x' ts') ->
       SStep (St x (multi_cons ts (Thrd c l))) e (St x' (multi_plus ts ts'))
   .
+
 Definition ConjectureTSNI := forall X1 l X2 e1 X1',
   pX X1 l = pX X2 l ->
   SStep X1 e1 X1' ->
@@ -164,6 +165,32 @@ Definition ConjectureTSNI := forall X1 l X2 e1 X1',
       pX X1' l = pX X2' l
     /\
       pe e1 l = pe e2 l
+  .
+
+Fixpoint pes (es : list Event) (l : Label) : list Event :=
+  match es with
+  | nil => nil
+  | cons e xxx => cons (pe e l) (pes xxx l)
+  end
+  .
+Inductive SStepStar : State -> list Event -> State -> Prop :=
+  | StarNil : forall X,
+      SStepStar X nil X
+  | StarCons : forall X e X' es X'',
+      SStep X e X' ->
+      SStepStar X' es X'' ->
+      SStepStar X (cons e es) X''
+  .
+Definition ConjectureTSNIStar := forall X1 l es1 X1',
+  SStepStar X1 es1 X1' ->
+  forall X2,
+  pX X1 l = pX X2 l ->
+  exists X2' es2,
+      SStepStar X2 es2 X2'
+    /\
+      pX X1' l = pX X2' l
+    /\
+      pes es1 l = pes es2 l
   .
 
 (****************)
@@ -675,4 +702,28 @@ Proof.
   rewrite <- T1.
   apply projection_1.
   exact T2.
+Qed.
+
+Theorem tsni_star : ConjectureTSNIStar.
+Proof.
+  induction 1.
+  -
+    do 2 eexists.
+    split.
+      apply StarNil.
+    auto.
+  -
+    rename X into X1, X' into X1', X'' into X1'', es into es1, H into T1, H0 into T2.
+    intros X2 T3.
+    edestruct tsni as (X2', (e2, (T4, (T5, T6)))).
+        exact T3.
+      exact T1.
+    destruct IHSStepStar with X2' as (X2'', (es2, (T7, (T8, T9)))).
+      exact T5.
+    exists X2''.
+    exists (cons e2 es2).
+    intuition.
+      apply StarCons with X2'; assumption.
+    simpl.
+    congruence.
 Qed.
