@@ -1,5 +1,5 @@
 {
-  "unsecLambda" : "get.js",
+  "unsecLambda" : "put.js",
   "min" : 0,
   "max" : 2,
   "securityBound" : 3,

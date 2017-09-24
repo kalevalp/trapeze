@@ -18,7 +18,7 @@ SHOW TABLES like ?;
         `;
         const createTableSql = `
 CREATE TABLE kvstore (
-    rowkey VARCHAR(31) NOT NULL,
+    rowkey VARCHAR(32) NOT NULL,
     rowvalues VARCHAR(255),
     PRIMARY KEY (rowkey)
 );

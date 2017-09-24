@@ -1,14 +1,14 @@
 {
-  "name": "kv-store",
-  "version": "1.2.0",
-  "description": "A simple SQL-backed key-value store.",
-  "main": "kv-store.js",
+  "name": "po-put",
+  "version": "1.0.1",
+  "description": "",
+  "main": "po-put.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Kalev Alpernas <kalev.alp@gmail.com>",
   "license": "ISC",
   "dependencies": {
-    "mysql": "^2.14.1"
+    "lambda-shim": "file:../../../../lambda-shim"
   }
 }

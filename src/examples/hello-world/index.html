@@ -46,9 +46,26 @@
     </form>
     <br/>
 
-    <button onclick="doRetrieveAction('idenGetKey', 'idenGetRes', identity)">Submit</button>
+    <button onclick="doRetrieveAction('idenGetKey', 'idenGetRes', identity.get)">Submit</button>
 
     <div id="idenGetRes"></div>
+
+    <h3>Has:</h3>
+
+    <form>
+        <label for="idenHasKey">Key: </label> <input type="text" id="idenHasKey"><br/>
+    </form>
+    <br/>
+
+    <button onclick="doRetrieveAction('idenHasKey', 'idenHasRes', identity.has)">Submit</button>
+
+    <div id="idenHasRes"></div>
+
+    <br/>
+    <br/>
+    <br/>
+    <button onclick="clearElements('idenPutRes','idenGetRes', 'idenHasRes')">Clear</button>
+
 </div>
 
 <div id="Unsafe" class="tabcontent">
@@ -76,9 +93,193 @@
     </form>
     <br/>
 
-    <button onclick="doRetrieveAction('unsafeGetKey', 'unsafeGetRes', unsafe)">Submit</button>
+    <button onclick="doRetrieveAction('unsafeGetKey', 'unsafeGetRes', unsafe.get)">Submit</button>
 
     <div id="unsafeGetRes"></div>
+
+    <h3>Has:</h3>
+
+    <form>
+        <label for="unsafeHasKey">Key: </label> <input type="text" id="unsafeHasKey"><br/>
+    </form>
+    <br/>
+
+    <button onclick="doRetrieveAction('unsafeHasKey', 'unsafeHasRes', unsafe.has)">Submit</button>
+
+    <div id="unsafeHasRes"></div>
+
+    <br/>
+    <br/>
+    <br/>
+    <button onclick="clearElements('unsafePutRes','unsafeGetRes', 'unsafeHasRes')">Clear</button>
+
+</div>
+
+<div id="TO" class="tabcontent">
+    <h2>Simple Store (Total Order) Lambda Function</h2>
+    <p>
+        This application calls stores and retrieves values from a simple key-value store that enforces IFC with a
+        total ordering over the labels.
+    </p>
+    <p>
+        Users and their corresponding security labels:
+    </p>
+    <table>
+        <tr>
+            <th>User</th> <th>Password</th> <th>Label</th>
+        </tr>
+        <tr>
+            <td>super</td>  <td>superpass</td>  <td>4</td>
+        </tr>
+        <tr>
+            <td>admin</td>  <td>adminpass</td>  <td>3</td>
+        </tr>
+        <tr>
+            <td>user</td>   <td>userpass</td>   <td>2</td>
+        </tr>
+        <tr>
+            <td>guest</td>  <td>guestpass</td>  <td>1</td>
+        </tr>
+    </table>
+    <br>
+    <form>
+        <label for="TOUser">User: </label> <input type="text" id="TOUser"><br/>
+        <label for="TOPass">Password: </label> <input type="password" id="TOPass"><br/>
+    </form>
+
+    <h3>Put:</h3>
+    <form>
+        <label for="TOPutKey">Key: </label> <input type="text" id="TOPutKey"><br/>
+        <label for="TOPutValue">Value: </label> <input type="text" id="TOPutValue"><br/>
+    </form>
+    <br/>
+
+    <button onclick="doStoreAction('TOPutKey', 'TOPutValue', 'TOPutRes', total, 'TOUser', 'TOPass')">Submit</button>
+
+    <div id="TOPutRes"></div>
+
+    <h3>Get:</h3>
+
+    <form>
+        <label for="TOGetKey">Key: </label> <input type="text" id="TOGetKey"><br/>
+    </form>
+    <br/>
+
+    <button onclick="doRetrieveAction('TOGetKey', 'TOGetRes', total.get, 'TOUser', 'TOPass')">Submit</button>
+
+    <div id="TOGetRes"></div>
+
+    <h3>Has:</h3>
+
+    <form>
+        <label for="TOHasKey">Key: </label> <input type="text" id="TOHasKey"><br/>
+    </form>
+    <br/>
+
+    <button onclick="doRetrieveAction('TOHasKey', 'TOHasRes', total.has, 'TOUser', 'TOPass')">Submit</button>
+
+    <div id="TOHasRes"></div>
+
+    <br/>
+    <br/>
+    <br/>
+    <button onclick="clearElements('TOPutRes','TOGetRes', 'TOHasRes')">Clear</button>
+
+</div>
+
+<div id="PO" class="tabcontent">
+    <h2>Simple Store (Partial Order) Lambda Function</h2>
+    <p>
+        This application calls stores and retrieves values from a simple key-value store that enforces IFC with a
+        partial ordering over the labels.
+    </p>
+    <p>
+        Users and their corresponding security labels:
+    </p>
+    <table>
+        <tr>
+            <th>User</th> <th>Password</th> <th>Label</th>
+        </tr>
+        <tr>
+            <td>posuper</td>  <td>posuperpass</td>  <td>&#x22A4 (top)</td>
+        </tr>
+        <tr>
+            <td>poadmin</td>  <td>poadminpass</td>  <td>admin</td>
+        </tr>
+        <tr>
+            <td>pousera</td>   <td>pouserapass</td>   <td>userA</td>
+        </tr>
+        <tr>
+            <td>pouserb</td>  <td>pouserbpass</td>  <td>userB</td>
+        </tr>
+        <tr>
+            <td>poguest</td>  <td>poguestpass</td>  <td>&#x22A5 (bottom)</td>
+        </tr>
+    </table>
+    <br>
+    Partial ordering over security labels:
+    <table>
+        <tr>
+            <td> &#x22A5</td> <td>&#x227C</td> <td>userA</td>
+        </tr>
+        <tr>
+            <td> &#x22A5</td> <td>&#x227C</td> <td>userB</td>
+        </tr>
+        <tr>
+            <td> userA</td> <td>&#x227C</td> <td>admin</td>
+        </tr>
+        <tr>
+            <td> userB</td> <td>&#x227C</td> <td>admin</td>
+        </tr>
+        <tr>
+            <td> admin</td> <td>&#x227C</td> <td>&#x22A4</td>
+        </tr>
+
+    </table>
+    <br/>
+    <form>
+        <label for="POUser">User: </label> <input type="text" id="POUser"><br/>
+        <label for="POPass">Password: </label> <input type="password" id="POPass"><br/>
+    </form>
+
+    <h3>Put:</h3>
+    <form>
+        <label for="POPutKey">Key: </label> <input type="text" id="POPutKey"><br/>
+        <label for="POPutValue">Value: </label> <input type="text" id="POPutValue"><br/>
+    </form>
+    <br/>
+
+    <button onclick="doStoreAction('POPutKey', 'POPutValue', 'POPutRes', partial, 'POUser', 'POPass')">Submit</button>
+
+    <div id="POPutRes"></div>
+
+    <h3>Get:</h3>
+
+    <form>
+        <label for="POGetKey">Key: </label> <input type="text" id="POGetKey"><br/>
+    </form>
+    <br/>
+
+    <button onclick="doRetrieveAction('POGetKey', 'POGetRes', partial.get, 'POUser', 'POPass')">Submit</button>
+
+    <div id="POGetRes"></div>
+
+    <h3>Has:</h3>
+
+    <form>
+        <label for="POHasKey">Key: </label> <input type="text" id="POHasKey"><br/>
+    </form>
+    <br/>
+
+    <button onclick="doRetrieveAction('POHasKey', 'POHasRes', partial.has, 'POUser', 'POPass')">Submit</button>
+
+    <div id="POHasRes"></div>
+
+    <br/>
+    <br/>
+    <br/>
+    <button onclick="clearElements('POPutRes','POGetRes', 'POHasRes')">Clear</button>
+
 </div>
 
 </body>

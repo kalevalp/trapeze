@@ -72,3 +72,6 @@ SET GLOBAL log_bin_trust_function_creators = 1;
 
 DESC <table_name>;
 
+-- Show logs
+SELECT * FROM general_log WHERE user_host LIKE 'vmwuser%';
+

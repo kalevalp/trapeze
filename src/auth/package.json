@@ -1,11 +1,14 @@
 {
   "name": "auth",
-  "version": "1.0.1",
+  "version": "2.0.2",
   "description": "User authentication module. Produces the security label that corresponds to the given user credentials.",
   "main": "auth.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Kalev Alpernas <kalev.alp@gmail.com>",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "kv-store": "file:../kv-store"
+  }
 }

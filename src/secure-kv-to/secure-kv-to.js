@@ -13,7 +13,7 @@ class SecureKV_TO {
     init(callback) {
         const createTableSql = `
 CREATE TABLE kvstore (
-    rowkey VARCHAR(31) NOT NULL,
+    rowkey VARCHAR(32) NOT NULL,
     rowvalues VARCHAR(255),
     label INTEGER NOT NULL,
     PRIMARY KEY (rowkey)
@@ -21,18 +21,15 @@ CREATE TABLE kvstore (
         `;
 
         const addUpdateTrigger = `
-DELIMITER $$
-CREATE TRIGGER TO_put_semantics BEFORE UPDATE ON ? 
+CREATE TRIGGER TO_put_semantics BEFORE UPDATE ON kvstore 
     FOR EACH ROW
     BEGIN
         IF OLD.label < NEW.label THEN
-            SIGNAL SQLSTATE '45000'
-                SET MESSAGE_TEXT = 'Security policy violation: Attempt to perform a sensitive upgrade (TO semantics).';
+            SIGNAL SQLSTATE "45000"
+                SET MESSAGE_TEXT = "Security policy violation: Attempt to perform a sensitive upgrade (TO semantics).";
         END IF;
     END;
-$$
-DELIMITER ;
-        `;
+    `;
 
         const tableSql = `
 SHOW TABLES like ?;
@@ -59,13 +56,14 @@ SHOW TABLES like ?;
                                     callback(err);
                                 } else {
                                     console.log("** DEBUG: Secure K-V (TO) - Successfully created table.");
-                                    this.con.query(addUpdateTrigger, ['kvstore'], (err, result) => {
+                                    this.con.query(addUpdateTrigger, (err, result) => {
                                         if (err) {
                                             console.log("** DEBUG: Secure K-V (TO) - Failed adding update trigger to table.");
                                             callback(err);
+                                        } else {
+                                            console.log("** DEBUG: Secure K-V (TO) - Successfully added update trigger to table.");
+                                            callback();
                                         }
-                                        console.log("** DEBUG: Secure K-V (TO) - Successfully added update trigger to table.");
-                                        callback();
                                     });
                                 }
                             });
@@ -122,7 +120,7 @@ INSERT INTO kvstore (rowkey,rowvalues,label)
 
     get (k, l, callback) {
         const sql = `
-SELECT rowvalue 
+SELECT rowvalues 
 FROM kvstore 
 WHERE rowkey = ? AND
       label <= ?;
@@ -141,7 +139,7 @@ WHERE rowkey = ? AND
                 console.log("** DEBUG: Secure K-V (TO) - Query result />");
 
                 if (result.length === 0) callback(null, "");
-                if (result.length === 1) callback(null, result[0]["rowvalue"]);
+                if (result.length === 1) callback(null, result[0]["rowvalues"]);
                 if (result.length > 1) callback("Inconsistent KeyValueStore");
             }
         });

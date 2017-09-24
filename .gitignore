@@ -7,6 +7,8 @@
 *.aux
 *.fls
 *.fdb_latexmk
+*.bbl
+*.blg
 
 # Mac OS stuff
 ##############
