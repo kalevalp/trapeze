@@ -54,7 +54,9 @@
 \newcommand{\tstep}[3]{#2\tsteparrow{#1}#3}
 \newcommand{\tsteprule}[5]{\steprule{#1}{#2}{#4}{\tsteparrow{#3}}{#5}}
 \newcommand{\ssteparrow}[1]{\overset{#1}{\longrightarrow}}
+\newcommand{\ssteparrowstar}[1]{\overset{#1}{\longrightarrow^*}}
 \newcommand{\sstep}[3]{#2\ssteparrow{#1}#3}
+\newcommand{\sstepstar}[3]{#2\ssteparrowstar{#1}#3}
 \newcommand{\ssteprule}[5]{\steprule{#1}{#2}{#4}{\ssteparrow{#3}}{#5}}
 \newcommand{\ltsteparrow}[2]{\overset{#2}{\underset{#1}{\longrightarrow}}}
 \newcommand{\ltstep}[4]{#3\ltsteparrow{#1}{#2}#4}
@@ -165,6 +167,7 @@ $\startsyntax
     \sepsyntax
       \epsilon
     \\
+  es    & \in & \s{Events} & = & \s{Event}^*  \\
   \Sigma& \in & \s{State} & ::= & (\sigma,ts)  \\
   &           & \s{run} & : & \s{Code}\to\s{Operation}  \\
   &           & \s{write} & : & \s{LabeledValueSet}\times\s{Value}\times\s{Label}\to\s{LabeledValueSet}  \\
@@ -180,6 +183,7 @@ $\startsyntax
       e  & \exists ch,v.~e=\evsend{ch}{v}\text{ and }\s{label}(ch)\sqsubseteq l  \\
       \epsilon & \text{otherwise.}
     \end{cases}  \\
+  &           & \proj{es}{l} & = & \text{\texttt{fmap}}~(\proj{}{l})~es  \\
   &           & \proj{(\sigma,ts)}{l} & = & (\proj{\sigma}{l},\proj{ts}{l})   \\
   &           & \lequiv{l}{\hole_1}{\hole_2} & \text{means} & \proj{\hole_1}{l}=\proj{\hole_2}{l}  \\
 \finishsyntax$
@@ -240,6 +244,34 @@ and $\lequiv{l}{e_1}{e_2}$.
 \\
 \textit{Proof.}
 Please continue reading below.
+\\
+\fbox{$\sstepstar{es}{\Sigma}{\Sigma}$} Multiple-step state transition relation
+\\
+$\startrules
+  \mrule{}{
+  }{
+    \sstepstar{}{\Sigma}{\Sigma}
+  }
+  \mrule{}{
+      \sstep{e}{\Sigma}{\Sigma'}
+    \qquad
+      \sstepstar{es}{\Sigma'}{\Sigma''}
+  }{
+    \sstepstar{e~es}{\Sigma}{\Sigma''}
+  }
+\finishrules$
+\\
+\textbf{Corollary (TSNI${}^*$).}
+\\
+If $\lequiv{l}{\Sigma_1}{\Sigma_2}$
+and $\sstepstar{es_1}{\Sigma_1}{\Sigma_1'}$,
+\\
+then $\exists \Sigma_2'.\exists es_2.~\sstepstar{es_2}{\Sigma_2}{\Sigma_2'}$
+and $\lequiv{l}{\Sigma_1'}{\Sigma_2'}$
+and $\lequiv{l}{es_1}{es_2}$.
+\\
+\textit{Proof.}
+By repeated application (i.e., use induction) of TSNI.
 
 
 \newpage
