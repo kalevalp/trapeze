@@ -46,14 +46,25 @@
     </form>
     <br/>
 
-    <button onclick="doRetrieveAction('idenGetKey', 'idenGetRes', identity)">Submit</button>
+    <button onclick="doRetrieveAction('idenGetKey', 'idenGetRes', identity.get)">Submit</button>
 
     <div id="idenGetRes"></div>
 
+    <h3>Has:</h3>
+
+    <form>
+        <label for="idenHasKey">Key: </label> <input type="text" id="idenHasKey"><br/>
+    </form>
+    <br/>
+
+    <button onclick="doRetrieveAction('idenHasKey', 'idenHasRes', identity.has)">Submit</button>
+
+    <div id="idenHasRes"></div>
+
     <br/>
     <br/>
     <br/>
-    <button onclick="clearElements('idenPutRes','idenGetRes')">Clear</button>
+    <button onclick="clearElements('idenPutRes','idenGetRes', 'idenHasRes')">Clear</button>
 
 </div>
 
@@ -82,14 +93,25 @@
     </form>
     <br/>
 
-    <button onclick="doRetrieveAction('unsafeGetKey', 'unsafeGetRes', unsafe)">Submit</button>
+    <button onclick="doRetrieveAction('unsafeGetKey', 'unsafeGetRes', unsafe.get)">Submit</button>
 
     <div id="unsafeGetRes"></div>
 
+    <h3>Has:</h3>
+
+    <form>
+        <label for="unsafeHasKey">Key: </label> <input type="text" id="unsafeHasKey"><br/>
+    </form>
+    <br/>
+
+    <button onclick="doRetrieveAction('unsafeHasKey', 'unsafeHasRes', unsafe.has)">Submit</button>
+
+    <div id="unsafeHasRes"></div>
+
     <br/>
     <br/>
     <br/>
-    <button onclick="clearElements('unsafePutRes','unsafeGetRes')">Clear</button>
+    <button onclick="clearElements('unsafePutRes','unsafeGetRes', 'unsafeHasRes')">Clear</button>
 
 </div>
 
@@ -143,14 +165,25 @@
     </form>
     <br/>
 
-    <button onclick="doRetrieveAction('TOGetKey', 'TOGetRes', total, 'TOUser', 'TOPass')">Submit</button>
+    <button onclick="doRetrieveAction('TOGetKey', 'TOGetRes', total.get, 'TOUser', 'TOPass')">Submit</button>
 
     <div id="TOGetRes"></div>
 
+    <h3>Has:</h3>
+
+    <form>
+        <label for="TOHasKey">Key: </label> <input type="text" id="TOHasKey"><br/>
+    </form>
+    <br/>
+
+    <button onclick="doRetrieveAction('TOHasKey', 'TOHasRes', total.has, 'TOUser', 'TOPass')">Submit</button>
+
+    <div id="TOHasRes"></div>
+
     <br/>
     <br/>
     <br/>
-    <button onclick="clearElements('TOPutRes','TOGetRes')">Clear</button>
+    <button onclick="clearElements('TOPutRes','TOGetRes', 'TOHasRes')">Clear</button>
 
 </div>
 
@@ -227,14 +260,25 @@
     </form>
     <br/>
 
-    <button onclick="doRetrieveAction('POGetKey', 'POGetRes', partial, 'POUser', 'POPass')">Submit</button>
+    <button onclick="doRetrieveAction('POGetKey', 'POGetRes', partial.get, 'POUser', 'POPass')">Submit</button>
 
     <div id="POGetRes"></div>
 
+    <h3>Has:</h3>
+
+    <form>
+        <label for="POHasKey">Key: </label> <input type="text" id="POHasKey"><br/>
+    </form>
+    <br/>
+
+    <button onclick="doRetrieveAction('POHasKey', 'POHasRes', partial.has, 'POUser', 'POPass')">Submit</button>
+
+    <div id="POHasRes"></div>
+
     <br/>
     <br/>
     <br/>
-    <button onclick="clearElements('POPutRes','POGetRes')">Clear</button>
+    <button onclick="clearElements('POPutRes','POGetRes', 'POHasRes')">Clear</button>
 
 </div>
 

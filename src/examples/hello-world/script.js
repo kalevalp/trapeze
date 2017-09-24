@@ -3,19 +3,23 @@
  */
 identity = {
     put : "https://xarygspldj.execute-api.us-west-1.amazonaws.com/helloWorld/identity/store",
-    get : "https://xarygspldj.execute-api.us-west-1.amazonaws.com/helloWorld/identity/retrieve"
+    get : "https://xarygspldj.execute-api.us-west-1.amazonaws.com/helloWorld/identity/retrieve",
+    has : "https://xarygspldj.execute-api.us-west-1.amazonaws.com/helloWorld/identity/contains"
 };
 unsafe = {
     put : "https://xarygspldj.execute-api.us-west-1.amazonaws.com/helloWorld/no-sec/store",
-    get : "https://xarygspldj.execute-api.us-west-1.amazonaws.com/helloWorld/no-sec/retrieve"
+    get : "https://xarygspldj.execute-api.us-west-1.amazonaws.com/helloWorld/no-sec/retrieve",
+    has : "https://xarygspldj.execute-api.us-west-1.amazonaws.com/helloWorld/no-sec/contains"
 };
 total = {
     put : "https://xarygspldj.execute-api.us-west-1.amazonaws.com/helloWorld/total-order/store",
-    get : "https://xarygspldj.execute-api.us-west-1.amazonaws.com/helloWorld/total-order/retrieve"
+    get : "https://xarygspldj.execute-api.us-west-1.amazonaws.com/helloWorld/total-order/retrieve",
+    has : "https://xarygspldj.execute-api.us-west-1.amazonaws.com/helloWorld/total-order/contains"
 };
 partial = {
     put : "https://xarygspldj.execute-api.us-west-1.amazonaws.com/helloWorld/partial-order/store",
-    get : "https://xarygspldj.execute-api.us-west-1.amazonaws.com/helloWorld/partial-order/retrieve"
+    get : "https://xarygspldj.execute-api.us-west-1.amazonaws.com/helloWorld/partial-order/retrieve",
+    has : "https://xarygspldj.execute-api.us-west-1.amazonaws.com/helloWorld/partial-order/contains"
 };
 
 /* *******************************************
@@ -72,7 +76,7 @@ function doRetrieveAction(keyId, outId, api, userId, passId) {
         }
     };
 
-    request.open("POST", api.get, true);
+    request.open("POST", api, true);
     request.setRequestHeader('Content-Type', 'application/json');
     request.send(JSON.stringify(requestJson));
 }
