@@ -1,0 +1,14 @@
+{
+  "unsecLambda" : "has.js",
+  "min" : 1,
+  "max" : 4,
+  "securityBound" : 3,
+  "handler" : "handler",
+  "host": "serverless-ifc.cs6543lupbsv.us-west-1.rds.amazonaws.com",
+  "user": "vmwuser",
+  "pass": "serverlessifc",
+  "declassifier" : {
+    "maxLabel" : 1,
+    "minLabel" : 4
+  }
+}
