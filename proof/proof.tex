@@ -128,6 +128,7 @@
 \newcommand{\opsend}[3]{\textsf{send}~#1~#2~#3}
 \newcommand{\opfork}[2]{\textsf{fork}~#1~#2}
 \newcommand{\opstuck}{\textsf{stuck}}
+\newcommand{\opraiselabel}[2]{\textsf{raiseLabel}~#1~#2}
 \newcommand{\evstart}[1]{\textsf{input}~#1}
 \newcommand{\evsend}[2]{\textsf{output}~#1~#2}
 \newcommand{\proj}[2]{#1{\downarrow_{#2}}}
@@ -157,6 +158,8 @@ $\startsyntax
       \opsend{ch}{v}{c}
     \sepsyntax
       \opfork{c}{c}
+    \sepsyntax
+      \opraiselabel{l}{c}
     \sepsyntax
       \opstuck
     \\
@@ -211,6 +214,11 @@ $\startrules
         {\epsilon}
         {(\sigma,\thread{c}{l})}
         {(\sigma,\{\thread{c_1}{l},\thread{c_2}{l}\})}
+  \tsteprule{raise-label}
+        {\s{run}(c) = \opraiselabel{l'}{c'}\qquad l\sqsubseteq l'}
+        {\epsilon}
+        {(\sigma,\thread{c}{l})}
+        {(\sigma,\{\thread{c'}{l'}\})}
 \finishrules$
 \\
 \fbox{$\sstep{e}{\Sigma}{\Sigma}$} State transition relation
@@ -311,6 +319,18 @@ $\startrules
         {\epsilon}
         {(\sigma,\thread{c}{l})}
         {(\sigma,\{\thread{c_1}{l},\thread{c_2}{l}\})}
+  \ltsteprule{l-raise-label}
+        {\s{run}(c) = \opraiselabel{l'}{c'}\qquad l\sqsubseteq l'{\color{red}{}\sqsubseteq l''}}
+        {{\color{red}l''}}
+        {\epsilon}
+        {(\sigma,\thread{c}{l})}
+        {(\sigma,\{\thread{c'}{l'}\})}
+  \ltsteprule{l-censor-2}
+        {\s{run}(c) = \opraiselabel{l'}{c'}\qquad l\sqsubseteq l'{\color{red}{}\not\sqsubseteq l''}}
+        {{\color{red}l''}}
+        {\epsilon}
+        {(\sigma,\thread{c}{l})}
+        {(\sigma,\{\})}
 \finishrules$
 \\
 \fbox{$\lsstep{l}{e}{\Sigma}{\Sigma}$} Projected state transition relation
@@ -422,6 +442,23 @@ Omitted.
         & \z \z \z \z QED
         & by applying $\rn{l-censor}$.
 \\
+  (4)   & \z \z Case: $\rn{raise-label}$.
+\\
+        & \z \z \z Let $\opraiselabel{l''}{c'} = run(c)$.
+        & Justified by (4).
+\\
+        & \z \z \z Proceed by cases.
+\\
+        & \z \z \z Case where $l''\sqsubseteq l$.
+\\
+        & \z \z \z \z QED
+        & by applying $\rn{l-raise-label}$.
+\\
+        & \z \z \z Case where $l''\not\sqsubseteq l$.
+\\
+        & \z \z \z \z QED
+        & by applying $\rn{l-censor-2}$.
+\\
         & \z \z Cases: $\rn{read}$, $\rn{write}$, and $\rn{fork}$.
 \\
         & \z \z \z Fairly straightforward.
@@ -485,6 +522,18 @@ Omitted.
 \\
         & \z \z QED
         & by applying $\rn{send}$.
+\\
+  (5)   & \z Cases: $\rn{l-raise-label}$ and $\rn{l-censor-2}$.
+\\
+        & \z \z Let $\opraiselabel{l''}{c'}=run(c)$.
+        & Justified by (5).
+\\
+        & \z \z Pick $\Sigma_2 = (\sigma,ts-\thread{c}{l'}+\thread{c'}{l''})$
+\\
+        & \z \z and pick $e_2 = \epsilon$.
+\\
+        & \z \z QED
+        & by applying $\rn{raise-label}$.
 \\
         & \z Cases: $\rn{l-read}$, $\rn{l-write}$, and $\rn{l-fork}$.
 \\
