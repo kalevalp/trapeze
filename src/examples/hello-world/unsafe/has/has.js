@@ -18,7 +18,7 @@ module.exports.handler = function (event, context, callback) {
                         if (err) {
                             callback(err);
                         } else {
-                            if (result === []) {
+                            if (result.length === 0) {
                                 callback(null, false);
                             } else {
                                 callback(null, true);
