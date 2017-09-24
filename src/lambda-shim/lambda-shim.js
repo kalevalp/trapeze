@@ -68,10 +68,17 @@ module.exports.makeShim = function (exp) {
                         externalContext: context,
                         externalCallback:
                             function (err, value) {
-                                if (labelOrdering.lte(label, conf.securityBound)) {
-                                    callback(err, value);
+                                if (conf.declassifier &&
+                                    labelOrdering.lte(label, conf.declassifier.maxLabel) &&
+                                    labelOrdering.lte(conf.declassifier.minLabel, conf.securityBound)) {
+                                    const {declassifier} = require("./decl.js");
+                                    declassifier(err, value, callback);
                                 } else {
-                                    callback(null);
+                                    if (labelOrdering.lte(label, conf.securityBound)) {
+                                        callback(err, value);
+                                    } else {
+                                        callback(null);
+                                    }
                                 }
                             },
                         bumpLabelTo:
