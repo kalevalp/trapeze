@@ -62,7 +62,9 @@ module.exports.makeShim = function (exp) {
 
                 let declf;
                 if (conf.declassifier) {
-                    declf = require("./decl");
+                    // The relative path part of the next require is a very dangerous workaround to model load issues.
+                    // TODO: KALEV - Should change to something more robust.
+                    declf = require("../../decl");
                 }
 
                 const vm = new NodeVM({
