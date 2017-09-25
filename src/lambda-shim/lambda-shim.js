@@ -62,7 +62,7 @@ module.exports.makeShim = function (exp) {
 
                 let declf;
                 if (conf.declassifier) {
-                    declf = require("./decl.js");
+                    declf = require("./decl");
                 }
 
                 const vm = new NodeVM({
