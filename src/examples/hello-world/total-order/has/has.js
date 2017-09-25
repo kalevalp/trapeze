@@ -3,6 +3,8 @@ const fs = require("fs");
 
 const conf = JSON.parse(fs.readFileSync('conf.json', 'utf8'));
 
+bumpLabelToTop();
+
 module.exports.handler = function (event, context, callback) {
     let kv = new KV_Store(conf.host, conf.user, conf.pass);
 

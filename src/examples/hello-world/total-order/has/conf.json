@@ -8,7 +8,7 @@
   "user": "vmwuser",
   "pass": "serverlessifc",
   "declassifier" : {
-    "maxLabel" : 1,
-    "minLabel" : 4
+    "maxLabel" : 4,
+    "minLabel" : 1
   }
 }
