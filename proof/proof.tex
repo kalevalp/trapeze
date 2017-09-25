@@ -54,7 +54,9 @@
 \newcommand{\tstep}[3]{#2\tsteparrow{#1}#3}
 \newcommand{\tsteprule}[5]{\steprule{#1}{#2}{#4}{\tsteparrow{#3}}{#5}}
 \newcommand{\ssteparrow}[1]{\overset{#1}{\longrightarrow}}
+\newcommand{\ssteparrowstar}[1]{\overset{#1}{\longrightarrow^*}}
 \newcommand{\sstep}[3]{#2\ssteparrow{#1}#3}
+\newcommand{\sstepstar}[3]{#2\ssteparrowstar{#1}#3}
 \newcommand{\ssteprule}[5]{\steprule{#1}{#2}{#4}{\ssteparrow{#3}}{#5}}
 \newcommand{\ltsteparrow}[2]{\overset{#2}{\underset{#1}{\longrightarrow}}}
 \newcommand{\ltstep}[4]{#3\ltsteparrow{#1}{#2}#4}
@@ -126,6 +128,7 @@
 \newcommand{\opsend}[3]{\textsf{send}~#1~#2~#3}
 \newcommand{\opfork}[2]{\textsf{fork}~#1~#2}
 \newcommand{\opstuck}{\textsf{stuck}}
+\newcommand{\opraiselabel}[2]{\textsf{raiseLabel}~#1~#2}
 \newcommand{\evstart}[1]{\textsf{input}~#1}
 \newcommand{\evsend}[2]{\textsf{output}~#1~#2}
 \newcommand{\proj}[2]{#1{\downarrow_{#2}}}
@@ -156,6 +159,8 @@ $\startsyntax
     \sepsyntax
       \opfork{c}{c}
     \sepsyntax
+      \opraiselabel{l}{c}
+    \sepsyntax
       \opstuck
     \\
   e     & \in & \s{Event} & ::= &
@@ -165,6 +170,7 @@ $\startsyntax
     \sepsyntax
       \epsilon
     \\
+  es    & \in & \s{Events} & = & \s{Event}^*  \\
   \Sigma& \in & \s{State} & ::= & (\sigma,ts)  \\
   &           & \s{run} & : & \s{Code}\to\s{Operation}  \\
   &           & \s{write} & : & \s{LabeledValueSet}\times\s{Value}\times\s{Label}\to\s{LabeledValueSet}  \\
@@ -180,6 +186,7 @@ $\startsyntax
       e  & \exists ch,v.~e=\evsend{ch}{v}\text{ and }\s{label}(ch)\sqsubseteq l  \\
       \epsilon & \text{otherwise.}
     \end{cases}  \\
+  &           & \proj{es}{l} & = & \text{\texttt{fmap}}~(\proj{}{l})~es  \\
   &           & \proj{(\sigma,ts)}{l} & = & (\proj{\sigma}{l},\proj{ts}{l})   \\
   &           & \lequiv{l}{\hole_1}{\hole_2} & \text{means} & \proj{\hole_1}{l}=\proj{\hole_2}{l}  \\
 \finishsyntax$
@@ -207,6 +214,11 @@ $\startrules
         {\epsilon}
         {(\sigma,\thread{c}{l})}
         {(\sigma,\{\thread{c_1}{l},\thread{c_2}{l}\})}
+  \tsteprule{raise-label}
+        {\s{run}(c) = \opraiselabel{l'}{c'}\qquad l\sqsubseteq l'}
+        {\epsilon}
+        {(\sigma,\thread{c}{l})}
+        {(\sigma,\{\thread{c'}{l'}\})}
 \finishrules$
 \\
 \fbox{$\sstep{e}{\Sigma}{\Sigma}$} State transition relation
@@ -240,6 +252,34 @@ and $\lequiv{l}{e_1}{e_2}$.
 \\
 \textit{Proof.}
 Please continue reading below.
+\\
+\fbox{$\sstepstar{es}{\Sigma}{\Sigma}$} Multiple-step state transition relation
+\\
+$\startrules
+  \mrule{}{
+  }{
+    \sstepstar{}{\Sigma}{\Sigma}
+  }
+  \mrule{}{
+      \sstep{e}{\Sigma}{\Sigma'}
+    \qquad
+      \sstepstar{es}{\Sigma'}{\Sigma''}
+  }{
+    \sstepstar{e~es}{\Sigma}{\Sigma''}
+  }
+\finishrules$
+\\
+\textbf{Corollary (TSNI${}^*$).}
+\\
+If $\lequiv{l}{\Sigma_1}{\Sigma_2}$
+and $\sstepstar{es_1}{\Sigma_1}{\Sigma_1'}$,
+\\
+then $\exists \Sigma_2'.\exists es_2.~\sstepstar{es_2}{\Sigma_2}{\Sigma_2'}$
+and $\lequiv{l}{\Sigma_1'}{\Sigma_2'}$
+and $\lequiv{l}{es_1}{es_2}$.
+\\
+\textit{Proof.}
+By repeated application (i.e., use induction) of TSNI.
 
 
 \newpage
@@ -279,6 +319,18 @@ $\startrules
         {\epsilon}
         {(\sigma,\thread{c}{l})}
         {(\sigma,\{\thread{c_1}{l},\thread{c_2}{l}\})}
+  \ltsteprule{l-raise-label}
+        {\s{run}(c) = \opraiselabel{l'}{c'}\qquad l\sqsubseteq l'{\color{red}{}\sqsubseteq l''}}
+        {{\color{red}l''}}
+        {\epsilon}
+        {(\sigma,\thread{c}{l})}
+        {(\sigma,\{\thread{c'}{l'}\})}
+  \ltsteprule{l-censor-2}
+        {\s{run}(c) = \opraiselabel{l'}{c'}\qquad l\sqsubseteq l'{\color{red}{}\not\sqsubseteq l''}}
+        {{\color{red}l''}}
+        {\epsilon}
+        {(\sigma,\thread{c}{l})}
+        {(\sigma,\{\})}
 \finishrules$
 \\
 \fbox{$\lsstep{l}{e}{\Sigma}{\Sigma}$} Projected state transition relation
@@ -390,6 +442,23 @@ Omitted.
         & \z \z \z \z QED
         & by applying $\rn{l-censor}$.
 \\
+  (4)   & \z \z Case: $\rn{raise-label}$.
+\\
+        & \z \z \z Let $\opraiselabel{l''}{c'} = run(c)$.
+        & Justified by (4).
+\\
+        & \z \z \z Proceed by cases.
+\\
+        & \z \z \z Case where $l''\sqsubseteq l$.
+\\
+        & \z \z \z \z QED
+        & by applying $\rn{l-raise-label}$.
+\\
+        & \z \z \z Case where $l''\not\sqsubseteq l$.
+\\
+        & \z \z \z \z QED
+        & by applying $\rn{l-censor-2}$.
+\\
         & \z \z Cases: $\rn{read}$, $\rn{write}$, and $\rn{fork}$.
 \\
         & \z \z \z Fairly straightforward.
@@ -453,6 +522,18 @@ Omitted.
 \\
         & \z \z QED
         & by applying $\rn{send}$.
+\\
+  (5)   & \z Cases: $\rn{l-raise-label}$ and $\rn{l-censor-2}$.
+\\
+        & \z \z Let $\opraiselabel{l''}{c'}=run(c)$.
+        & Justified by (5).
+\\
+        & \z \z Pick $\Sigma_2 = (\sigma,ts-\thread{c}{l'}+\thread{c'}{l''})$
+\\
+        & \z \z and pick $e_2 = \epsilon$.
+\\
+        & \z \z QED
+        & by applying $\rn{raise-label}$.
 \\
         & \z Cases: $\rn{l-read}$, $\rn{l-write}$, and $\rn{l-fork}$.
 \\
