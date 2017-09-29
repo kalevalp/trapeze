@@ -60,6 +60,13 @@ module.exports.makeShim = function (exp) {
                     label = labelOrdering.getBottom();
                 }
 
+                let declf;
+                if (conf.declassifier) {
+                    // The relative path part of the next require is a very dangerous workaround to model load issues.
+                    // TODO: KALEV - Should change to something more robust.
+                    declf = require("../../decl");
+                }
+
                 const vm = new NodeVM({
                     // console: 'off',
                     console: 'inherit',
@@ -71,8 +78,7 @@ module.exports.makeShim = function (exp) {
                                 if (conf.declassifier &&
                                     labelOrdering.lte(label, conf.declassifier.maxLabel) &&
                                     labelOrdering.lte(conf.declassifier.minLabel, conf.securityBound)) {
-                                    const {declassifier} = require("./decl.js");
-                                    declassifier(err, value, callback);
+                                    declf.declassifier(err, value, callback);
                                 } else {
                                     if (labelOrdering.lte(label, conf.securityBound)) {
                                         callback(err, value);

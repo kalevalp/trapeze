@@ -20,7 +20,7 @@ class PartialOrder {
         else {
             for (const label in this.potc) {
                 if (this.potc.hasOwnProperty(label)) {
-                    if (this.potc[label].length === 0) {
+                    if (this.potc[label].size === 1) {
                         this.top = label;
                         return this.top;
                     }
