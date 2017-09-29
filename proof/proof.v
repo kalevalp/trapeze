@@ -195,47 +195,8 @@ Definition ConjectureTSNIStar := forall X1 l es1 X1',
 
 (****************)
 
-Inductive LStep : Store -> Thread -> Event -> Label -> State -> Prop :=
-  | LSSend : forall x c l ch v c' L,
-      run c = Send ch v c' ->
-      Flows l (label ch) ->
-      Flows (label ch) L ->
-      LStep x (Thrd c l) (Output ch v) L (St x (multi_one (Thrd c' l)))
-  | LSCensor : forall x c l ch v c' L,
-      run c = Send ch v c' ->
-      Flows l (label ch) ->
-      ~Flows (label ch) L ->
-      LStep x (Thrd c l) Epsilon L (St x (multi_one (Thrd c' l)))
-  | LSRead : forall x c l f k L,
-      run c = Read k f ->
-      LStep x (Thrd c l) Epsilon L (St x (multi_one (Thrd (f (pS (x k) l)) l)))
-  | LSWrite : forall x c l k v c' L,
-      run c = Write k v c' ->
-      LStep x (Thrd c l) Epsilon L (St (upd x k (write (x k) v l)) (multi_one (Thrd c' l)))
-  | LSFork : forall x c l c1 c2 L,
-      run c = Fork c1 c2 ->
-      LStep x (Thrd c l) Epsilon L (St x (multi_two (Thrd c1 l) (Thrd c2 l)))
-  | LSRaiseLabel : forall c l' c' x l L,
-      run c = RaiseLabel l' c' ->
-      Flows l l' ->
-      Flows l' L ->
-      LStep x (Thrd c l) Epsilon L (St x (multi_one (Thrd c' l')))
-  | LSCensor2 : forall c l' c' x l L,
-      run c = RaiseLabel l' c' ->
-      Flows l l' ->
-      ~Flows l' L ->
-      LStep x (Thrd c l) Epsilon L (St x (fun t => 0))
-  .
-Inductive LSStep : State -> Event -> Label -> State -> Prop :=
-  | LSSStart : forall x ts c l L,
-      Flows l L ->
-      LSStep (St x ts) (Input (Thrd c l)) L (St x (multi_cons ts (Thrd c l)))
-  | LSSSkip : forall X L,
-      LSStep X Epsilon L X
-  | LSSThread : forall x ts c l e x' ts' L,
-      LStep x (Thrd c l) e L (St x' ts') ->
-      LSStep (St x (multi_cons ts (Thrd c l))) e L (St x' (multi_plus ts ts'))
-  .
+Definition LStep x t e L X := exists e' X', Step x t e' X' /\ pe e' L = e /\ pX X' L = X.
+Definition LSStep X1 e L X2 := exists e' X2', SStep X1 e' X2' /\ pe e' L = e /\ pX X2' L = X2.
 
 Lemma lemma_pts_multicons_1 : forall ts c l l',
   Flows l' l ->
@@ -440,88 +401,190 @@ Proof.
   intuition.  (* contradiction *)
 Qed.
 
+Lemma lemma_idemp_px : forall x l,
+  px (px x l) l = px x l.
+Proof.
+  intros.
+  apply extensionality; intro k.
+  apply extensionality; intro v.
+  apply extensionality; intro l'.
+  unfold px, pS.
+  destruct (Flows_dec l' l); reflexivity.
+Qed.
+
+Lemma lemma_idemp_pts : forall ts l,
+  pts (pts ts l) l = pts ts l.
+Proof.
+  intros.
+  apply extensionality; intro t; destruct t as (c', l').
+  unfold pts, thread_label.
+  destruct (Flows_dec l' l); reflexivity.
+Qed.
+
+Lemma lemma_pts_multicons_pts : forall ts l t,
+  pts (multi_cons (pts ts l) t) l = pts (multi_cons ts t) l.
+Proof.
+  intros.
+  apply extensionality; intro t'; destruct t' as (c', l').
+  unfold pts, multi_cons, thread_label.
+  destruct (Flows_dec l' l); destruct (eqdec t (Thrd c' l')); auto.
+Qed.
+
+Lemma lemma_pts_multiplus_pts : forall ts l ts',
+  pts (multi_plus (pts ts l) ts') l = pts (multi_plus ts ts') l.
+Proof.
+  intros.
+  apply extensionality; intro t'; destruct t' as (c', l').
+  unfold pts, multi_plus, thread_label.
+  destruct (Flows_dec l' l); auto.
+Qed.
+
+Lemma lemma_idemp_pX : forall X l,
+  pX (pX X l) l = pX X l.
+Proof.
+  intros.
+  destruct X as (x, ts).
+  simpl.
+  rewrite lemma_idemp_px.
+  rewrite lemma_idemp_pts.
+  reflexivity.
+Qed.
+
+Lemma lemma_multicons_multiplus_multione : forall ts t,
+  multi_cons ts t = multi_plus ts (multi_one t).
+Proof.
+  intros.
+  apply extensionality; intro t'.
+  unfold multi_cons, multi_plus, multi_one.
+  destruct (eqdec t t')
+  ; destruct (eqdec t' t)
+  ; try congruence
+  ; omega
+  .
+Qed.
+
 Theorem projection_1 : forall X e X' l,
   SStep X e X' ->
   LSStep (pX X l) (pe e l) l (pX X' l)
   .
 Proof.
-  destruct 1.
+  destruct 1 as [| |? ? ? l'].
   -
-    destruct t as (c, l').
-    simpl.
-    destruct (Flows_dec l' l).
-    +
-      rewrite lemma_pts_multicons_1; auto.
-      apply LSSStart.
-      auto.
-    +
-      rewrite lemma_pts_multicons_2; auto.
-      apply LSSSkip.
+    do 2 eexists.
+    split; [|split].
+    + apply SSStart.
+    + reflexivity.
+    + unfold pX.
+      rewrite lemma_idemp_px.
+      rewrite lemma_pts_multicons_pts.
+      reflexivity.
   -
-    eapply LSSSkip.
+    do 2 eexists.
+    split; [|split].
+    + apply SSSkip.
+    + reflexivity.
+    + apply lemma_idemp_pX.
   -
-    rename H into T1, l0 into l'.
-    destruct (Flows_dec l' l) as [T2|T2]; cycle 1.
+    destruct (Flows_dec l' l); cycle 1.
     +
-      simpl.
-      rewrite lemma_pts_multicons_2; auto.
-      erewrite lemma_invisibility_1 with (x' := x'); cycle 1.
-          exact T2.
-        exact T1.
-      erewrite lemma_invisibility_2; cycle 1.
-          exact T2.
-        exact T1.
-      rewrite lemma_pts_multiplus.
-      erewrite lemma_invisibility_3 with (ts' := ts'); cycle 1.
-          exact T2.
-        exact T1.
-      rewrite lemma_multiplus_zero.
-      apply LSSSkip.
-    +
-      simpl.
-      rewrite lemma_pts_multicons_1; auto.
-      rewrite lemma_pts_multiplus.
-      apply LSSThread.
-      inversion T1.
+      do 2 eexists; split; [|split].
       *
-        rewrite lemma_pts_multione; auto.
+        apply SSSkip.
+      *
+        destruct e as [|ch v|].
+        --  inversion H.
+        --  inversion H.
+            simpl.
+            destruct (Flows_dec (label ch) l); auto.
+            pose (Flows_trans l' (label ch) l).
+            intuition.  (* contradiction *)
+        --  reflexivity.
+      *
         simpl.
+        rewrite lemma_pts_multiplus.
+        rewrite lemma_idemp_px.
+        erewrite <- lemma_invisibility_1; cycle 1.
+            exact n.
+          exact H.
+        rewrite lemma_idemp_pts.
+        rewrite lemma_pts_multicons_2; auto.
+        erewrite lemma_invisibility_3 with (ts' := ts') ; cycle 1.
+            exact n.
+          exact H.
+        rewrite lemma_multiplus_zero.
+        reflexivity.
+    +
+      simpl.
+      rewrite lemma_pts_multicons_1; auto.
+      inversion H.
+      *
         destruct (Flows_dec (label ch) l).
-          apply LSSend; auto.
-        eapply LSCensor.
+        --
+            do 2 eexists; split; [|split].
+            ++  apply SSThread.
+                apply SSend.
+                  exact H5.
+                assumption.
+            ++  reflexivity.
+            ++  simpl.
+                rewrite lemma_idemp_px.
+                rewrite lemma_pts_multiplus_pts.
+                reflexivity.
+        --
+            do 2 eexists; split; [|split].
+            ++  apply SSThread.
+                apply SSend.
+                  exact H5.
+                assumption.
+            ++  unfold pe.
+                destruct (Flows_dec (label ch) l); intuition.
+            ++  simpl.
+                rewrite lemma_idemp_px.
+                rewrite lemma_pts_multiplus_pts.
+                reflexivity.
+      *
+        do 2 eexists; split; [|split].
+        --  apply SSThread.
+            apply SRead.
             exact H4.
-          auto.
-        auto.
+        --  reflexivity.
+        --  simpl.
+            rewrite lemma_idemp_px.
+            rewrite lemma_pts_multiplus_pts.
+            rewrite <- lemma_read_helper with (l := l); auto.
       *
-        rewrite lemma_pts_multione; auto.
-        rewrite lemma_read_helper with (l := l); auto.
-        apply LSRead.
-        assumption.
-      *
-        rewrite lemma_pts_multione; auto.
-        rewrite lemma_px_upd; auto.
-        apply LSWrite.
-        assumption.
-      *
-        rewrite lemma_pts_multitwo; auto.
-        apply LSFork.
-        assumption.
-      *
-        destruct (Flows_dec l'0 l).
-          rewrite lemma_pts_multione; auto.
-          apply LSRaiseLabel; auto.
-        assert ((pts (multi_one (Thrd c' l'0)) l) = fun t => 0) as T3.
-          apply extensionality; intro t.
-          destruct t.
-          unfold pts, multi_one, thread_label.
-          destruct (Flows_dec l1 l); destruct (eqdec (Thrd c1 l1) (Thrd c' l'0)); auto.
-          injection e0; intros.
-          congruence.  (* it's a contradiction *)
-        rewrite T3.
-        eapply LSCensor2.
+        do 2 eexists; split; [|split].
+        --  apply SSThread.
+            apply SWrite.
             exact H4.
-          auto.
-        auto.
+        --  reflexivity.
+        --  simpl.
+            rewrite lemma_px_upd; auto.
+            rewrite lemma_px_upd; auto.
+            rewrite lemma_idemp_px.
+            rewrite lemma_pts_multiplus_pts.
+            reflexivity.
+      *
+        do 2 eexists; split; [|split].
+        --  apply SSThread.
+            apply SFork.
+            exact H4.
+        --  reflexivity.
+        --  simpl.
+            rewrite lemma_idemp_px.
+            rewrite lemma_pts_multiplus_pts.
+            reflexivity.
+      *
+        do 2 eexists; split; [|split].
+        --  apply SSThread.
+            apply SRaiseLabel.
+              exact H5.
+            exact H7.
+        --  reflexivity.
+        --  simpl.
+            rewrite lemma_idemp_px.
+            rewrite lemma_pts_multiplus_pts.
+            reflexivity.
 Qed.
 
 Lemma apply_equation : forall {A}{B} {f g:A->B},
@@ -542,24 +605,38 @@ Theorem projection_2 : forall X l e1 X1,
   .
 Proof.
   destruct X as (x, ts).
-  inversion 1.
+  destruct 1 as (e', (X', (T8, (T9, T10)))).
+  inversion T8.
   -
+    destruct t as (c, l0).
     exists (St x (multi_cons ts (Thrd c l0))).
     exists (Input (Thrd c l0)).
     repeat split.
     + apply SSStart.
-    + simpl.
-      rewrite lemma_pts_multicons_1; auto.
-    + simpl.
-      destruct (Flows_dec l0 l); intuition.
+    + rewrite <- T10.
+      rewrite <- H3.
+      simpl.
+      rewrite lemma_idemp_px.
+      rewrite lemma_pts_multicons_pts.
+      reflexivity.
+    + rewrite <- T9.
+      rewrite <- H2.
+      reflexivity.
   -
     do 2 eexists.
     split; [|split].
     + apply SSSkip.
-    + reflexivity.
-    + reflexivity.
+    + rewrite <- T10.
+      rewrite <- H1.
+      simpl.
+      rewrite lemma_idemp_px.
+      rewrite lemma_idemp_pts.
+      reflexivity.
+    + rewrite <- T9.
+      rewrite <- H0.
+      reflexivity.
   -
-    rename H2 into T2, H5 into T3.
+    rename H1 into T2, H3 into T3.
     assert (Flows l0 l).
       remember (apply_equation T2 (Thrd c l0)) as T4; clear HeqT4.
       unfold multi_cons, pts, thread_label in T4.
@@ -590,107 +667,93 @@ Proof.
       repeat split.
       * apply SSThread.
         apply SSend.
-          exact H12.
+          exact H8.
         assumption.
-      * simpl.
-        rewrite lemma_pts_multiplus.
-        rewrite lemma_pts_multione; auto.
-        rewrite T6.
+      * rewrite <- T10.
+        rewrite <- H2.
+        simpl.
+        rewrite <- T6.
+        rewrite lemma_pts_multiplus_pts.
+        rewrite <- H6.
+        rewrite lemma_idemp_px.
+        rewrite <- H9.
         reflexivity.
-      * unfold pe.
-        destruct (Flows_dec (label ch) l); congruence.
-    + (* This case is just a copy-paste of the previous case *)
-      rewrite T5.
-      do 2 eexists.
-      repeat split.
-      * apply SSThread.
-        apply SSend.
-          exact H12.
-        assumption.
-      * simpl.
-        rewrite lemma_pts_multiplus.
-        rewrite lemma_pts_multione; auto.
-        rewrite T6.
-        reflexivity.
-      * unfold pe.
-        destruct (Flows_dec (label ch) l); congruence.
+      * congruence.
     +
       rewrite T5.
       do 2 eexists.
       repeat split.
       * apply SSThread.
         apply SRead.
-          exact H10.
-      * simpl.
+        exact H7.
+      * rewrite <- T10.
+        rewrite <- H2.
+        simpl.
+        rewrite <- T6.
+        rewrite lemma_pts_multiplus_pts.
+        rewrite <- H8.
+        rewrite lemma_idemp_px.
+        rewrite <- H9.
+        rewrite lemma_pts_multiplus.
         rewrite lemma_pts_multiplus.
         rewrite lemma_pts_multione; auto.
-        rewrite T6.
+        rewrite lemma_pts_multione; auto.
         rewrite <- lemma_read_helper with (l := l); auto.
-      * reflexivity.
+      * congruence.
     +
       rewrite T5.
       do 2 eexists.
       repeat split.
       * apply SSThread.
         apply SWrite.
-          exact H10.
-      * simpl.
-        rewrite lemma_pts_multiplus.
-        rewrite lemma_pts_multione; auto.
-        rewrite T6.
-        rewrite <- lemma_px_upd; auto.
-      * reflexivity.
+        exact H7.
+      * rewrite <- T10.
+        rewrite <- H2.
+        simpl.
+        rewrite <- T6.
+        rewrite lemma_pts_multiplus_pts.
+        rewrite <- H8.
+        rewrite lemma_px_upd; auto.
+        rewrite lemma_px_upd; auto.
+        rewrite lemma_idemp_px.
+        rewrite <- H9.
+        reflexivity.
+      * congruence.
     +
       rewrite T5.
       do 2 eexists.
       repeat split.
       * apply SSThread.
         apply SFork.
-          exact H10.
-      * simpl.
-        rewrite lemma_pts_multiplus.
-        rewrite lemma_pts_multitwo; auto.
-        rewrite T6.
+        exact H7.
+      * rewrite <- T10.
+        rewrite <- H2.
+        simpl.
+        rewrite <- T6.
+        rewrite lemma_pts_multiplus_pts.
+        rewrite <- H8.
+        rewrite lemma_idemp_px.
+        rewrite <- H9.
         reflexivity.
-      * reflexivity.
-    + (* This case is copy-paste-edited from a previous case. *)
+      * congruence.
+    +
       rewrite T5.
       do 2 eexists.
       repeat split.
       * apply SSThread.
         apply SRaiseLabel.
-          exact H12.
-        assumption.
-      * simpl.
-        rewrite lemma_pts_multiplus.
-        rewrite lemma_pts_multione; auto.
-        rewrite T6.
+          exact H8.
+        auto.
+      * rewrite <- T10.
+        rewrite <- H2.
+        simpl.
+        rewrite <- T6.
+        rewrite lemma_pts_multiplus_pts.
+        rewrite <- H6.
+        rewrite lemma_idemp_px.
+        rewrite <- H9.
         reflexivity.
-      * unfold pe.
-        destruct (Flows_dec l0 l); congruence.
-    + (* This case is copy-paste-edited from a previous case. *)
-      rewrite T5.
-      do 2 eexists.
-      repeat split.
-      * apply SSThread.
-        apply SRaiseLabel.
-          exact H12.
-        assumption.
-      * simpl.
-        rewrite lemma_pts_multiplus.
-        rewrite T6.
-        assert (pts (multi_one (Thrd c' l')) l = fun t => 0) as T7.
-          (* This tactic sequence is copy-paste-edited from part of the projection_1 proof. *)
-          apply extensionality; intro t.
-          destruct t.
-          unfold pts, multi_one, thread_label.
-          destruct (Flows_dec l2 l); destruct (eqdec (Thrd c1 l2) (Thrd c' l')); auto.
-          injection e0; intros.
-          congruence.  (* it's a contradiction *)
-        rewrite T7.
-        reflexivity.
-      * unfold pe.
-        destruct (Flows_dec l0 l); congruence.
+      * congruence.
 Qed.
 
 Theorem tsni : ConjectureTSNI.
