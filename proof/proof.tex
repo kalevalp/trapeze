@@ -146,20 +146,20 @@ $\startsyntax
   S     & \in & \s{LabeledValueSet} & = & \multicolumn{2}{l}{2^{\s{Value}\times\s{Label}}}  \\
   k     & \in & \s{Key}  \\
   \sigma& \in & \s{Store} & = & \s{Key}\to\s{LabeledValueSet}  \\
-  c     & \in & \s{Code}  \\
-  p     & \in & \s{Process} & ::= & \process{c}{l}  \\
+  t     & \in & \s{Thread}  \\
+  p     & \in & \s{Process} & ::= & \process{t}{l}  \\
   ps    & \in & \s{Processes} & = & \text{multisets of processes}  \\
-  f     & \in & \s{ReadContinuation} & = & \s{LabeledValueSet}\to\s{Code}  \\
+  f     & \in & \s{ReadContinuation} & = & \s{LabeledValueSet}\to\s{Thread}  \\
   op    & \in & \s{Operation} & ::= &
       \opread{k}{f}
     \sepsyntax
-      \opwrite{k}{v}{c}
+      \opwrite{k}{v}{t}
     \sepsyntax
-      \opsend{ch}{v}{c}
+      \opsend{ch}{v}{t}
     \sepsyntax
-      \opfork{c}{c}
+      \opfork{t}{t}
     \sepsyntax
-      \opraiselabel{l}{c}
+      \opraiselabel{l}{t}
     \sepsyntax
       \opstuck
     \\
@@ -172,17 +172,17 @@ $\startsyntax
     \\
   es    & \in & \s{Events} & = & \s{Event}^*  \\
   \Sigma& \in & \s{State} & ::= & (\sigma,ps)  \\
-  &           & \s{run} & : & \s{Code}\to\s{Operation}  \\
+  &           & \s{run} & : & \s{Thread}\to\s{Operation}  \\
   &           & \s{write} & : & \s{LabeledValueSet}\times\s{Value}\times\s{Label}\to\s{LabeledValueSet}  \\
   &           & \s{write}(S,v,l) & = & (S\setminus\{(v',l')\in S~|~l\sqsubseteq l'\})\cup\{(v,l)\}  \\
   &           & \proj{\hole}{\hole}
                   & : & \text{``Various things''}\to\s{Label}\to\text{``Various things''}  \\
   &           & \proj{S}{l} & = & \{(v,l')\in S~|~l'\sqsubseteq l\}  \\
-  &           & \proj{ps}{l} & = & \text{multiset}\{\process{c}{l'}\in ps~|~l'\sqsubseteq l\}  \\
+  &           & \proj{ps}{l} & = & \text{multiset}\{\process{t}{l'}\in ps~|~l'\sqsubseteq l\}  \\
   &           & \proj{\sigma}{l} & = & \lambda k. \proj{\sigma(k)}{l}  \\
   &           & \proj{e}{l} & = &
     \begin{cases}
-      e  & \exists c,l'.~e=\evstart{\process{c}{l'}}\text{ and }l'\sqsubseteq l  \\
+      e  & \exists t,l'.~e=\evstart{\process{t}{l'}}\text{ and }l'\sqsubseteq l  \\
       e  & \exists ch,v.~e=\evsend{ch}{v}\text{ and }\s{label}(ch)\sqsubseteq l  \\
       \epsilon & \text{otherwise.}
     \end{cases}  \\
@@ -195,30 +195,30 @@ $\startsyntax
 \\
 $\startrules
   \tsteprule{p-send}
-        {\s{run}(c)=\opsend{ch}{v}{c'}\qquad l\sqsubseteq\s{label}(ch)}
+        {\s{run}(t)=\opsend{ch}{v}{t'}\qquad l\sqsubseteq\s{label}(ch)}
         {\evsend{ch}{v}}
-        {(\sigma,\process{c}{l})}
-        {(\sigma,\{\process{c'}{l}\})}
+        {(\sigma,\process{t}{l})}
+        {(\sigma,\{\process{t'}{l}\})}
   \tsteprule{p-read}
-        {\s{run}(c)=\opread{k}{f}}
+        {\s{run}(t)=\opread{k}{f}}
         {\epsilon}
-        {(\sigma,\process{c}{l})}
+        {(\sigma,\process{t}{l})}
         {(\sigma,\{\process{f(\proj{\sigma(k)}{l})}{l}\})}
   \tsteprule{p-write}
-        {\s{run}(c)=\opwrite{k}{v}{c'}}
+        {\s{run}(t)=\opwrite{k}{v}{t'}}
         {\epsilon}
-        {(\sigma,\process{c}{l})}
-        {(\upd{\sigma}{k}{\s{write}(\sigma(k),v,l)},\{\process{c'}{l}\})}
+        {(\sigma,\process{t}{l})}
+        {(\upd{\sigma}{k}{\s{write}(\sigma(k),v,l)},\{\process{t'}{l}\})}
   \tsteprule{p-fork}
-        {\s{run}(c) = \opfork{c_1}{c_2}}
+        {\s{run}(t) = \opfork{t_1}{t_2}}
         {\epsilon}
-        {(\sigma,\process{c}{l})}
-        {(\sigma,\{\process{c_1}{l},\process{c_2}{l}\})}
+        {(\sigma,\process{t}{l})}
+        {(\sigma,\{\process{t_1}{l},\process{t_2}{l}\})}
   \tsteprule{p-raise-label}
-        {\s{run}(c) = \opraiselabel{l'}{c'}\qquad l\sqsubseteq l'}
+        {\s{run}(t) = \opraiselabel{l'}{t'}\qquad l\sqsubseteq l'}
         {\epsilon}
-        {(\sigma,\process{c}{l})}
-        {(\sigma,\{\process{c'}{l'}\})}
+        {(\sigma,\process{t}{l})}
+        {(\sigma,\{\process{t'}{l'}\})}
 \finishrules$
 \\
 \fbox{$\sstep{e}{\Sigma}{\Sigma}$} State transition relation
@@ -235,9 +235,9 @@ $\startrules
         {(\sigma,ps)}
         {(\sigma,ps)}
   \ssteprule{s-step}
-        {\tstep{e}{(\sigma,\process{c}{l})}{(\sigma',ps')}}
+        {\tstep{e}{(\sigma,\process{t}{l})}{(\sigma',ps')}}
         {e}
-        {(\sigma,ps\uplus\{\process{c}{l}\})}
+        {(\sigma,ps\uplus\{\process{t}{l}\})}
         {(\sigma',ps\uplus ps')}
 \finishrules$
 \\
@@ -299,7 +299,7 @@ $\startrules
 \textbf{Lemma (Invisibility).}
 \\
 If $l'\not\sqsubseteq l$
-and $\tstep{e}{(\sigma,\process{c}{l'})}{(\sigma',ps')}$,
+and $\tstep{e}{(\sigma,\process{t}{l'})}{(\sigma',ps')}$,
 \\
 then $\proj{\sigma'}{l}=\proj{\sigma}{l}$
 and $\proj{e}{l}=\epsilon$
@@ -326,19 +326,19 @@ Omitted.
 \\
         & Proceed by cases (ie inversion) on (1).
 \\
-        & Case: $\rn{s-start}$. Let $c,l'$ be such that:
+        & Case: $\rn{s-start}$. Let $t,l'$ be such that:
 \\
-        & \z $e=\evstart{\process{c}{l'}}$; and
+        & \z $e=\evstart{\process{t}{l'}}$; and
 \\
         & \z $\sigma'=\sigma$; and
 \\
-        & \z $ps'=ps+\process{c}{l'}$.
+        & \z $ps'=ps+\process{t}{l'}$.
 \\
         & \z Proceed by cases.
 \\
         & \z Case: where $l'\sqsubseteq l$.
 \\
-        & \z \z $\sstep{\evstart{\process{c}{l'}}}{\proj{\Sigma}{l}}{(\proj{\sigma}{l},\proj{ps}{l}+\process{c}{l'})}$
+        & \z \z $\sstep{\evstart{\process{t}{l'}}}{\proj{\Sigma}{l}}{(\proj{\sigma}{l},\proj{ps}{l}+\process{t}{l'})}$
         & by  $\rn{s-start}$.
 \\
         & \z \z QED
@@ -360,13 +360,13 @@ Omitted.
         & \z QED
         & by  $\rn{ps}$.
 \\
-        & Last case: $\rn{s-step}$. Let $c,l',ps_1,ps_2$ be such that:
+        & Last case: $\rn{s-step}$. Let $t,l',ps_1,ps_2$ be such that:
 \\
-        & $ps=ps_1+\process{c}{l'}$; and
+        & $ps=ps_1+\process{t}{l'}$; and
 \\
         & $ps'=ps_1\uplus ps_2$; and
 \\
-  (2)   & $\tstep{e}{(\sigma,\process{c}{l'})}{(\sigma',ps_2)}$.
+  (2)   & $\tstep{e}{(\sigma,\process{t}{l'})}{(\sigma',ps_2)}$.
 \\
         & Proceed by cases.
 \\
@@ -382,22 +382,22 @@ Omitted.
 \\
         & Proceed by cases (ie inversion) on (2).
 \\
-        & Case: $\rn{p-send}$. Let $ch,v,c'$ be such that:
+        & Case: $\rn{p-send}$. Let $ch,v,t'$ be such that:
 \\
         & \z $e=\evsend{ch}{v}$; and
 \\
         & \z $\sigma'=\sigma$; and
 \\
-        & \z $ps_2=\{\process{c'}{l'}\}$; and
+        & \z $ps_2=\{\process{t'}{l'}\}$; and
 \\
-        & \z $run(c)=\opsend{ch}{v}{c'}$; and
+        & \z $run(t)=\opsend{ch}{v}{t'}$; and
 \\
         & \z $l'\sqsubseteq\s{label}(ch)$.
 \\
-        & \z $\tstep{\evsend{ch}{v}}{(\proj{\sigma}{l},\process{c}{l'})}{(\proj{\sigma}{l},\{\process{c'}{l'}\})}$
+        & \z $\tstep{\evsend{ch}{v}}{(\proj{\sigma}{l},\process{t}{l'})}{(\proj{\sigma}{l},\{\process{t'}{l'}\})}$
         & by $\rn{p-send}$.
 \\
-        & \z $\sstep{\evsend{ch}{v}}{\proj{\Sigma}{l}}{(\proj{\sigma}{l},\proj{ps_1}{l}+\process{c'}{l'})}$
+        & \z $\sstep{\evsend{ch}{v}}{\proj{\Sigma}{l}}{(\proj{\sigma}{l},\proj{ps_1}{l}+\process{t'}{l'})}$
         & by $\rn{s-step}$.
 \\
         & \z QED
@@ -439,15 +439,15 @@ Omitted.
 \\
         & Proceed by cases (ie inversion) on (2).
 \\
-        & Case: $\rn{s-start}$. Let $c,l'$ be such that:
+        & Case: $\rn{s-start}$. Let $t,l'$ be such that:
 \\
-        & \z $e'=\process{c}{l'}$; and
+        & \z $e'=\process{t}{l'}$; and
 \\
         & \z $\sigma'=\proj{\sigma}{l}$; and
 \\
-        & \z $ps'=\proj{ps}{l}+\process{c}{l'}$; and
+        & \z $ps'=\proj{ps}{l}+\process{t}{l'}$; and
 \\
-        & \z Pick $\Sigma_2 = (\sigma,ps+\process{c}{l'})$ and $e_2=e'$.
+        & \z Pick $\Sigma_2 = (\sigma,ps+\process{t}{l'})$ and $e_2=e'$.
 \\
         & \z QED
         & by $\rn{s-start}$.
@@ -459,35 +459,35 @@ Omitted.
         & \z QED
         & by $\rn{s-skip}$.
 \\
-        & Last case: $\rn{s-step}$. Let $c,l',ps_3,ps_4$ be such that:
+        & Last case: $\rn{s-step}$. Let $t,l',ps_3,ps_4$ be such that:
 \\
-  (3)   & $\proj{ps}{l}=ps_3+\process{c}{l'}$; and
+  (3)   & $\proj{ps}{l}=ps_3+\process{t}{l'}$; and
 \\
         & $ps'=ps_3\uplus ps_4$; and
 \\
-  (4)   & $\tstep{e'}{(\proj{\sigma}{l},\process{c}{l'})}{(\sigma',ps_4)}$.
+  (4)   & $\tstep{e'}{(\proj{\sigma}{l},\process{t}{l'})}{(\sigma',ps_4)}$.
 \\
         & $l'\sqsubseteq l$
         & by (3).
 \\
-        & $p_3 = \proj{(ps-\process{c}{l'})}{l}$
+        & $p_3 = \proj{(ps-\process{t}{l'})}{l}$
         & by (3).
 \\
         & Proceed by cases (ie inversion) on (4).
 \\
-        & Case: $\rn{p-send}$. Let $ch,v,c'$ be such that:
+        & Case: $\rn{p-send}$. Let $ch,v,t'$ be such that:
 \\
         & \z $e'=\evsend{ch}{v}$; and
 \\
         & \z $\sigma'=\proj{\sigma}{l}$; and
 \\
-        & \z $ps_4=\{\process{c'}{l'}\}$; and
+        & \z $ps_4=\{\process{t'}{l'}\}$; and
 \\
-        & \z $run(c)=\opsend{ch}{v}{c'}$; and
+        & \z $run(t)=\opsend{ch}{v}{t'}$; and
 \\
         & \z $l'\sqsubseteq\s{label}(ch)$.
 \\
-        & \z Pick $\Sigma_2 = (\sigma, ps-\process{c}{l'}+\process{c'}{l'})$ and $e_2=e'$.
+        & \z Pick $\Sigma_2 = (\sigma, ps-\process{t}{l'}+\process{t'}{l'})$ and $e_2=e'$.
 \\
         & \z QED
         & by $\rn{p-send}$.
