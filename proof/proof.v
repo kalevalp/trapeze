@@ -195,7 +195,6 @@ Definition ConjectureTSNIStar := forall X1 l es1 X1',
 
 (****************)
 
-Definition LStep x t e L X := exists e' X', Step x t e' X' /\ pe e' L = e /\ pX X' L = X.
 Definition LSStep X1 e L X2 := exists e' X2', SStep X1 e' X2' /\ pe e' L = e /\ pX X2' L = X2.
 
 Lemma lemma_pts_multicons_1 : forall ts c l l',
