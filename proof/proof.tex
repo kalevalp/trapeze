@@ -129,7 +129,7 @@
 \newcommand{\opfork}[2]{\textsf{fork}~#1~#2}
 \newcommand{\opstuck}{\textsf{stuck}}
 \newcommand{\opraiselabel}[2]{\textsf{raiseLabel}~#1~#2}
-\newcommand{\evstart}[1]{\textsf{input}~#1}
+\newcommand{\evstart}[1]{\textsf{start}~#1}
 \newcommand{\evsend}[2]{\textsf{output}~#1~#2}
 \newcommand{\proj}[2]{#1{\downarrow_{#2}}}
 \newcommand{\lequiv}[3]{#2\approx_{#1}#3}
@@ -186,7 +186,7 @@ $\startsyntax
       e  & \exists ch,v.~e=\evsend{ch}{v}\text{ and }\s{label}(ch)\sqsubseteq l  \\
       \epsilon & \text{otherwise.}
     \end{cases}  \\
-  &           & \proj{es}{l} & = & \text{\texttt{fmap}}~(\proj{}{l})~es  \\
+  &           & \proj{(e_1\ldots e_n)}{l} & = & \proj{e_1}{l}\ldots\proj{e_n}{l}  \\
   &           & \proj{(\sigma,ts)}{l} & = & (\proj{\sigma}{l},\proj{ts}{l})   \\
   &           & \lequiv{l}{\hole_1}{\hole_2} & \text{means} & \proj{\hole_1}{l}=\proj{\hole_2}{l}  \\
 \finishsyntax$
@@ -194,27 +194,27 @@ $\startsyntax
 \fbox{$\tstep{e}{(\sigma,t)}{\Sigma}$} Thread transition relation
 \\
 $\startrules
-  \tsteprule{send}
+  \tsteprule{p-send}
         {\s{run}(c)=\opsend{ch}{v}{c'}\qquad l\sqsubseteq\s{label}(ch)}
         {\evsend{ch}{v}}
         {(\sigma,\thread{c}{l})}
         {(\sigma,\{\thread{c'}{l}\})}
-  \tsteprule{read}
+  \tsteprule{p-read}
         {\s{run}(c)=\opread{k}{f}}
         {\epsilon}
         {(\sigma,\thread{c}{l})}
         {(\sigma,\{\thread{f(\proj{\sigma(k)}{l})}{l}\})}
-  \tsteprule{write}
+  \tsteprule{p-write}
         {\s{run}(c)=\opwrite{k}{v}{c'}}
         {\epsilon}
         {(\sigma,\thread{c}{l})}
         {(\upd{\sigma}{k}{\s{write}(\sigma(k),v,l)},\{\thread{c'}{l}\})}
-  \tsteprule{fork}
+  \tsteprule{p-fork}
         {\s{run}(c) = \opfork{c_1}{c_2}}
         {\epsilon}
         {(\sigma,\thread{c}{l})}
         {(\sigma,\{\thread{c_1}{l},\thread{c_2}{l}\})}
-  \tsteprule{raise-label}
+  \tsteprule{p-raise-label}
         {\s{run}(c) = \opraiselabel{l'}{c'}\qquad l\sqsubseteq l'}
         {\epsilon}
         {(\sigma,\thread{c}{l})}
@@ -224,24 +224,24 @@ $\startrules
 \fbox{$\sstep{e}{\Sigma}{\Sigma}$} State transition relation
 \\
 $\startrules
-  \ssteprule{start}
+  \ssteprule{s-start}
         {}
         {\evstart{t}}
         {(\sigma,ts)}
         {(\sigma,ts+t)}
-  \ssteprule{skip}
+  \ssteprule{s-skip}
         {}
         {\epsilon}
         {(\sigma,ts)}
         {(\sigma,ts)}
-  \ssteprule{thread}
+  \ssteprule{s-step}
         {\tstep{e}{(\sigma,\thread{c}{l})}{(\sigma',ts')}}
         {e}
         {(\sigma,ts\uplus\{\thread{c}{l}\})}
         {(\sigma',ts\uplus ts')}
 \finishrules$
 \\
-\textbf{Theorem (TSNI).}
+\textbf{Theorem (Single step Progress Sensitive Non-Interference).}
 \\
 If $\lequiv{l}{\Sigma_1}{\Sigma_2}$
 and $\sstep{e_1}{\Sigma_1}{\Sigma_1'}$,
@@ -256,11 +256,11 @@ Please continue reading below.
 \fbox{$\sstepstar{es}{\Sigma}{\Sigma}$} Multiple-step state transition relation
 \\
 $\startrules
-  \mrule{}{
+  \mrule{refl}{
   }{
     \sstepstar{}{\Sigma}{\Sigma}
   }
-  \mrule{}{
+  \mrule{trans}{
       \sstep{e}{\Sigma}{\Sigma'}
     \qquad
       \sstepstar{es}{\Sigma'}{\Sigma''}
@@ -269,7 +269,7 @@ $\startrules
   }
 \finishrules$
 \\
-\textbf{Corollary (TSNI${}^*$).}
+\textbf{Corollary (Progress Sensitive Non-Interference).}
 \\
 If $\lequiv{l}{\Sigma_1}{\Sigma_2}$
 and $\sstepstar{es_1}{\Sigma_1}{\Sigma_1'}$,
@@ -279,81 +279,21 @@ and $\lequiv{l}{\Sigma_1'}{\Sigma_2'}$
 and $\lequiv{l}{es_1}{es_2}$.
 \\
 \textit{Proof.}
-By repeated application (i.e., use induction) of TSNI.
+By induction on the derivation of $\sstepstar{es_1}{\Sigma_1}{\Sigma_1'}$.
 
 
 \newpage
 \noindent
 %
 %
-\fbox{$\ltstep{l}{e}{(\sigma,t)}{\Sigma}$} Projected thread transition relation
-\\
-$\startrules
-  \ltsteprule{l-send}
-        {\s{run}(c)=\opsend{ch}{v}{c'}\qquad l\sqsubseteq\s{label}(ch){\color{red}{}\sqsubseteq l'}}
-        {{\color{red}l'}}
-        {\evsend{ch}{v}}
-        {(\sigma,\thread{c}{l})}
-        {(\sigma,\{\thread{c'}{l}\})}
-  \ltsteprule{l-censor}
-        {\s{run}(c)=\opsend{ch}{v}{c'}\qquad l\sqsubseteq\s{label}(ch){\color{red}{}\not\sqsubseteq l'}}
-        {{\color{red}l'}}
-        {{\color{red}\epsilon}}
-        {(\sigma,\thread{c}{l})}
-        {(\sigma,\{\thread{c'}{l}\})}
-  \ltsteprule{l-read}
-        {\s{run}(c)=\opread{k}{f}}
-        {{\color{red}l'}}
-        {\epsilon}
-        {(\sigma,\thread{c}{l})}
-        {(\sigma,\{\thread{f(\proj{\sigma(k)}{l})}{l}\})}
-  \ltsteprule{l-write}
-        {\s{run}(c)=\opwrite{k}{v}{c'}}
-        {{\color{red}l'}}
-        {\epsilon}
-        {(\sigma,\thread{c}{l})}
-        {(\upd{\sigma}{k}{\s{write}(\sigma(k),v,l)},\{\thread{c'}{l}\})}
-  \ltsteprule{l-fork}
-        {\s{run}(c) = \opfork{c_1}{c_2}}
-        {{\color{red}l'}}
-        {\epsilon}
-        {(\sigma,\thread{c}{l})}
-        {(\sigma,\{\thread{c_1}{l},\thread{c_2}{l}\})}
-  \ltsteprule{l-raise-label}
-        {\s{run}(c) = \opraiselabel{l'}{c'}\qquad l\sqsubseteq l'{\color{red}{}\sqsubseteq l''}}
-        {{\color{red}l''}}
-        {\epsilon}
-        {(\sigma,\thread{c}{l})}
-        {(\sigma,\{\thread{c'}{l'}\})}
-  \ltsteprule{l-censor-2}
-        {\s{run}(c) = \opraiselabel{l'}{c'}\qquad l\sqsubseteq l'{\color{red}{}\not\sqsubseteq l''}}
-        {{\color{red}l''}}
-        {\epsilon}
-        {(\sigma,\thread{c}{l})}
-        {(\sigma,\{\})}
-\finishrules$
-\\
 \fbox{$\lsstep{l}{e}{\Sigma}{\Sigma}$} Projected state transition relation
 \\
 $\startrules
-  \lssteprule{l-start}
-        {{\color{red}l\sqsubseteq l'}}
-        {{\color{red}l'}}
-        {\evstart{\thread{c}{l}}}
-        {(\sigma, ts)}
-        {(\sigma, ts+\thread{c}{l})}
-  \lssteprule{l-skip}
-        {}
-        {{\color{red}l'}}
-        {\epsilon}
-        {(\sigma,ts)}
-        {(\sigma,ts)}
-  \lssteprule{l-thread}
-        {\tstep{e}{(\sigma,\thread{c}{l})}{(\sigma',ts')}}
-        {{\color{red}l'}}
-        {e}
-        {(\sigma,ts\uplus\{\thread{c}{l}\})}
-        {(\sigma',ts\uplus ts')}
+  \mrule{ps}{
+      \sstep{e}{\Sigma_1}{\Sigma_2}
+  }{
+    \lsstep{l}{\proj{e}{l}}{\Sigma_1}{\proj{\Sigma_2}{l}}
+  }
 \finishrules$
 \\
 \textbf{Lemma (Invisibility).}
@@ -379,91 +319,98 @@ Omitted.
 \textit{Proof.}
 \\
 \newcommand{\z}{$\quad$}
-\begin{tabular}{l@{$\qquad$}l@{\qquad}l}
+\begin{tabular}{l@{$\qquad$}l@{$\qquad$}l}
+        & Let $(\sigma, ts) = \Sigma$.
+\\
+        & Let $(\sigma', ts') = \Sigma'$.
+\\
         & Proceed by cases (ie inversion) on (1).
 \\
-  (2)   & Case: $\rn{start}$.
+        & Case: $\rn{s-start}$. Let $c,l'$ be such that:
 \\
-        & \z Let $\evstart{\thread{c}{l'}}=e$.
-        & Justified by (2).
+        & \z $e=\evstart{\thread{c}{l'}}$; and
+\\
+        & \z $\sigma'=\sigma$; and
+\\
+        & \z $ts'=ts+\thread{c}{l'}$.
 \\
         & \z Proceed by cases.
 \\
-        & \z Case where $l'\sqsubseteq l$.
+        & \z Case: where $l'\sqsubseteq l$.
+\\
+        & \z \z $\sstep{\evstart{\thread{c}{l'}}}{\proj{\Sigma}{l}}{(\proj{\sigma}{l},\proj{ts}{l}+\thread{c}{l'})}$
+        & by  $\rn{s-start}$.
 \\
         & \z \z QED
-        & by applying $\rn{l-start}$.
+        & by  $\rn{ps}$.
 \\
-        & \z Case where $l'\not\sqsubseteq l$.
+       & \z Case: where $l'\not\sqsubseteq l$.
+\\
+        & \z \z $\sstep{\epsilon}{\proj{\Sigma}{l}}{\proj{\Sigma}{l}}$
+        & by  $\rn{s-skip}$.
 \\
         & \z \z QED
-        & by applying $\rn{l-skip}$.
+        & by  $\rn{ps}$.
 \\
-        & Case: $\rn{skip}$.
+        & Case: $\rn{s-skip}$. $e=\epsilon$ and $\Sigma'=\Sigma$.
+\\
+        & \z $\sstep{\epsilon}{\proj{\Sigma}{l}}{\proj{\Sigma}{l}}$
+        & by  $\rn{s-skip}$.
 \\
         & \z QED
-        & by applying $\rn{l-skip}$.
+        & by  $\rn{ps}$.
 \\
-  (2)   & Case: $\rn{thread}$.
+        & Last case: $\rn{s-step}$. Let $c,l',ts_1,ts_2$ be such that:
 \\
-        & \z Let $c,l',\sigma',ts'$ be such that:
-        & Justified by (2).
+        & $ts=ts_1+\thread{c}{l'}$; and
 \\
-  (3)   & \z \z $\tstep{e}{(\sigma,\thread{c}{l'})}{(\sigma',ts')}$
+        & $ts'=ts_1\uplus ts_2$; and
 \\
-        & \z Proceed by cases.
+  (2)   & $\tstep{e}{(\sigma,\thread{c}{l'})}{(\sigma',ts_2)}$.
 \\
-  (4)   & \z Case where $l'\not\sqsubseteq l$.
+        & Proceed by cases.
 \\
-        & \z \z $\proj{\sigma'}{l}=\proj{\sigma}{l}$ and $\proj{e}{l}=\epsilon$ and $\proj{ts'}{l}=\{\}$
-        & by Invisibility with (4) and (3).
+        & Case: where $l'\not\sqsubseteq l$.
 \\
-        & \z \z QED
-        & by applying $\rn{l-skip}$.
+        & \z $\proj{\sigma'}{l}=\proj{\sigma}{l}$ and $\proj{e}{l}=\epsilon$ and $\proj{ts_2}{l}=\{\}$
+        & by Invisibility.
 \\
-        & \z Case where $l'\sqsubseteq l$.
+        & \z QED
+        & by  $\rn{ps}$ and $\rn{s-skip}$.
 \\
-        & \z \z Proceed by cases (ie inversion) on (3).
+        & Last case: where $l'\sqsubseteq l$.
 \\
-  (4)   & \z \z Case: $\rn{send}$.
+        & Proceed by cases (ie inversion) on (2).
 \\
-        & \z \z \z Let $\evsend{ch}{v} = e$.
-        & Justified by (4).
+        & Case: $\rn{p-send}$. Let $ch,v,c'$ be such that:
 \\
-        & \z \z \z Proceed by cases.
+        & \z $e=\evsend{ch}{v}$; and
 \\
-        & \z \z \z Case where $label(ch)\sqsubseteq l$.
+        & \z $\sigma'=\sigma$; and
 \\
-        & \z \z \z \z QED
-        & by applying $\rn{l-send}$.
+        & \z $ts_2=\{\thread{c'}{l'}\}$; and
 \\
-        & \z \z \z Case where $label(ch)\not\sqsubseteq l$.
+        & \z $run(c)=\opsend{ch}{v}{c'}$; and
 \\
-        & \z \z \z \z QED
-        & by applying $\rn{l-censor}$.
+        & \z $l'\sqsubseteq\s{label}(ch)$.
 \\
-  (4)   & \z \z Case: $\rn{raise-label}$.
+        & \z $\tstep{\evsend{ch}{v}}{(\proj{\sigma}{l},\thread{c}{l'})}{(\proj{\sigma}{l},\{\thread{c'}{l'}\})}$
+        & by $\rn{p-send}$.
 \\
-        & \z \z \z Let $\opraiselabel{l''}{c'} = run(c)$.
-        & Justified by (4).
+        & \z $\sstep{\evsend{ch}{v}}{\proj{\Sigma}{l}}{(\proj{\sigma}{l},\proj{ts_1}{l}+\thread{c'}{l'})}$
+        & by $\rn{s-step}$.
 \\
-        & \z \z \z Proceed by cases.
+        & \z QED
+        & by $\rn{ps}$.
 \\
-        & \z \z \z Case where $l''\sqsubseteq l$.
-\\
-        & \z \z \z \z QED
-        & by applying $\rn{l-raise-label}$.
-\\
-        & \z \z \z Case where $l''\not\sqsubseteq l$.
-\\
-        & \z \z \z \z QED
-        & by applying $\rn{l-censor-2}$.
-\\
-        & \z \z Cases: $\rn{read}$, $\rn{write}$, and $\rn{fork}$.
-\\
-        & \z \z \z Fairly straightforward.
+        & Remaining cases omitted.
 \end{tabular}
-\\
+
+
+\newpage
+\noindent
+%
+%
 \textbf{Theorem (Projection 2).}
 \\
 \begin{tabular}{l@{$\qquad$}l}
@@ -477,67 +424,75 @@ Omitted.
 \textit{Proof.}
 \\
 \begin{tabular}{l@{$\qquad$}l@{\qquad}l}
+        & Let $e',\Sigma'$ be such that:
+        & (by inversion on (1))
+\\
+  (2)   & $\sstep{e'}{\proj{\Sigma}{l}}{\Sigma'}$; and
+\\
+        & $e_1=\proj{e'}{l}$; and
+\\
+        & $\Sigma_1=\proj{\Sigma'}{l}$.
+\\
         & Let $(\sigma,ts)=\Sigma$.
 \\
-        & Proceed by cases (ie inversion) on (1).
+        & Let $(\sigma',ts')=\Sigma'$.
 \\
-  (2)   & Case: $\rn{l-start}$.
+        & Proceed by cases (ie inversion) on (2).
 \\
-        & \z Let $\evstart{\thread{c}{l'}}=e_1$.
-        & Justified by (2).
+        & Case: $\rn{s-start}$. Let $c,l'$ be such that:
 \\
-        & \z Pick $\Sigma_2 = (\sigma,ts+\thread{c}{l'})$ and $e_2=e_1$.
+        & \z $e'=\thread{c}{l'}$; and
+\\
+        & \z $\sigma'=\proj{\sigma}{l}$; and
+\\
+        & \z $ts'=\proj{ts}{l}+\thread{c}{l'}$; and
+\\
+        & \z Pick $\Sigma_2 = (\sigma,ts+\thread{c}{l'})$ and $e_2=e'$.
 \\
         & \z QED
-        & by applying $\rn{start}$.
+        & by $\rn{s-start}$.
 \\
-        & \multicolumn{2}{l}{\z (Fairly straightforward because $\rn{start}$ is the same as $\rn{l-start}$, except without the side condition.)}
+        & Case: $\rn{s-skip}$.
 \\
-        & Case: $\rn{l-skip}$.
+        & \z Pick $\Sigma_2=\Sigma$ and $e_2=\epsilon$.
 \\
-        & \multicolumn{2}{l}{\z (Fairly straightforward because $\rn{skip}$ is the same as $\rn{l-skip}$.)}
+        & \z QED
+        & by $\rn{s-skip}$.
 \\
-  (2)   & Case: $\rn{l-thread}$.
+        & Last case: $\rn{s-step}$. Let $c,l',ts_3,ts_4$ be such that:
 \\
-        & \z Let $c,l',\sigma_1,ts_1$ be such that:
-        & Justified by (2).
+  (3)   & $\proj{ts}{l}=ts_3+\thread{c}{l'}$; and
 \\
-  (3)   & \z \z $\thread{c}{l'}\in\proj{ts}{l}$
+        & $ts'=ts_3\uplus ts_4$; and
 \\
-  (4)   & \z \z $\ltstep{l}{e_1}{(\sigma,\thread{c}{l'})}{(\sigma_1,ts_1)}$
+  (4)   & $\tstep{e'}{(\proj{\sigma}{l},\thread{c}{l'})}{(\sigma',ts_4)}$.
 \\
-        & \z $l'\sqsubseteq l$
-        & due to (3) and the definition of $\proj{\hole}{\hole}$.
+        & $l'\sqsubseteq l$
+        & by (3).
 \\
-        & \z Proceed by cases (ie inversion) on (4).
+        & $t_3 = \proj{(ts-\thread{c}{l'})}{l}$
+        & by (3).
 \\
-  (5)   & \z Cases: $\rn{l-send}$ and $\rn{l-censor}$.
+        & Proceed by cases (ie inversion) on (4).
 \\
-        & \z \z Let $\opsend{ch}{v}{c'}=run(c)$.
-        & Justified by (5).
+        & Case: $\rn{p-send}$. Let $ch,v,c'$ be such that:
 \\
-        & \z \z Pick $\Sigma_2 = (\sigma,ts-\thread{c}{l'}+\thread{c'}{l'})$
+        & \z $e'=\evsend{ch}{v}$; and
 \\
-        & \z \z and pick $e_2 = \evsend{ch}{v}$.
+        & \z $\sigma'=\proj{\sigma}{l}$; and
 \\
-        & \z \z QED
-        & by applying $\rn{send}$.
+        & \z $ts_4=\{\thread{c'}{l'}\}$; and
 \\
-  (5)   & \z Cases: $\rn{l-raise-label}$ and $\rn{l-censor-2}$.
+        & \z $run(c)=\opsend{ch}{v}{c'}$; and
 \\
-        & \z \z Let $\opraiselabel{l''}{c'}=run(c)$.
-        & Justified by (5).
+        & \z $l'\sqsubseteq\s{label}(ch)$.
 \\
-        & \z \z Pick $\Sigma_2 = (\sigma,ts-\thread{c}{l'}+\thread{c'}{l''})$
+        & \z Pick $\Sigma_2 = (\sigma, ts-\thread{c}{l'}+\thread{c'}{l'})$ and $e_2=e'$.
 \\
-        & \z \z and pick $e_2 = \epsilon$.
+        & \z QED
+        & by $\rn{p-send}$.
 \\
-        & \z \z QED
-        & by applying $\rn{raise-label}$.
-\\
-        & \z Cases: $\rn{l-read}$, $\rn{l-write}$, and $\rn{l-fork}$.
-\\
-        & \multicolumn{2}{l}{\z \z (Fairly straightforward because the corresponding rules are the same.)}
+        & Remaining cases omitted.
 \end{tabular}
 \\
 \textbf{Theorem (TSNI).}
