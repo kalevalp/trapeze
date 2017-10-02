@@ -143,13 +143,13 @@ $\startsyntax
   ch    & \in & \s{Channel}  \\
   &           & \s{label} & : & \s{Channel}\to\s{Label}  \\
   v     & \in & \s{Value}  \\
-  S     & \in & \s{LabeledValueSet} & = & \multicolumn{2}{l}{2^{\s{Value}\times\s{Label}}}  \\
+  S     & \in & \s{LabeledValueSeq} & = & \multicolumn{2}{l}{(\s{Value}\times\s{Label})^*}  \\
   k     & \in & \s{Key}  \\
-  \sigma& \in & \s{Store} & = & \s{Key}\to\s{LabeledValueSet}  \\
+  \sigma& \in & \s{Store} & = & \s{Key}\to\s{LabeledValueSeq}  \\
   t     & \in & \s{Thread}  \\
   p     & \in & \s{Process} & ::= & \process{t}{l}  \\
   ps    & \in & \s{Processes} & = & \text{multisets of processes}  \\
-  f     & \in & \s{ReadContinuation} & = & \s{LabeledValueSet}\to\s{Thread}  \\
+  f     & \in & \s{ReadContinuation} & = & \s{LabeledValueSeq}\to\s{Thread}  \\
   op    & \in & \s{Operation} & ::= &
       \opread{k}{f}
     \sepsyntax
@@ -173,11 +173,11 @@ $\startsyntax
   es    & \in & \s{Events} & = & \s{Event}^*  \\
   \Sigma& \in & \s{State} & ::= & (\sigma,ps)  \\
   &           & \s{run} & : & \s{Thread}\to\s{Operation}  \\
-  &           & \s{write} & : & \s{LabeledValueSet}\times\s{Value}\times\s{Label}\to\s{LabeledValueSet}  \\
-  &           & \s{write}(S,v,l) & = & (S\setminus\{(v',l')\in S~|~l\sqsubseteq l'\})\cup\{(v,l)\}  \\
+  &           & \s{write} & : & \s{LabeledValueSeq}\times\s{Value}\times\s{Label}\to\s{LabeledValueSeq}  \\
+  &           & \s{write}(S,v,l) & = & (S\setminus\{(v',l')\in S~|~l\sqsubseteq l'\})(v,l)  \\
   &           & \proj{\hole}{\hole}
                   & : & \text{``Various things''}\to\s{Label}\to\text{``Various things''}  \\
-  &           & \proj{S}{l} & = & \{(v,l')\in S~|~l'\sqsubseteq l\}  \\
+  &           & \proj{S}{l} & = & S\setminus\{(v',l')\in S~|~l'\not\sqsubseteq l\}  \\
   &           & \proj{ps}{l} & = & \text{multiset}\{\process{t}{l'}\in ps~|~l'\sqsubseteq l\}  \\
   &           & \proj{\sigma}{l} & = & \lambda k. \proj{\sigma(k)}{l}  \\
   &           & \proj{e}{l} & = &
