@@ -122,6 +122,51 @@ WHERE rowkey = ?;
             }
         });
     }
+
+    keys(callback) {
+        const keysQuerySql = `
+SELECT rowkey 
+FROM kvstore;
+    `;
+        console.log("** DEBUG: Call to keys.");
+
+        this.con.query(keysQuerySql, (err, result) => {
+            if (err) {
+                console.log("** DEBUG: Query failed - getting keys.");
+                callback(err);
+            } else {
+                console.log("** DEBUG: Query successful - getting keys.");
+                console.log("** DEBUG: Query result:");
+                console.log(result);
+                console.log("** DEBUG: Query result />");
+
+                callback(null, result.map( x => x["rowkey"]));
+            }
+        });
+    }
+
+    del(k, callback) {
+        const deleteQuerySql = `
+DELETE FROM kvstore
+WHERE rowkey = ?;
+    `;
+        console.log("** DEBUG: Call to delete.");
+        console.log("** DEBUG:   Key:   " + k + ".");
+
+        this.con.query(deleteQuerySql, [k], (err, result) => {
+            if (err) {
+                console.log("** DEBUG: Query failed - deleting key.");
+                callback(err);
+            } else {
+                console.log("** DEBUG: Query successful - deleting key.");
+                console.log("** DEBUG: Query result:");
+                console.log(result);
+                console.log("** DEBUG: Query result />");
+
+                callback(null);
+            }
+        });
+    }
 }
 
 module.exports.KV_Store = KV_Store;
