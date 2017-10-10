@@ -58,12 +58,6 @@
 \newcommand{\sstep}[3]{#2\ssteparrow{#1}#3}
 \newcommand{\sstepstar}[3]{#2\ssteparrowstar{#1}#3}
 \newcommand{\ssteprule}[5]{\steprule{#1}{#2}{#4}{\ssteparrow{#3}}{#5}}
-\newcommand{\ltsteparrow}[2]{\overset{#2}{\underset{#1}{\longrightarrow}}}
-\newcommand{\ltstep}[4]{#3\ltsteparrow{#1}{#2}#4}
-\newcommand{\ltsteprule}[6]{\steprule{#1}{#2}{#5}{\ltsteparrow{#3}{#4}}{#6}}
-\newcommand{\lssteparrow}[2]{\overset{#2}{\underset{#1}{\longrightarrow}}}
-\newcommand{\lsstep}[4]{#3\lssteparrow{#1}{#2}#4}
-\newcommand{\lssteprule}[6]{\steprule{#1}{#2}{#5}{\lssteparrow{#3}{#4}}{#6}}
 
 \newcommand{\hole}{{\bullet}}
 \newcommand{\hash}[2]{\##1\,{:}{=}\,#2}
@@ -286,15 +280,6 @@ By induction on the derivation of $\sstepstar{es_1}{\Sigma_1}{\Sigma_1'}$.
 \noindent
 %
 %
-\fbox{$\lsstep{l}{e}{\Sigma}{\Sigma}$} Projected state transition relation
-\\
-$\startrules
-  \mrule{ps}{
-      \sstep{e}{\Sigma_1}{\Sigma_2}
-  }{
-    \lsstep{l}{\proj{e}{l}}{\Sigma_1}{\proj{\Sigma_2}{l}}
-  }
-\finishrules$
 \\
 \textbf{Lemma (Invisibility).}
 \\
@@ -311,9 +296,11 @@ Omitted.
 \textbf{Theorem (Projection 1).}
 \\
 \begin{tabular}{l@{$\qquad$}l}
-  (1) & If $\sstep{e}{\Sigma}{\Sigma'}$,
+  (1) & If $\sstep{e_1}{\Sigma}{\Sigma_1'}$,
 \\
-      & then $\lsstep{l}{\proj{e}{l}}{\proj{\Sigma}{l}}{\proj{\Sigma'}{l}}$.
+      & then $\exists\Sigma_2'.\exists e_2.~\sstep{e_2}{\proj{\Sigma}{l}}{\Sigma_2'}$
+        and $\lequiv{l}{\Sigma_1'}{\Sigma_2'}$
+        and $\lequiv{l}{e_1'}{e_2'}$
 \end{tabular}
 \\
 \textit{Proof.}
@@ -322,61 +309,60 @@ Omitted.
 \begin{tabular}{l@{$\qquad$}l@{$\qquad$}l}
         & Let $(\sigma, ps) = \Sigma$.
 \\
-        & Let $(\sigma', ps') = \Sigma'$.
+        & Let $(\sigma_1', ps_1') = \Sigma_1'$.
 \\
         & Proceed by cases (ie inversion) on (1).
 \\
         & Case: $\rn{s-start}$. Let $t,l'$ be such that:
 \\
-        & \z $e=\evstart{\process{t}{l'}}$; and
+        & \z $e_1=\evstart{\process{t}{l'}}$; and
 \\
-        & \z $\sigma'=\sigma$; and
+        & \z $\sigma_1'=\sigma$; and
 \\
-        & \z $ps'=ps+\process{t}{l'}$.
+        & \z $ps_1'=ps+\process{t}{l'}$.
 \\
         & \z Proceed by cases.
 \\
         & \z Case: where $l'\sqsubseteq l$.
 \\
-        & \z \z $\sstep{\evstart{\process{t}{l'}}}{\proj{\Sigma}{l}}{(\proj{\sigma}{l},\proj{ps}{l}+\process{t}{l'})}$
-        & by  $\rn{s-start}$.
+        & \z \z Pick $\Sigma_2' = {(\proj{\sigma}{l},\proj{ps}{l}+\process{t}{l'})}$.
+\\
+        & \z \z Pick $e_2' = {\evstart{\process{t}{l'}}}$.
 \\
         & \z \z QED
-        & by  $\rn{ps}$.
+        & by  $\rn{s-start}$.
 \\
        & \z Case: where $l'\not\sqsubseteq l$.
 \\
-        & \z \z $\sstep{\epsilon}{\proj{\Sigma}{l}}{\proj{\Sigma}{l}}$
-        & by  $\rn{s-skip}$.
+        & \z \z Pick $\Sigma_2' = \proj{\Sigma}{l}$ and pick $e_2' = \epsilon$.
 \\
         & \z \z QED
-        & by  $\rn{ps}$.
-\\
-        & Case: $\rn{s-skip}$. $e=\epsilon$ and $\Sigma'=\Sigma$.
-\\
-        & \z $\sstep{\epsilon}{\proj{\Sigma}{l}}{\proj{\Sigma}{l}}$
         & by  $\rn{s-skip}$.
 \\
+        & Case: $\rn{s-skip}$. $e_1=\epsilon$ and $\Sigma_1'=\Sigma$.
+\\
+        & \z Pick $\Sigma_2' = \proj{\Sigma}{l}$ and pick $e_2' = \epsilon$.
+\\
         & \z QED
-        & by  $\rn{ps}$.
+        & by  $\rn{s-skip}$.
 \\
         & Last case: $\rn{s-step}$. Let $t,l',ps_1,ps_2$ be such that:
 \\
         & $ps=ps_1+\process{t}{l'}$; and
 \\
-        & $ps'=ps_1\uplus ps_2$; and
+        & $ps_1'=ps_1\uplus ps_2$; and
 \\
-  (2)   & $\tstep{e}{(\sigma,\process{t}{l'})}{(\sigma',ps_2)}$.
+  (2)   & $\tstep{e_1}{(\sigma,\process{t}{l'})}{(\sigma_1',ps_2)}$.
 \\
         & Proceed by cases.
 \\
         & Case: where $l'\not\sqsubseteq l$.
 \\
-        & \z $\proj{\sigma'}{l}=\proj{\sigma}{l}$ and $\proj{e}{l}=\epsilon$ and $\proj{ps_2}{l}=\{\}$
+        & \z $\proj{\sigma_1'}{l}=\proj{\sigma}{l}$ and $\proj{e_1}{l}=\epsilon$ and $\proj{ps_2}{l}=\{\}$
         & by Invisibility.
 \\
         & \z QED
-        & by  $\rn{ps}$ and $\rn{s-skip}$.
+        & by $\rn{s-skip}$.
 \\
         & Last case: where $l'\sqsubseteq l$.
 \\
@@ -384,9 +370,9 @@ Omitted.
 \\
         & Case: $\rn{p-send}$. Let $ch,v,t'$ be such that:
 \\
-        & \z $e=\evsend{ch}{v}$; and
+        & \z $e_1=\evsend{ch}{v}$; and
 \\
-        & \z $\sigma'=\sigma$; and
+        & \z $\sigma_1'=\sigma$; and
 \\
         & \z $ps_2=\{\process{t'}{l'}\}$; and
 \\
@@ -397,11 +383,12 @@ Omitted.
         & \z $\tstep{\evsend{ch}{v}}{(\proj{\sigma}{l},\process{t}{l'})}{(\proj{\sigma}{l},\{\process{t'}{l'}\})}$
         & by $\rn{p-send}$.
 \\
-        & \z $\sstep{\evsend{ch}{v}}{\proj{\Sigma}{l}}{(\proj{\sigma}{l},\proj{ps_1}{l}+\process{t'}{l'})}$
-        & by $\rn{s-step}$.
+        & \z Pick $\Sigma_2' = {(\proj{\sigma}{l},\proj{ps_1}{l}+\process{t'}{l'})}$.
+\\
+        & \z Pick $e_2' = {\evsend{ch}{v}}$.
 \\
         & \z QED
-        & by $\rn{ps}$.
+        & by $\rn{s-step}$.
 \\
         & Remaining cases omitted.
 \end{tabular}
@@ -414,40 +401,31 @@ Omitted.
 \textbf{Theorem (Projection 2).}
 \\
 \begin{tabular}{l@{$\qquad$}l}
-  (1) & If $\lsstep{l}{e_1}{\proj{\Sigma}{l}}{\Sigma_1}$,
+  (1) & If $\sstep{e_1}{\proj{\Sigma}{l}}{\Sigma_1}$,
 \\
       & then $\exists \Sigma_2.\exists e_2.~\sstep{e_2}{\Sigma}{\Sigma_2}$
-        and $\Sigma_1 = \proj{\Sigma_2}{l}$
-        and $e_1 = \proj{e_2}{l}$.
+        and $\lequiv{l}{\Sigma_1}{\Sigma_2}$
+        and $\lequiv{l}{e_1}{e_2}$.
 \end{tabular}
 \\
 \textit{Proof.}
 \\
 \begin{tabular}{l@{$\qquad$}l@{\qquad}l}
-        & Let $e',\Sigma'$ be such that:
-        & (by inversion on (1))
-\\
-  (2)   & $\sstep{e'}{\proj{\Sigma}{l}}{\Sigma'}$; and
-\\
-        & $e_1=\proj{e'}{l}$; and
-\\
-        & $\Sigma_1=\proj{\Sigma'}{l}$.
-\\
         & Let $(\sigma,ps)=\Sigma$.
 \\
-        & Let $(\sigma',ps')=\Sigma'$.
+        & Let $(\sigma_1,ps_1)=\Sigma_1$.
 \\
-        & Proceed by cases (ie inversion) on (2).
+        & Proceed by cases (ie inversion) on (1).
 \\
         & Case: $\rn{s-start}$. Let $t,l'$ be such that:
 \\
-        & \z $e'=\process{t}{l'}$; and
+        & \z $e_1=\process{t}{l'}$; and
 \\
-        & \z $\sigma'=\proj{\sigma}{l}$; and
+        & \z $\sigma_1=\proj{\sigma}{l}$; and
 \\
-        & \z $ps'=\proj{ps}{l}+\process{t}{l'}$; and
+        & \z $ps_1=\proj{ps}{l}+\process{t}{l'}$; and
 \\
-        & \z Pick $\Sigma_2 = (\sigma,ps+\process{t}{l'})$ and $e_2=e'$.
+        & \z Pick $\Sigma_2 = (\sigma,ps+\process{t}{l'})$ and $e_2=e_1$.
 \\
         & \z QED
         & by $\rn{s-start}$.
@@ -461,25 +439,25 @@ Omitted.
 \\
         & Last case: $\rn{s-step}$. Let $t,l',ps_3,ps_4$ be such that:
 \\
-  (3)   & $\proj{ps}{l}=ps_3+\process{t}{l'}$; and
+  (2)   & $\proj{ps}{l}=ps_3+\process{t}{l'}$; and
 \\
-        & $ps'=ps_3\uplus ps_4$; and
+        & $ps_1=ps_3\uplus ps_4$; and
 \\
-  (4)   & $\tstep{e'}{(\proj{\sigma}{l},\process{t}{l'})}{(\sigma',ps_4)}$.
+  (3)   & $\tstep{e_1}{(\proj{\sigma}{l},\process{t}{l'})}{(\sigma_1,ps_4)}$.
 \\
         & $l'\sqsubseteq l$
-        & by (3).
+        & by (2).
 \\
         & $p_3 = \proj{(ps-\process{t}{l'})}{l}$
-        & by (3).
+        & by (2).
 \\
-        & Proceed by cases (ie inversion) on (4).
+        & Proceed by cases (ie inversion) on (3).
 \\
         & Case: $\rn{p-send}$. Let $ch,v,t'$ be such that:
 \\
-        & \z $e'=\evsend{ch}{v}$; and
+        & \z $e_1=\evsend{ch}{v}$; and
 \\
-        & \z $\sigma'=\proj{\sigma}{l}$; and
+        & \z $\sigma_1=\proj{\sigma}{l}$; and
 \\
         & \z $ps_4=\{\process{t'}{l'}\}$; and
 \\
@@ -487,7 +465,7 @@ Omitted.
 \\
         & \z $l'\sqsubseteq\s{label}(ch)$.
 \\
-        & \z Pick $\Sigma_2 = (\sigma, ps-\process{t}{l'}+\process{t'}{l'})$ and $e_2=e'$.
+        & \z Pick $\Sigma_2 = (\sigma, ps-\process{t}{l'}+\process{t'}{l'})$ and $e_2=e_1$.
 \\
         & \z QED
         & by $\rn{p-send}$.
@@ -495,7 +473,7 @@ Omitted.
         & Remaining cases omitted.
 \end{tabular}
 \\
-\textbf{Theorem (TSNI).}
+\textbf{Theorem (Single step Progress Sensitive Non-Interference).}
 \\
 \begin{tabular}{l@{$\qquad$}l}
   (1) & If $\lequiv{l}{\Sigma_1}{\Sigma_2}$
@@ -510,14 +488,29 @@ Omitted.
 \textit{Proof.}
 \\
 \begin{tabular}{l@{$\qquad$}l@{\qquad}l}
-  (3) & $\lsstep{l}{\proj{e_1}{l}}{\proj{\Sigma_1}{l}}{\proj{\Sigma_1'}{l}}$
-      & by applying Projection 1 to (2).
+      & We have $\Sigma_3',e_3$ such that:
+      & (by applying Projection 1 to (2))
 \\
-  (4) & $\lsstep{l}{\proj{e_1}{l}}{\proj{\Sigma_2}{l}}{\proj{\Sigma_1'}{l}}$
+  (3) & $\sstep{e_3}{\proj{\Sigma_1}{l}}{\Sigma_3'}$; and
+\\
+      & $\lequiv{l}{\Sigma_1'}{\Sigma_3'}$; and
+\\
+      & $\lequiv{l}{e_1}{e_3}$.
+\\
+  (4) & $\sstep{e_3}{\proj{\Sigma_2}{l}}{\Sigma_3'}$; and
       & by substituting (1) in (3).
 \\
+      & We have $\Sigma_2',e_2$ such that:
+      & (by applying Projection 2 to (4))
+\\
+      & $\sstep{e_2}{\Sigma_2}{\Sigma_2'}$; and
+\\
+      & $\lequiv{l}{\Sigma_3'}{\Sigma_2'}$; and
+\\
+      & $\lequiv{l}{e_3}{e_2}$.
+\\
       & QED
-      & by applying Projection 2 to (4).
+      & by transitivity of $\lequiv{l}{}{}$.
 \end{tabular}
 
 
