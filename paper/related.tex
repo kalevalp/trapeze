@@ -1,0 +1,6 @@
+\section{Related work}
+
+The modern technique for using security labels to dynamically monitor information flow was proposed by \citet{Denning-76-CACM} as the Lattice Model. This work defines the concept of \textit{implicit flow} of information. \citet{Austin-Cormac-10-PLAS} describe three techniques for monitoring such flows, namely \textit{Fenton rule} and \textit{No Sensitive Upgrade} and \textit{Permissive Upgrade}. Our work exposes a fourth choice using faceted values specifically to eliminate implicit flows.
+
+\citet{Austin-Flanagan-12-POPL} introduce faceted values as a dynamic enforcement technique for information security. Their technique combines the faceted value concept with the concept of \textit{multiple executions}. \citet{Devriese-Piessens-10-SSP} introduce the latter concept under the name Secure Multi Execution, which executes a program multiple times in different sandboxes. Our approach is simpler because only the data storage is faceted, not the program execution; in exchange, our approach does not offer the same transparency guarantees.
+
