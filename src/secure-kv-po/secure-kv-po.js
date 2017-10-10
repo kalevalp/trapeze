@@ -175,6 +175,74 @@ WHERE rowkey = ? AND
             }
         });
     }
+
+    /* *****************************************************************************************
+     *    Note: In our setting delete is an extremely non-transparent operation. To be secure
+     *  delete has to remove only the facets with a higher label, but any subsequent reads
+     *  will still see values with smaller (i.e. more public) labels. This is true even for
+     *  the label doing the delete.
+     *    A potential fix could actually write a special N/A value to the table. That way, any
+     *  read that could be exposed to the delete operation would actually be exposed to the
+     *  deletion.
+     * ***************************************************************************************** */
+    del (k, l, callback) {
+        // TODO KALEV: Implement getAllGE
+        let geLabels = this.po.getAllGE(l);
+        const sql = `
+DELETE FROM kvstore_po  
+WHERE rowkey = ? AND
+      label IN ${"('" + [...geLabels].join("', '") + "')"};
+    `;
+
+        console.log("** DEBUG: Secure K-V (PO) - Call to del.");
+        console.log("** DEBUG: Secure K-V (PO) -   Key:   " + k + ".");
+        console.log("** DEBUG: Secure K-V (PO) - Del Query:");
+        console.log(sql);
+        console.log("** DEBUG: Secure K-V (PO) - Del Query /> ");
+        this.con.query(sql, [k], function (err, result) {
+            if (err) {
+                console.log("** DEBUG: Secure K-V (PO) - Query failed - deleting value.");
+                callback(err);
+            }
+            else {
+                console.log("** DEBUG: Secure K-V (PO) - Query successful - deleting value.");
+                console.log("** DEBUG: Secure K-V (PO) - Query result:");
+                console.log(result);
+                console.log("** DEBUG: Secure K-V (PO) - Query result />");
+
+                callback();
+            }
+        });
+    }
+
+    keys(l, callback) {
+        let leLabels = this.po.getAllLE(l);
+        const sql = `
+SELECT rowkey 
+FROM kvstore_po 
+WHERE label IN ${"('" + [...leLabels].join("', '") + "')"};
+    `;
+
+        console.log("** DEBUG: Secure K-V (PO) - Call to keys.");
+        console.log("** DEBUG: Secure K-V (PO) - Keys Query:");
+        console.log(sql);
+        console.log("** DEBUG: Secure K-V (PO) - Keys Query /> ");
+        this.con.query(sql, [k], function (err, result) {
+            if (err) {
+                console.log("** DEBUG: Secure K-V (PO) - Query failed - getting keys.");
+                callback(err);
+            }
+            else {
+                console.log("** DEBUG: Secure K-V (PO) - Query successful - getting keys.");
+                console.log("** DEBUG: Secure K-V (PO) - Query result:");
+                console.log(result);
+                console.log("** DEBUG: Secure K-V (PO) - Query result />");
+
+                callback(null,result);
+            }
+        });
+    }
+
 }
 
 module.exports.SecureKV_PO = SecureKV_PO;
