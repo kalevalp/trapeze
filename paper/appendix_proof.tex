@@ -1,0 +1,233 @@
+\section{Proof details}
+
+\textbf{Lemma (Invisibility).}
+\\
+If $l'\not\sqsubseteq l$
+and $\tstep{e}{(\sigma,\process{t}{l'})}{(\sigma',ps')}$,
+\\
+then $\proj{\sigma'}{l}=\proj{\sigma}{l}$
+and $\proj{e}{l}=\epsilon$
+and $\proj{ps'}{l}=\{\}$.
+\\
+\textit{Proof.}
+Omitted.
+\\
+\textbf{Theorem (Projection 1).}
+\\
+\begin{tabular}{l@{$\qquad$}l}
+  (1) & If $\sstep{e_1}{\Sigma}{\Sigma_1'}$,
+\\
+      & then $\exists\Sigma_2'.\exists e_2.~\sstep{e_2}{\proj{\Sigma}{l}}{\Sigma_2'}$
+        and $\lequiv{l}{\Sigma_1'}{\Sigma_2'}$
+        and $\lequiv{l}{e_1'}{e_2'}$
+\end{tabular}
+\\
+\textit{Proof.}
+\\
+\newcommand{\z}{$\quad$}
+\begin{tabular}{l@{$\qquad$}l@{$\qquad$}l}
+        & Let $(\sigma, ps) = \Sigma$.
+\\
+        & Let $(\sigma_1', ps_1') = \Sigma_1'$.
+\\
+        & Proceed by cases (ie inversion) on (1).
+\\
+        & Case: $\rn{s-start}$. Let $t,l'$ be such that:
+\\
+        & \z $e_1=\evstart{\process{t}{l'}}$; and
+\\
+        & \z $\sigma_1'=\sigma$; and
+\\
+        & \z $ps_1'=ps+\process{t}{l'}$.
+\\
+        & \z Proceed by cases.
+\\
+        & \z Case: where $l'\sqsubseteq l$.
+\\
+        & \z \z Pick $\Sigma_2' = {(\proj{\sigma}{l},\proj{ps}{l}+\process{t}{l'})}$.
+\\
+        & \z \z Pick $e_2' = {\evstart{\process{t}{l'}}}$.
+\\
+        & \z \z QED
+        & by  $\rn{s-start}$.
+\\
+       & \z Case: where $l'\not\sqsubseteq l$.
+\\
+        & \z \z Pick $\Sigma_2' = \proj{\Sigma}{l}$ and pick $e_2' = \epsilon$.
+\\
+        & \z \z QED
+        & by  $\rn{s-skip}$.
+\\
+        & Case: $\rn{s-skip}$. $e_1=\epsilon$ and $\Sigma_1'=\Sigma$.
+\\
+        & \z Pick $\Sigma_2' = \proj{\Sigma}{l}$ and pick $e_2' = \epsilon$.
+\\
+        & \z QED
+        & by  $\rn{s-skip}$.
+\\
+        & Last case: $\rn{s-step}$. Let $t,l',ps_1,ps_2$ be such that:
+\\
+        & $ps=ps_1+\process{t}{l'}$; and
+\\
+        & $ps_1'=ps_1\uplus ps_2$; and
+\\
+  (2)   & $\tstep{e_1}{(\sigma,\process{t}{l'})}{(\sigma_1',ps_2)}$.
+\\
+        & Proceed by cases.
+\\
+        & Case: where $l'\not\sqsubseteq l$.
+\\
+        & \z $\proj{\sigma_1'}{l}=\proj{\sigma}{l}$ and $\proj{e_1}{l}=\epsilon$ and $\proj{ps_2}{l}=\{\}$
+        & by Invisibility.
+\\
+        & \z QED
+        & by $\rn{s-skip}$.
+\\
+        & Last case: where $l'\sqsubseteq l$.
+\\
+        & Proceed by cases (ie inversion) on (2).
+\\
+        & Case: $\rn{p-send}$. Let $ch,v,t'$ be such that:
+\\
+        & \z $e_1=\evsend{ch}{v}$; and
+\\
+        & \z $\sigma_1'=\sigma$; and
+\\
+        & \z $ps_2=\{\process{t'}{l'}\}$; and
+\\
+        & \z $run(t)=\opsend{ch}{v}{t'}$; and
+\\
+        & \z $l'\sqsubseteq\s{label}(ch)$.
+\\
+        & \z $\tstep{\evsend{ch}{v}}{(\proj{\sigma}{l},\process{t}{l'})}{(\proj{\sigma}{l},\{\process{t'}{l'}\})}$
+        & by $\rn{p-send}$.
+\\
+        & \z Pick $\Sigma_2' = {(\proj{\sigma}{l},\proj{ps_1}{l}+\process{t'}{l'})}$.
+\\
+        & \z Pick $e_2' = {\evsend{ch}{v}}$.
+\\
+        & \z QED
+        & by $\rn{s-step}$.
+\\
+        & Remaining cases omitted.
+\end{tabular}
+
+
+\newpage
+\noindent
+%
+%
+\textbf{Theorem (Projection 2).}
+\\
+\begin{tabular}{l@{$\qquad$}l}
+  (1) & If $\sstep{e_1}{\proj{\Sigma}{l}}{\Sigma_1}$,
+\\
+      & then $\exists \Sigma_2.\exists e_2.~\sstep{e_2}{\Sigma}{\Sigma_2}$
+        and $\lequiv{l}{\Sigma_1}{\Sigma_2}$
+        and $\lequiv{l}{e_1}{e_2}$.
+\end{tabular}
+\\
+\textit{Proof.}
+\\
+\begin{tabular}{l@{$\qquad$}l@{\qquad}l}
+        & Let $(\sigma,ps)=\Sigma$.
+\\
+        & Let $(\sigma_1,ps_1)=\Sigma_1$.
+\\
+        & Proceed by cases (ie inversion) on (1).
+\\
+        & Case: $\rn{s-start}$. Let $t,l'$ be such that:
+\\
+        & \z $e_1=\process{t}{l'}$; and
+\\
+        & \z $\sigma_1=\proj{\sigma}{l}$; and
+\\
+        & \z $ps_1=\proj{ps}{l}+\process{t}{l'}$; and
+\\
+        & \z Pick $\Sigma_2 = (\sigma,ps+\process{t}{l'})$ and $e_2=e_1$.
+\\
+        & \z QED
+        & by $\rn{s-start}$.
+\\
+        & Case: $\rn{s-skip}$.
+\\
+        & \z Pick $\Sigma_2=\Sigma$ and $e_2=\epsilon$.
+\\
+        & \z QED
+        & by $\rn{s-skip}$.
+\\
+        & Last case: $\rn{s-step}$. Let $t,l',ps_3,ps_4$ be such that:
+\\
+  (2)   & $\proj{ps}{l}=ps_3+\process{t}{l'}$; and
+\\
+        & $ps_1=ps_3\uplus ps_4$; and
+\\
+  (3)   & $\tstep{e_1}{(\proj{\sigma}{l},\process{t}{l'})}{(\sigma_1,ps_4)}$.
+\\
+        & $l'\sqsubseteq l$
+        & by (2).
+\\
+        & $p_3 = \proj{(ps-\process{t}{l'})}{l}$
+        & by (2).
+\\
+        & Proceed by cases (ie inversion) on (3).
+\\
+        & Case: $\rn{p-send}$. Let $ch,v,t'$ be such that:
+\\
+        & \z $e_1=\evsend{ch}{v}$; and
+\\
+        & \z $\sigma_1=\proj{\sigma}{l}$; and
+\\
+        & \z $ps_4=\{\process{t'}{l'}\}$; and
+\\
+        & \z $run(t)=\opsend{ch}{v}{t'}$; and
+\\
+        & \z $l'\sqsubseteq\s{label}(ch)$.
+\\
+        & \z Pick $\Sigma_2 = (\sigma, ps-\process{t}{l'}+\process{t'}{l'})$ and $e_2=e_1$.
+\\
+        & \z QED
+        & by $\rn{p-send}$.
+\\
+        & Remaining cases omitted.
+\end{tabular}
+\\
+\textbf{Theorem (Single step Progress Sensitive Non-Interference).}
+\\
+\begin{tabular}{l@{$\qquad$}l}
+  (1) & If $\lequiv{l}{\Sigma_1}{\Sigma_2}$
+\\
+  (2) & and $\sstep{e_1}{\Sigma_1}{\Sigma_1'}$,
+\\
+      & then $\exists \Sigma_2'.\exists e_2.~\sstep{e_2}{\Sigma_2}{\Sigma_2'}$
+        and $\lequiv{l}{\Sigma_1'}{\Sigma_2'}$
+        and $\lequiv{l}{e_1}{e_2}$.
+\end{tabular}
+\\
+\textit{Proof.}
+\\
+\begin{tabular}{l@{$\qquad$}l@{\qquad}l}
+      & We have $\Sigma_3',e_3$ such that:
+      & (by applying Projection 1 to (2))
+\\
+  (3) & $\sstep{e_3}{\proj{\Sigma_1}{l}}{\Sigma_3'}$; and
+\\
+      & $\lequiv{l}{\Sigma_1'}{\Sigma_3'}$; and
+\\
+      & $\lequiv{l}{e_1}{e_3}$.
+\\
+  (4) & $\sstep{e_3}{\proj{\Sigma_2}{l}}{\Sigma_3'}$; and
+      & by substituting (1) in (3).
+\\
+      & We have $\Sigma_2',e_2$ such that:
+      & (by applying Projection 2 to (4))
+\\
+      & $\sstep{e_2}{\Sigma_2}{\Sigma_2'}$; and
+\\
+      & $\lequiv{l}{\Sigma_3'}{\Sigma_2'}$; and
+\\
+      & $\lequiv{l}{e_3}{e_2}$.
+\\
+      & QED
+      & by transitivity of $\lequiv{l}{}{}$.
+\end{tabular}
