@@ -144,6 +144,54 @@ WHERE rowkey = ? AND
             }
         });
     }
+
+    del (k, l, callback) {
+        const sql = `
+DELETE FROM kvstore 
+WHERE rowkey = ? AND
+      label >= ?;
+        `;
+
+        console.log("** DEBUG: Secure K-V (TO) - Call to del.");
+        console.log("** DEBUG: Secure K-V (TO) -   Key:   " + k + ".");
+        this.con.query(sql, [k,l], (err, result) => {
+            if (err) {
+                console.log("** DEBUG: Secure K-V (TO) - Query failed - deleting value.");
+                callback(err);
+            } else {
+                console.log("** DEBUG: Secure K-V (TO) - Query successful - deleting value.");
+                console.log("** DEBUG: Secure K-V (TO) - Query result:");
+                console.log(result);
+                console.log("** DEBUG: Secure K-V (TO) - Query result />");
+
+                callback();
+            }
+        });
+    }
+
+    keys(l, callback) {
+        const sql = `
+SELECT rowkey 
+FROM kvstore 
+WHERE label <= ?;
+        `;
+
+        console.log("** DEBUG: Secure K-V (TO) - Call to keys.");
+        this.con.query(sql, [l], (err, result) => {
+            if (err) {
+                console.log("** DEBUG: Secure K-V (TO) - Query failed - getting keys.");
+                callback(err);
+            } else {
+                console.log("** DEBUG: Secure K-V (TO) - Query successful - getting keys.");
+                console.log("** DEBUG: Secure K-V (TO) - Query result:");
+                console.log(result);
+                console.log("** DEBUG: Secure K-V (TO) - Query result />");
+
+                callback(null, result.map(row => row["rowkey"]));
+            }
+        });
+    }
+
 }
 
 module.exports.SecureKV_TO = SecureKV_TO;
