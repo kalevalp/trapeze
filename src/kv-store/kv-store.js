@@ -167,6 +167,33 @@ WHERE rowkey = ?;
             }
         });
     }
+
+    entries(callback) {
+        const entriesQuerySql = `
+SELECT rowkey, rowvalues 
+FROM kvstore;
+    `;
+        console.log("** DEBUG: Call to entries.");
+
+        this.con.query(entriesQuerySql, (err, result) => {
+            if (err) {
+                console.log("** DEBUG: Query failed - getting entries.");
+                callback(err);
+            } else {
+                console.log("** DEBUG: Query successful - getting entries.");
+                console.log("** DEBUG: Query result:");
+                console.log(result);
+                console.log("** DEBUG: Query result />");
+
+                callback(null, result.map( x => {
+                    return {
+                        'key': x["rowkey"],
+                        'val': x["rowvalues"],
+                    };
+                }));
+            }
+        });
+    }
 }
 
 module.exports.KV_Store = KV_Store;
