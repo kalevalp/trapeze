@@ -1,6 +1,6 @@
 {
   "name": "secure-kv-to",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "A mySQL backed key-value store with security labels (totally ordered)",
   "main": "secure-kv-to.js",
   "scripts": {

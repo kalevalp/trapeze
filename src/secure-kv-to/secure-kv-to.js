@@ -192,6 +192,34 @@ WHERE label <= ?;
         });
     }
 
+    entries(l, callback) {
+        const sql = `
+SELECT rowkey, rowvalues 
+FROM kvstore 
+WHERE label <= ?;
+        `;
+
+        console.log("** DEBUG: Secure K-V (TO) - Call to entries.");
+        this.con.query(sql, [l], (err, result) => {
+            if (err) {
+                console.log("** DEBUG: Secure K-V (TO) - Query failed - getting entries.");
+                callback(err);
+            } else {
+                console.log("** DEBUG: Secure K-V (TO) - Query successful - getting entries.");
+                console.log("** DEBUG: Secure K-V (TO) - Query result:");
+                console.log(result);
+                console.log("** DEBUG: Secure K-V (TO) - Query result />");
+
+                callback(null, result.map(row => {
+                    return{
+                        key: row["rowkey"],
+                        value: row["rowvalues"],
+                    }
+                }));
+            }
+        });
+    }
+
 }
 
 module.exports.SecureKV_TO = SecureKV_TO;
