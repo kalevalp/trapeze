@@ -218,7 +218,7 @@ WHERE rowkey = ? AND
     keys(l, callback) {
         let leLabels = this.po.getAllLE(l);
         const sql = `
-SELECT rowkey 
+SELECT rowkey, label
 FROM kvstore_po 
 WHERE label IN ${"('" + [...leLabels].join("', '") + "')"};
     `;
@@ -227,7 +227,7 @@ WHERE label IN ${"('" + [...leLabels].join("', '") + "')"};
         console.log("** DEBUG: Secure K-V (PO) - Keys Query:");
         console.log(sql);
         console.log("** DEBUG: Secure K-V (PO) - Keys Query /> ");
-        this.con.query(sql, [k], function (err, result) {
+        this.con.query(sql, function (err, result) {
             if (err) {
                 console.log("** DEBUG: Secure K-V (PO) - Query failed - getting keys.");
                 callback(err);
@@ -239,6 +239,40 @@ WHERE label IN ${"('" + [...leLabels].join("', '") + "')"};
                 console.log("** DEBUG: Secure K-V (PO) - Query result />");
 
                 callback(null,result);
+            }
+        });
+    }
+
+    entries(l, callback) {
+        let leLabels = this.po.getAllLE(l);
+        const sql = `
+SELECT rowkey, rowvalues, label
+FROM kvstore_po 
+WHERE label IN ${"('" + [...leLabels].join("', '") + "')"};
+    `;
+
+        console.log("** DEBUG: Secure K-V (PO) - Call to entries.");
+        console.log("** DEBUG: Secure K-V (PO) - Entries Query:");
+        console.log(sql);
+        console.log("** DEBUG: Secure K-V (PO) - Entries Query /> ");
+        this.con.query(sql, function (err, result) {
+            if (err) {
+                console.log("** DEBUG: Secure K-V (PO) - Query failed - getting entries.");
+                callback(err);
+            }
+            else {
+                console.log("** DEBUG: Secure K-V (PO) - Query successful - getting entries.");
+                console.log("** DEBUG: Secure K-V (PO) - Query result:");
+                console.log(result);
+                console.log("** DEBUG: Secure K-V (PO) - Query result />");
+
+                callback(null,result.map(row => {
+                    return {
+                        key: row["rowkey"],
+                        val: row["rowvalues"],
+                        lab: row["label"],
+                    };
+                }));
             }
         });
     }
