@@ -18,6 +18,8 @@ Definition ReadContinuation := LabeledValueSet -> Code.
 Inductive Operation :=
   | Read : Key -> ReadContinuation -> Operation
   | Write : Key -> Value -> Code -> Operation
+  | Delete : Key -> Code -> Operation
+  | GetAllKeys : ReadContinuation -> Operation
   | Send : Channel -> Value -> Code -> Operation
   | Fork : Code -> Code -> Operation
   | RaiseLabel : Label -> Code -> Operation
@@ -34,6 +36,13 @@ Variable run : Code -> Operation.
 Variable Flows : Label -> Label -> Prop.
 Variable Flows_dec : forall l1 l2, {Flows l1 l2}+{~Flows l1 l2}.
 Variable Flows_trans : forall l1 l2 l3, Flows l1 l2 -> Flows l2 l3 -> Flows l1 l3.
+Definition delete (S:LabeledValueSet) l : LabeledValueSet :=
+  fun v' l' =>
+    if Flows_dec l l' then
+      false
+    else
+      S v' l'
+  .
 Definition write (S:LabeledValueSet) v l : LabeledValueSet :=
   fun v' l' =>
     if eqdec v v' then
@@ -127,6 +136,12 @@ Inductive Step : Store -> Thread -> Event -> State -> Prop :=
   | SWrite : forall x c l k v c',
       run c = Write k v c' ->
       Step x (Thrd c l) Epsilon (St (upd x k (write (x k) v l)) (multi_one (Thrd c' l)))
+  | SDelete : forall c k c' x l,
+      run c = Delete k c' ->
+      Step x (Thrd c l) Epsilon (St (upd x k (delete (x k) l)) (multi_one (Thrd c' l)))
+  | SGetAllKeys : forall c f x l,
+      run c = GetAllKeys f ->
+      Step x (Thrd c l) Epsilon (St x (multi_one (Thrd (f (getallkeys x l)) l)))
   | SFork : forall x c l c1 c2,
       run c = Fork c1 c2 ->
       Step x (Thrd c l) Epsilon (St x (multi_two (Thrd c1 l) (Thrd c2 l)))
