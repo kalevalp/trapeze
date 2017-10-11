@@ -1,13 +1,18 @@
 const mysql = require("mysql");
 
 class KV_Store {
-    constructor(h, u, pwd) {
+    constructor(h, u, pwd, tbl) {
         this.con = mysql.createConnection({
             host: h,
             user: u,
             password: pwd,
             database: "unsecurekv"
         });
+        if (tbl) {
+            this.table = tbl;
+        } else {
+            this.table = 'kvstore';
+        }
     }
 
 
@@ -17,7 +22,7 @@ class KV_Store {
 SHOW TABLES like ?;
         `;
         const createTableSql = `
-CREATE TABLE kvstore (
+CREATE TABLE ${this.table} (
     rowkey VARCHAR(32) NOT NULL,
     rowvalues VARCHAR(255),
     PRIMARY KEY (rowkey)
@@ -31,14 +36,14 @@ CREATE TABLE kvstore (
                 callback(err);
             } else {
                 console.log("** DEBUG: K-V store connected successfully.");
-                this.con.query(showTablesSql, ['kvstore'], (err, result) => {
+                this.con.query(showTablesSql, [this.table], (err, result) => {
                     if (err) {
                         console.log("** DEBUG: Failed getting list of tables in database.");
                         callback(err);
                     } else {
                         console.log("** DEBUG: Query successful - getting list of tables in database.");
                         if (result.length === 0) {
-                            console.log("** DEBUG: No kvstore table in database. Calling query to create table.");
+                            console.log("** DEBUG: No table in database. Calling query to create table.");
                             this.con.query(createTableSql, (err, result) => {
                                 if (err) {
                                     console.log("** DEBUG: Failed creating table.");
@@ -50,7 +55,7 @@ CREATE TABLE kvstore (
                                 }
                             });
                         } else {
-                            console.log("** DEBUG: kvstore table already exists in the database. No need to create it.");
+                            console.log("** DEBUG: table already exists in the database. No need to create it.");
                             callback();
                         }
                     }
@@ -75,7 +80,7 @@ CREATE TABLE kvstore (
 
     put (k, v, callback) {
         const putQuerySql = `
-INSERT INTO kvstore (rowkey,rowvalues) 
+INSERT INTO ${this.table} (rowkey,rowvalues) 
     VALUES (?, ?)
     ON DUPLICATE KEY UPDATE 
         rowvalues = VALUES(rowvalues);
@@ -100,7 +105,7 @@ INSERT INTO kvstore (rowkey,rowvalues)
     get (k, callback) {
         const getQuerySql = `
 SELECT rowvalues 
-FROM kvstore 
+FROM ${this.table} 
 WHERE rowkey = ?;
     `;
         console.log("** DEBUG: Call to get.");
@@ -126,7 +131,7 @@ WHERE rowkey = ?;
     keys(callback) {
         const keysQuerySql = `
 SELECT rowkey 
-FROM kvstore;
+FROM ${this.table};
     `;
         console.log("** DEBUG: Call to keys.");
 
@@ -147,7 +152,7 @@ FROM kvstore;
 
     del(k, callback) {
         const deleteQuerySql = `
-DELETE FROM kvstore
+DELETE FROM ${this.table}
 WHERE rowkey = ?;
     `;
         console.log("** DEBUG: Call to delete.");
@@ -171,7 +176,7 @@ WHERE rowkey = ?;
     entries(callback) {
         const entriesQuerySql = `
 SELECT rowkey, rowvalues 
-FROM kvstore;
+FROM ${this.table};
     `;
         console.log("** DEBUG: Call to entries.");
 

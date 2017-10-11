@@ -1,18 +1,24 @@
 const mysql = require("mysql");
 
 class SecureKV_TO {
-    constructor(h, u, pwd) {
+    constructor(h, u, pwd, tbl) {
         this.con = mysql.createConnection({
             host: h,
             user: u,
             password: pwd,
-            database: "securekv"
+            database: "securekvto"
         });
+        if (tbl) {
+            this.table = tbl;
+        } else {
+            this.table = 'kvstore';
+        }
+
     }
 
     init(callback) {
         const createTableSql = `
-CREATE TABLE kvstore (
+CREATE TABLE ${this.table} (
     rowkey VARCHAR(32) NOT NULL,
     rowvalues VARCHAR(255),
     label INTEGER NOT NULL,
@@ -21,7 +27,7 @@ CREATE TABLE kvstore (
         `;
 
         const addUpdateTrigger = `
-CREATE TRIGGER TO_put_semantics BEFORE UPDATE ON kvstore 
+CREATE TRIGGER TO_put_semantics BEFORE UPDATE ON ${this.table} 
     FOR EACH ROW
     BEGIN
         IF OLD.label < NEW.label THEN
@@ -42,7 +48,7 @@ SHOW TABLES like ?;
                 callback(err);
             } else {
                 console.log("** DEBUG: Secure K-V (TO) - Connection successful.");
-                this.con.query(tableSql, ['kvstore'], (err, result) => {
+                this.con.query(tableSql, [this.table], (err, result) => {
                     if (err) {
                         console.log("** DEBUG: Secure K-V (TO) - Failed getting list of tables.");
                         callback(err);
@@ -93,7 +99,7 @@ SHOW TABLES like ?;
 
     put (k, v, l, callback) {
         const sql = `
-INSERT INTO kvstore (rowkey,rowvalues,label) 
+INSERT INTO ${this.table} (rowkey,rowvalues,label) 
     VALUES (?, ?, ?)
     ON DUPLICATE KEY UPDATE 
         rowvalues=VALUES(rowvalues), label=VALUES(label);
@@ -121,7 +127,7 @@ INSERT INTO kvstore (rowkey,rowvalues,label)
     get (k, l, callback) {
         const sql = `
 SELECT rowvalues 
-FROM kvstore 
+FROM ${this.table} 
 WHERE rowkey = ? AND
       label <= ?;
         `;
@@ -147,7 +153,7 @@ WHERE rowkey = ? AND
 
     del (k, l, callback) {
         const sql = `
-DELETE FROM kvstore 
+DELETE FROM ${this.table}
 WHERE rowkey = ? AND
       label >= ?;
         `;
@@ -172,7 +178,7 @@ WHERE rowkey = ? AND
     keys(l, callback) {
         const sql = `
 SELECT rowkey 
-FROM kvstore 
+FROM ${this.table} 
 WHERE label <= ?;
         `;
 
@@ -195,7 +201,7 @@ WHERE label <= ?;
     entries(l, callback) {
         const sql = `
 SELECT rowkey, rowvalues 
-FROM kvstore 
+FROM ${this.table} 
 WHERE label <= ?;
         `;
 

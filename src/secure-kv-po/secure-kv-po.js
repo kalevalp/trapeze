@@ -2,14 +2,19 @@ const mysql = require ("mysql");
 const {PartialOrder} = require ("po-utils");
 
 class SecureKV_PO {
-    constructor(h, u, pwd, partialOrder) {
+    constructor(h, u, pwd, partialOrder, tbl) {
         this.con = mysql.createConnection({
             host: h,
             user: u,
             password: pwd,
-            database: "securekv"
+            database: "securekvpo"
         });
         this.po = partialOrder;
+        if (tbl) {
+            this.table = tbl;
+        } else {
+            this.table = 'kvstore';
+        }
     }
 
     init(callback) {
@@ -18,7 +23,7 @@ SHOW TABLES like ?;
         `;
 
         const createTableSql = `
-CREATE TABLE kvstore_po (
+CREATE TABLE ${this.table} (
     rowkey VARCHAR(32) NOT NULL,
     rowvalues VARCHAR(255),
     label VARCHAR(32) NOT NULL,
@@ -33,7 +38,7 @@ CREATE TABLE kvstore_po (
                 callback(err);
             } else {
                 console.log("** DEBUG: Secure K-V (PO) - Connection successful.");
-                this.con.query(tableSql, ['kvstore_po'], (err, result) => {
+                this.con.query(tableSql, [this.table], (err, result) => {
                     if (err) {
                         console.log("** DEBUG: Secure K-V (PO) - Failed getting list of tables.");
                         callback(err);
@@ -99,13 +104,13 @@ CREATE TABLE kvstore_po (
                 callback(err);
             } else {
                 console.log("** DEBUG: Secure K-V (PO) - Successfully started transaction.");
-                this.con.query(`DELETE FROM kvstore_po WHERE rowkey = ? AND ${cond}`, [k], (err) => {
+                this.con.query(`DELETE FROM ${this.table} WHERE rowkey = ? AND ${cond}`, [k], (err) => {
                     if (err) {
                         console.log("** DEBUG: Secure K-V (PO) - Failed deleting.");
                         callback(err);
                     } else {
                         console.log("** DEBUG: Secure K-V (PO) - Delete successful.");
-                        this.con.query('INSERT INTO kvstore_po (rowkey,rowvalues,label) VALUES (?, ?, ?)', [k,v,l],  (err, results, fields) => {
+                        this.con.query(`INSERT INTO ${this.table} (rowkey,rowvalues,label) VALUES (?, ?, ?)`, [k,v,l],  (err, results, fields) => {
                             if (err) {
                                 console.log("** DEBUG: Secure K-V (PO) - Failed inserting.");
                                 callback(err);
@@ -138,7 +143,7 @@ CREATE TABLE kvstore_po (
         let leLabels = this.po.getAllLE(l);
         const sql = `
 SELECT rowvalues, label 
-FROM kvstore_po 
+FROM ${this.table} 
 WHERE rowkey = ? AND
       label IN ${"('" + [...leLabels].join("', '") + "')"};
     `;
@@ -189,7 +194,7 @@ WHERE rowkey = ? AND
         // TODO KALEV: Implement getAllGE
         let geLabels = this.po.getAllGE(l);
         const sql = `
-DELETE FROM kvstore_po  
+DELETE FROM ${this.table}  
 WHERE rowkey = ? AND
       label IN ${"('" + [...geLabels].join("', '") + "')"};
     `;
@@ -219,7 +224,7 @@ WHERE rowkey = ? AND
         let leLabels = this.po.getAllLE(l);
         const sql = `
 SELECT rowkey, label
-FROM kvstore_po 
+FROM ${this.table} 
 WHERE label IN ${"('" + [...leLabels].join("', '") + "')"};
     `;
 
@@ -247,7 +252,7 @@ WHERE label IN ${"('" + [...leLabels].join("', '") + "')"};
         let leLabels = this.po.getAllLE(l);
         const sql = `
 SELECT rowkey, rowvalues, label
-FROM kvstore_po 
+FROM ${this.table} 
 WHERE label IN ${"('" + [...leLabels].join("', '") + "')"};
     `;
 
