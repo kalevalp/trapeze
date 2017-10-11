@@ -7,14 +7,14 @@ Variable Label : Set.
 Variable Channel : Set.
 Variable label : Channel -> Label.
 Variable Value : Set.
-Definition LabeledValueSet := Value -> Label -> bool.
+Definition LabeledValueSeq := list (Value * Label).
 Variable Key : Set.
-Definition Store := Key -> LabeledValueSet.
+Definition Store := Key -> LabeledValueSeq.
 Variable Code : Set.
 Inductive Thread :=
   Thrd : Code -> Label -> Thread.
 Definition Threads := Thread -> nat.
-Definition ReadContinuation := LabeledValueSet -> Code.
+Definition ReadContinuation := LabeledValueSeq -> Code.
 Inductive Operation :=
   | Read : Key -> ReadContinuation -> Operation
   | Write : Key -> Value -> Code -> Operation
@@ -36,36 +36,28 @@ Variable run : Code -> Operation.
 Variable Flows : Label -> Label -> Prop.
 Variable Flows_dec : forall l1 l2, {Flows l1 l2}+{~Flows l1 l2}.
 Variable Flows_trans : forall l1 l2 l3, Flows l1 l2 -> Flows l2 l3 -> Flows l1 l3.
-Definition delete (S:LabeledValueSet) l : LabeledValueSet :=
-  fun v' l' =>
-    if Flows_dec l l' then
-      false
-    else
-      S v' l'
-  .
-Definition write (S:LabeledValueSet) v l : LabeledValueSet :=
-  fun v' l' =>
-    if eqdec v v' then
-      if eqdec l l' then
-        true
-      else
-        if Flows_dec l l' then
-          false
-        else
-          S v' l'
-    else
+Fixpoint delete (S:LabeledValueSeq) l : LabeledValueSeq :=
+  match S with
+  | nil =>
+      nil
+  | cons (v', l') S' =>
       if Flows_dec l l' then
-        false
+        delete S' l
       else
-        S v' l'
-  .
-Definition pS (S:LabeledValueSet) l : LabeledValueSet :=
-  fun v l' =>
-    if Flows_dec l' l then
-      S v l'
-    else
-      false
-  .
+        cons (v', l') (delete S' l)
+  end.
+Definition write (S:LabeledValueSeq) v l : LabeledValueSeq :=
+  cons (v, l) (delete S l).
+Fixpoint pS (S:LabeledValueSeq) l : LabeledValueSeq :=
+  match S with
+  | nil =>
+      nil
+  | cons (v', l') S' =>
+      if Flows_dec l' l then
+        cons (v', l') (pS S' l)
+      else
+        pS S' l
+  end.
 Definition thread_label t :=
   match t with
   | Thrd _ l => l
@@ -136,12 +128,14 @@ Inductive Step : Store -> Thread -> Event -> State -> Prop :=
   | SWrite : forall x c l k v c',
       run c = Write k v c' ->
       Step x (Thrd c l) Epsilon (St (upd x k (write (x k) v l)) (multi_one (Thrd c' l)))
+(*
   | SDelete : forall c k c' x l,
       run c = Delete k c' ->
       Step x (Thrd c l) Epsilon (St (upd x k (delete (x k) l)) (multi_one (Thrd c' l)))
   | SGetAllKeys : forall c f x l,
       run c = GetAllKeys f ->
       Step x (Thrd c l) Epsilon (St x (multi_one (Thrd (f (getallkeys x l)) l)))
+*)
   | SFork : forall x c l c1 c2,
       run c = Fork c1 c2 ->
       Step x (Thrd c l) Epsilon (St x (multi_two (Thrd c1 l) (Thrd c2 l)))
@@ -313,22 +307,29 @@ Proof.
   intros.
   rename H into T1, H0 into T2.
   inversion T2; auto.
-  unfold px, pS, upd, write.
-  apply extensionality.
-  intro k'.
-  apply extensionality.
-  intro v'.
-  apply extensionality.
-  intro l''.
-  destruct (eqdec k k')
-  ; destruct (eqdec v v')
-  ; destruct (eqdec l' l'')
-  ; destruct (Flows_dec l'' l)
-  ; destruct (Flows_dec l' l'')
-  ; intuition (try congruence)
-  ; pose (Flows_trans l' l'' l)
-  ; intuition
-  .
+  unfold px, upd, write.
+  apply extensionality; intro k'.
+  destruct (eqdec k k'); auto.
+  simpl.
+  destruct (Flows_dec l' l); try congruence.
+  rewrite <- e0.
+  clear H4.
+  induction (x k); auto.
+  simpl.
+  destruct a.
+  destruct (Flows_dec l2 l).
+  - (* This case is copy-pasted below *)
+    destruct (Flows_dec l' l2).
+      pose (Flows_trans l' l2 l).
+      intuition.  (* contradiction *)
+    simpl.
+    destruct (Flows_dec l2 l); congruence.
+  - (* This case is copy-pasted from above *)
+    destruct (Flows_dec l' l2).
+      pose (Flows_trans l' l2 l).
+      intuition.  (* contradiction *)
+    simpl.
+    destruct (Flows_dec l2 l); congruence.
 Qed.
 
 Lemma lemma_invisibility_2 : forall x c l' e x' ts' l,
@@ -388,14 +389,22 @@ Lemma lemma_px_upd : forall l' l x k v,
 Proof.
   intros.
   apply extensionality; intro k'.
-  apply extensionality; intro v'.
-  apply extensionality; intro l''.
-  unfold px, upd, write, pS.
-  destruct (eqdec k k')
-  ; destruct (Flows_dec l'' l)
-  ; destruct (eqdec v v')
-  ; destruct (eqdec l' l'')
-  ; destruct (Flows_dec l' l'')
+  unfold px, upd, write.
+  destruct (eqdec k k'); auto.
+  simpl.
+  destruct (Flows_dec l' l); intuition.
+  simpl.
+  apply f_equal.
+  clear.
+  induction (x k).
+    reflexivity.
+  destruct a.
+  simpl.
+  destruct (Flows_dec l' l1)
+  ; simpl
+  ; destruct (Flows_dec l1 l)
+  ; simpl
+  ; destruct (Flows_dec l' l1)
   ; intuition congruence.
 Qed.
 
@@ -405,14 +414,18 @@ Lemma lemma_read_helper : forall x' k l' l,
   .
 Proof.
   intros.
-  apply extensionality.
-  intro v.
-  apply extensionality.
-  intro l''.
-  unfold pS, px, pS.
-  destruct (Flows_dec l'' l'); destruct (Flows_dec l'' l); auto.
-  pose (Flows_trans l'' l' l).
-  intuition.  (* contradiction *)
+  unfold px.
+  induction (x' k).
+    reflexivity.
+  destruct a.
+  simpl.
+  pose (Flows_trans l1 l' l).
+  destruct (Flows_dec l1 l')
+  ; simpl
+  ; destruct (Flows_dec l1 l)
+  ; simpl
+  ; destruct (Flows_dec l1 l')
+  ; intuition congruence.
 Qed.
 
 Lemma lemma_idemp_px : forall x l,
@@ -420,10 +433,15 @@ Lemma lemma_idemp_px : forall x l,
 Proof.
   intros.
   apply extensionality; intro k.
-  apply extensionality; intro v.
-  apply extensionality; intro l'.
-  unfold px, pS.
-  destruct (Flows_dec l' l); reflexivity.
+  unfold px.
+  induction (x k).
+    reflexivity.
+  destruct a.
+  simpl.
+  destruct (Flows_dec l1 l)
+  ; simpl
+  ; destruct (Flows_dec l1 l)
+  ; congruence.
 Qed.
 
 Lemma lemma_idemp_pts : forall ts l,
