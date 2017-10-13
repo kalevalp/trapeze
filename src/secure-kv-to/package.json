@@ -12,6 +12,7 @@
   "author": "Kalev Alpernas <kalev.alp@gmail.com>",
   "license": "ISC",
   "dependencies": {
+    "bluebird": "^3.5.1",
     "mysql": "latest"
   }
 }
