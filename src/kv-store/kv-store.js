@@ -1,8 +1,6 @@
 const mysql = require("mysql");
 const bbPromise = require('bluebird');
 
-// bbPromise.promisifyAll(mysql);
-
 class KV_Store {
     constructor(h, u, pwd, tbl) {
         this.con = bbPromise.promisifyAll(mysql.createConnection({
@@ -34,11 +32,8 @@ CREATE TABLE ${this.table} (
 
         console.log("** DEBUG: Call to init.");
         return this.con.connectAsync()
-            .then(
-                () => {
-                    console.log("** DEBUG: K-V store connected successfully.");
-                    return this.con.queryAsync(showTablesSql, [this.table]);
-                })
+            .then(() => console.log("** DEBUG: K-V store connected successfully."))
+            .then(() => this.con.queryAsync(showTablesSql, [this.table]))
             .then(
                 (result) => {
                     console.log("** DEBUG: Query successful - getting list of tables in database.");
@@ -195,8 +190,6 @@ module.exports.KV_Store = KV_Store;
  * ************************ */
 
 if (process.argv[2] === "test") {
-    console.log(process.argv)
-
 
     const kv = new KV_Store(
         process.argv[3],
