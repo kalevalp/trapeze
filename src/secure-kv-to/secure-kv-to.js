@@ -52,7 +52,7 @@ SHOW TABLES like ?;
                     console.log("** DEBUG: Secure K-V (TO) - Table does not exists in database. Creating table.");
                     return this.con.queryAsync(createTableSql)
                         .then(() => console.log("** DEBUG: Secure K-V (TO) - Successfully created table."))
-                        .then(() => this.con.query(addUpdateTrigger))
+                        .then(() => this.con.queryAsync(addUpdateTrigger))
                         .then(() => console.log("** DEBUG: Secure K-V (TO) - Successfully added update trigger to table."))
                 } else {
                     console.log("** DEBUG: Secure K-V (TO) - Table exists in database.");
