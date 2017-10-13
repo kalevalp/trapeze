@@ -123,9 +123,7 @@
 \newcommand{\lequiv}[3]{#2\approx_{#1}#3}
 
 
-%\begin{document}
-
-
+\begin{figure*}
 $\startsyntax
   l     & \in & \s{Label}  \\
   ch    & \in & \s{Channel}  \\
@@ -178,7 +176,9 @@ $\startsyntax
   &           & \proj{(\sigma,ps)}{l} & = & (\proj{\sigma}{l},\proj{ps}{l})   \\
   &           & \lequiv{l}{\hole_1}{\hole_2} & \text{means} & \proj{\hole_1}{l}=\proj{\hole_2}{l}  \\
 \finishsyntax$
-\\
+\end{figure*}
+
+\begin{figure*}
 \fbox{$\tstep{e}{(\sigma,p)}{\Sigma}$} Process transition relation
 \\
 $\startrules
@@ -228,7 +228,8 @@ $\startrules
         {(\sigma,ps\uplus\{\process{t}{l}\})}
         {(\sigma',ps\uplus ps')}
 \finishrules$
-\\
+\end{figure*}
+
 \textbf{Theorem (Single step Progress Sensitive Non-Interference).}
 \\
 If $\lequiv{l}{\Sigma_1}{\Sigma_2}$

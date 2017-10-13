@@ -12,20 +12,22 @@ and $\proj{ps'}{l}=\{\}$.
 \textit{Proof.}
 Omitted.
 \\
+\newcommand{\startproof}{\begin{xtabular}{l@{$\quad$}l@{$\quad$}l}}
+\newcommand{\finishproof}{\end{xtabular}}
 \textbf{Theorem (Projection 1).}
 \\
-\begin{tabular}{l@{$\qquad$}l}
+\startproof
   (1) & If $\sstep{e_1}{\Sigma}{\Sigma_1'}$,
 \\
       & then $\exists\Sigma_2'.\exists e_2.~\sstep{e_2}{\proj{\Sigma}{l}}{\Sigma_2'}$
         and $\lequiv{l}{\Sigma_1'}{\Sigma_2'}$
-        and $\lequiv{l}{e_1'}{e_2'}$
-\end{tabular}
+        and $\lequiv{l}{e_1'}{e_2'}$.
+\finishproof
 \\
 \textit{Proof.}
 \\
 \newcommand{\z}{$\quad$}
-\begin{tabular}{l@{$\qquad$}l@{$\qquad$}l}
+\startproof
         & Let $(\sigma, ps) = \Sigma$.
 \\
         & Let $(\sigma_1', ps_1') = \Sigma_1'$.
@@ -65,7 +67,7 @@ Omitted.
         & \z QED
         & by  $\rn{s-skip}$.
 \\
-        & Last case: $\rn{s-step}$. Let $t,l',ps_1,ps_2$ be such that:
+        & \multicolumn{2}{@{}l}{Last case: $\rn{s-step}$. Let $t,l',ps_1,ps_2$ be such that:}
 \\
         & $ps=ps_1+\process{t}{l'}$; and
 \\
@@ -110,7 +112,7 @@ Omitted.
         & by $\rn{s-step}$.
 \\
         & Remaining cases omitted.
-\end{tabular}
+\finishproof
 
 
 \newpage
@@ -119,17 +121,17 @@ Omitted.
 %
 \textbf{Theorem (Projection 2).}
 \\
-\begin{tabular}{l@{$\qquad$}l}
+\startproof
   (1) & If $\sstep{e_1}{\proj{\Sigma}{l}}{\Sigma_1}$,
 \\
       & then $\exists \Sigma_2.\exists e_2.~\sstep{e_2}{\Sigma}{\Sigma_2}$
         and $\lequiv{l}{\Sigma_1}{\Sigma_2}$
         and $\lequiv{l}{e_1}{e_2}$.
-\end{tabular}
+\finishproof
 \\
 \textit{Proof.}
 \\
-\begin{tabular}{l@{$\qquad$}l@{\qquad}l}
+\startproof
         & Let $(\sigma,ps)=\Sigma$.
 \\
         & Let $(\sigma_1,ps_1)=\Sigma_1$.
@@ -156,7 +158,7 @@ Omitted.
         & \z QED
         & by $\rn{s-skip}$.
 \\
-        & Last case: $\rn{s-step}$. Let $t,l',ps_3,ps_4$ be such that:
+        & \multicolumn{2}{@{}l}{Last case: $\rn{s-step}$. Let $t,l',ps_3,ps_4$ be such that:}
 \\
   (2)   & $\proj{ps}{l}=ps_3+\process{t}{l'}$; and
 \\
@@ -172,7 +174,7 @@ Omitted.
 \\
         & Proceed by cases (ie inversion) on (3).
 \\
-        & Case: $\rn{p-send}$. Let $ch,v,t'$ be such that:
+        & \multicolumn{2}{@{}l}{Case: $\rn{p-send}$. Let $ch,v,t'$ be such that:}
 \\
         & \z $e_1=\evsend{ch}{v}$; and
 \\
@@ -184,17 +186,17 @@ Omitted.
 \\
         & \z $l'\sqsubseteq\s{label}(ch)$.
 \\
-        & \z Pick $\Sigma_2 = (\sigma, ps-\process{t}{l'}+\process{t'}{l'})$ and $e_2=e_1$.
+        & \multicolumn{2}{@{}l}{\z Pick $\Sigma_2 = (\sigma, ps-\process{t}{l'}+\process{t'}{l'})$ and $e_2=e_1$.}
 \\
         & \z QED
         & by $\rn{p-send}$.
 \\
         & Remaining cases omitted.
-\end{tabular}
+\finishproof
 \\
 \textbf{Theorem (Single step Progress Sensitive Non-Interference).}
 \\
-\begin{tabular}{l@{$\qquad$}l}
+\startproof
   (1) & If $\lequiv{l}{\Sigma_1}{\Sigma_2}$
 \\
   (2) & and $\sstep{e_1}{\Sigma_1}{\Sigma_1'}$,
@@ -202,11 +204,11 @@ Omitted.
       & then $\exists \Sigma_2'.\exists e_2.~\sstep{e_2}{\Sigma_2}{\Sigma_2'}$
         and $\lequiv{l}{\Sigma_1'}{\Sigma_2'}$
         and $\lequiv{l}{e_1}{e_2}$.
-\end{tabular}
+\finishproof
 \\
 \textit{Proof.}
 \\
-\begin{tabular}{l@{$\qquad$}l@{\qquad}l}
+\startproof
       & We have $\Sigma_3',e_3$ such that:
       & (by applying Projection 1 to (2))
 \\
@@ -230,4 +232,4 @@ Omitted.
 \\
       & QED
       & by transitivity of $\lequiv{l}{}{}$.
-\end{tabular}
+\finishproof
