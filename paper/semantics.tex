@@ -67,7 +67,11 @@ resolved, faceting continues to enforce confidentiality.
 %to different observers.  We use it to isolate writes by incomparable 
 %users.  The latter prevents the flow of information down the lattice by
 %blocking high writes to low locations.  Both mechanisms preserve
-%termination sensitivity.  NSU reduces faceting (which can be seen as a
+%termination sensitivity.
+%\TODO{Does NSU preserve termination sensitivity?
+%I thought it would leak half a bit by continuing execution in some
+%cases while raising an error in other cases. --Tommy}
+%NSU reduces faceting (which can be seen as a
 %form of store corruption that requires manual intervention) by
 %sacrificing transparency.  Without NSU, we would need to introduce
 %facets for each label, not just incomparable ones.
