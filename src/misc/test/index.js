@@ -1,4 +1,4 @@
-fs = require("fs");
+const fs = require("fs");
 
 exports.handler = (event, context, callback) => {
     console.log("## File: " + __filename);

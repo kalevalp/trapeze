@@ -115,10 +115,12 @@ class PartialOrder {
                 }
             }
         }
-
         return res;
     }
 
+    getAllGE(label) {
+        return this.potc[label];
+    }
 }
 
 module.exports.PartialOrder = PartialOrder;
@@ -148,6 +150,12 @@ if (process.argv[2] === "test") {
     console.log("Transitive closure test 2:");
     console.log(x);
     console.log(po.potc);
+    console.log("************************");
+
+    console.log("************************");
+    console.log("Get all GE test: ");
+    console.log(">= userA:")
+    console.log(po.getAllGE("userA"));
     console.log("************************");
 
 
