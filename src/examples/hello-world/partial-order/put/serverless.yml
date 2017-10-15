@@ -1,0 +1,18 @@
+service: hello-world
+
+provider:
+  name: aws
+  runtime: nodejs6.10
+
+  stage: dev
+  region: us-west-1
+
+functions:
+  po-put:
+    handler: po-put.handler
+
+    events:
+      - http:
+          path: partial-order/store
+          method: POST
+          cors: true
