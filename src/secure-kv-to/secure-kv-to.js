@@ -21,7 +21,7 @@ class SecureKV_TO {
         const createTableSql = `
 CREATE TABLE ${this.table} (
     rowkey VARCHAR(32) NOT NULL,
-    rowvalues VARCHAR(255),
+    rowvalues MEDIUMTEXT,
     label INTEGER NOT NULL,
     PRIMARY KEY (rowkey)
 );

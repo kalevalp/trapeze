@@ -25,7 +25,7 @@ SHOW TABLES like ?;
         const createTableSql = `
 CREATE TABLE ${this.table} (
     rowkey VARCHAR(32) NOT NULL,
-    rowvalues VARCHAR(255),
+    rowvalues MEDIUMTEXT,
     PRIMARY KEY (rowkey)
 );
             `;
