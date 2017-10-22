@@ -9,6 +9,6 @@
   "author": "Kalev Alpernas <kalev.alp@gmail.com>",
   "license": "ISC",
   "dependencies": {
-    "lambda-shim": "file:../../../../lambda-shim"
+    "lambda-shim": "file:../../../../src/lambda-shim"
   }
 }
