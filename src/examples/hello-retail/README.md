@@ -1,7 +1,7 @@
 
 # Hello (Secure) Retail
 
-The cloned github repository holding the minimized project can be found [here](https://github.com/kalevalp/hello-retail).
+The cloned github repository holding the minimized project can be found [here](https://github.com/kalevalp/hello-retail-baseline).
 
 
 
