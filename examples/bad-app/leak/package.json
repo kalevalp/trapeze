@@ -1,0 +1,14 @@
+{
+  "name": "bad-app-leak",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Kalev Alpernas <kalev.alp@gmail.com>",
+  "license": "ISC",
+  "dependencies": {
+    "kv-store": "file:../../../src/kv-store"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "bad-app-secure",
+  "version": "1.0.0",
+  "description": "",
+  "main": "secure-index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Kalev Alpernas <kalev.alp@gmail.com>",
+  "license": "ISC",
+  "dependencies": {
+    "lambda-shim": "file:../../../src/lambda-shim"
+  }
+}
