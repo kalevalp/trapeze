@@ -39,11 +39,6 @@ const unsecuredLambda = fs.readFileSync(conf.unsecLambda, 'utf8');
 
 const labelOrdering = conf.usingPO ? new PartialOrder(conf.labels) : new TotalOrder(conf.min, conf.max);
 
-const skv = conf.usingPO ?
-    new SecureKV_PO(conf.host, conf.user, conf.pass, labelOrdering) :
-    new SecureKV_TO(conf.host, conf.user, conf.pass);
-
-
 module.exports.makeShim = function (exp, allowExtReq) {
     exp.handler = function (event, context, callback) {
 
@@ -87,24 +82,19 @@ module.exports.makeShim = function (exp, allowExtReq) {
                 root: "./",
                 mock: {
                     'kv-store': {
-                        KV_Store: class {
-                            constructor(h, u, pwd) {
-                            }
+                        KV_Store: function(h, u, pwd, tableName) {
+                            const skv = conf.usingPO ?
+                                new SecureKV_PO(conf.host, conf.user, conf.pass, labelOrdering, tableName) :
+                                new SecureKV_TO(conf.host, conf.user, conf.pass, tableName);
 
-                            init(callback) {
-                                skv.init(callback);
-                            }
-
-                            close(callback) {
-                                skv.close(callback);
-                            }
-
-                            put(k, v, callback) {
-                                skv.put(k, v, label, callback);
-                            }
-
-                            get(k, callback) {
-                                skv.get(k, label, callback);
+                            return {
+                                init:    ()     => skv.init(),
+                                close:   ()     => skv.close(),
+                                put:     (k, v) => skv.put(k, v, label),
+                                get:     (k)    => skv.get(k, label),
+                                del:     (k)    => skv.del(k, label),
+                                keys:    ()     => skv.keys(label),
+                                entries: ()     => skv.entries(label),
                             }
                         }
                     },
@@ -131,27 +121,34 @@ module.exports.makeShim = function (exp, allowExtReq) {
             console.log("WARNING : /tmp/ dir not empty on fresh invocation of lambda. Might lead to data leak.")
         }
 
-        // Run on behalf of invoking user.
-        auth(event.user, event.pass)
-            .then((l) => {
+        let p;
 
-                if (l === undefined) {
-                    // In case getting the label failed, run on behalf of 'bottom' (completely unprivileged).
-                    label = labelOrdering.getBottom();
-                } else {
-                    label = l;
-                }
+        if (conf.runFromKinesis && event.Data.ifcLabel) { // Handle events originating from AWS Kinesis.
+            p = Promise.resolve(event.Data.ifcLabel);
+        } else if (conf.runFromSF && event.ifcLabel) { // Handle events originating from AWS Step Functions.
+            p = Promise.resolve(event.ifcLabel);
+        } else { // Run on behalf of invoking user.
+            p = auth(event.user, event.pass);
+        }
 
-                let declf;
-                if (conf.declassifier) {
-                    // The relative path part of the next require is a very dangerous workaround to model load issues.
-                    // TODO: KALEV - Should change to something more robust.
-                    declf = require("../../decl");
-                }
+        p.then((l) => {
+            if (l === undefined) {
+                // In case getting the label failed, run on behalf of 'bottom' (completely unprivileged).
+                label = labelOrdering.getBottom();
+            } else {
+                label = l;
+            }
 
-                const vm = new NodeVM(executionEnv);
+            let declf;
+            if (conf.declassifier) {
+                // The relative path part of the next require is a very dangerous workaround to model load issues.
+                // TODO: KALEV - Should change to something more robust.
+                declf = require("../../decl");
+            }
 
-                console.log(`
+            const vm = new NodeVM(executionEnv);
+
+            console.log(`
 //  ***********************************
 //  ** Original Lambda Code:
 ${unsecuredLambda}
@@ -162,7 +159,7 @@ module.exports.${conf.handler}(externalEvent, externalContext, externalCallback)
 
         `);
 
-                vm.run(`
+            vm.run(`
 //  ***********************************
 //  ** Original Lambda Code:
 ${unsecuredLambda}
@@ -171,7 +168,7 @@ ${unsecuredLambda}
 
 module.exports.${conf.handler}(externalEvent, externalContext, externalCallback);
         `);
-            })
+        })
             .catch(err => callback(err));
     };
 };
