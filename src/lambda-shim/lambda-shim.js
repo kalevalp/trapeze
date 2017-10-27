@@ -7,6 +7,7 @@ const {TotalOrder} = require("to-utils");
 const {auth} = require("auth");
 const {SecureKV_PO} = require("secure-kv-po");
 const {SecureKV_TO} = require("secure-kv-to");
+const aws = require("aws");
 
 const rmFilesInDir = function (dirPath) {
     try {
@@ -104,6 +105,21 @@ module.exports.makeShim = function (exp, allowExtReq) {
 
                             get(k, callback) {
                                 skv.get(k, label, callback);
+                            }
+                        }
+                    },
+                    'aws': {
+                        Kinesis: function () {
+                            const kinesis = aws.Kinesis();
+                            return {
+                                putRecord: (event, callback) => {
+                                    if (event.Data.ifcLabel) { // && event.Data.ifcLabel !== label) {
+                                        throw `Unexpected security label. Event written to kinesis should not have an ifcLabel field. Has label: ${event.ifcLabel}`;
+                                    } else {
+                                        event.Data.ifcLabel = label;
+                                        return kinesis.putRecord(event, callback);
+                                    }
+                                },
                             }
                         }
                     }
