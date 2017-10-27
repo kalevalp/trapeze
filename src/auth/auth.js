@@ -4,67 +4,30 @@ const crypto = require('crypto');
 
 const conf = JSON.parse(fs.readFileSync('conf.json', 'utf8'));
 
-function auth(user, pass, callback) {
+function auth(user, pass) {
     const md5sum = crypto.createHash('md5');
     md5sum.update(user + pass, 'utf8');
     const h = md5sum.digest('hex');
 
-    // Copy pasted, more or less, from the unsafe hello-world example.
-    // Could probably be refactored.
+    let kv = new KV_Store(conf.host, conf.user, conf.pass, 'userLabelMappingTable');
 
-    let kv = new KV_Store(conf.host, conf.user, conf.pass);
-
-    kv.init((err) => {
-        if (err) {
-            callback(err);
-        } else {
-            kv.get(h, (err, result) => {
-                if (err) {
-                    callback(err);
-                } else {
-                    kv.close((err) => {
-                        if (err) {
-                            callback(err);
-                        } else {
-                            callback(null, result);
-                        }
-                    })
-                }
-            })
-        }
-    })
-
+    return kv.init()
+        .then(() => kv.get(h))
+        .then(res => kv.close().then(() => res))
+        .catch(err => Promise.reject(err));
 }
 
-function storeCredentials(user, pass, label, callback) {
+function storeCredentials(user, pass, label) {
     const md5sum = crypto.createHash('md5');
     md5sum.update(user + pass, 'utf8');
     const h = md5sum.digest('hex');
 
-    // Copy pasted, more or less, from the unsafe hello-world example.
-    // Could probably be refactored.
+    let kv = new KV_Store(conf.host, conf.user, conf.pass, 'userLabelMappingTable');
 
-    let kv = new KV_Store(conf.host, conf.user, conf.pass);
-
-    kv.init((err) => {
-        if (err) {
-            callback(err);
-        } else {
-            kv.put(h, label, (err, result) => {
-                if (err) {
-                    callback(err);
-                } else {
-                    kv.close((err) => {
-                        if (err) {
-                            callback(err);
-                        } else {
-                            callback(null, result);
-                        }
-                    })
-                }
-            })
-        }
-    })
+    return kv.init()
+        .then(() => kv.put(h, label))
+        .then(() => kv.close())
+        .catch(err => Promise.reject(err))
 }
 
 module.exports.auth = auth;
