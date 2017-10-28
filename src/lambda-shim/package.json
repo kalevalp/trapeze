@@ -1,6 +1,6 @@
 {
   "name": "lambda-shim",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "An secure execution shim for running AWS Lambda functions while monitoring and maintaining IFC",
   "main": "lambda-shim.js",
   "dependencies": {
@@ -10,6 +10,9 @@
     "secure-kv-to": "file:../secure-kv-to",
     "to-utils": "file:../to-utils",
     "vm2": "latest"
+  },
+  "devDependencies": {
+    "aws-sdk": "^2.141.0"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

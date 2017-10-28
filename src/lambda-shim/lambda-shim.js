@@ -7,7 +7,7 @@ const {TotalOrder} = require("to-utils");
 const {auth} = require("auth");
 const {SecureKV_PO} = require("secure-kv-po");
 const {SecureKV_TO} = require("secure-kv-to");
-const aws = require("aws");
+const aws = require("aws-sdk");
 
 const rmFilesInDir = function (dirPath) {
     try {
@@ -43,10 +43,40 @@ module.exports.makeShim = function (exp, allowExtReq) {
     exp.handler = function (event, context, callback) {
 
         let label;
+
+        let p;
+        const strippedEvent = event;
+        if (conf.runFromKinesis && event.Data.ifcLabel) { // Handle events originating from AWS Kinesis.
+            const kinesisLabel = event.Data.ifcLabel;
+            delete strippedEvent.label;
+            p = Promise.resolve(kinesisLabel);
+        } else if (conf.runFromSF && event.ifcLabel) { // Handle events originating from AWS Step Functions.
+            const sfLabel = event.ifcLabel;
+            delete strippedEvent.label;
+            p = Promise.resolve(sfLabel);
+        } else { // Run http request on behalf of invoking user.
+            let reqBody;
+            if ((typeof event.body) === "string") {
+                reqBody = JSON.parse(event.body);
+            } else {
+                reqBody = event.body;
+            }
+
+            p = auth(reqBody.user, reqBody.pass);
+        }
+        const processEnv = {};
+
+        for (let envVar of conf.processEnv) {
+            processEnv[envVar] = process.env[envVar];
+        }
+
         let executionEnv = {
             console: 'inherit',
             sandbox: {
-                externalEvent: event,
+                process: {
+                    env: processEnv,
+                },
+                externalEvent: strippedEvent,
                 externalContext: context,
                 externalCallback:
                     function (err, value) {
@@ -98,15 +128,17 @@ module.exports.makeShim = function (exp, allowExtReq) {
                             }
                         }
                     },
-                    'aws': {
+                    'aws-sdk': {
                         Kinesis: function () {
-                            const kinesis = aws.Kinesis();
+                            const kinesis = new aws.Kinesis();
                             return {
                                 putRecord: (event, callback) => {
-                                    if (event.Data.ifcLabel) { // && event.Data.ifcLabel !== label) {
+                                    const data = JSON.parse(event.Data);
+                                    if (data.ifcLabel) { // && event.Data.ifcLabel !== label) {
                                         throw `Unexpected security label. Event written to kinesis should not have an ifcLabel field. Has label: ${event.ifcLabel}`;
                                     } else {
-                                        event.Data.ifcLabel = label;
+                                        data.ifcLabel = label;
+                                        event.Data = JSON.stringify(data);
                                         return kinesis.putRecord(event, callback);
                                     }
                                 },
@@ -119,16 +151,6 @@ module.exports.makeShim = function (exp, allowExtReq) {
 
         if (notEmptyDir('/tmp/')) {
             console.log("WARNING : /tmp/ dir not empty on fresh invocation of lambda. Might lead to data leak.")
-        }
-
-        let p;
-
-        if (conf.runFromKinesis && event.Data.ifcLabel) { // Handle events originating from AWS Kinesis.
-            p = Promise.resolve(event.Data.ifcLabel);
-        } else if (conf.runFromSF && event.ifcLabel) { // Handle events originating from AWS Step Functions.
-            p = Promise.resolve(event.ifcLabel);
-        } else { // Run on behalf of invoking user.
-            p = auth(event.user, event.pass);
         }
 
         p.then((l) => {
@@ -167,9 +189,9 @@ ${unsecuredLambda}
 //  ***********************************
 
 module.exports.${conf.handler}(externalEvent, externalContext, externalCallback);
-        `);
+        `, conf.secLambdaFullPath);
         })
-            .catch(err => callback(err));
+            .catch(err => console.log(err));
     };
 };
 
