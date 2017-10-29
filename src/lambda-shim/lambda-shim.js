@@ -78,15 +78,29 @@ module.exports.makeShim = function (exp, allowExtReq) {
                 const sfLabel = event.ifcLabel;
                 delete strippedEvent.label;
                 p = Promise.resolve(sfLabel);
-            } else { // Run http request on behalf of invoking user.
-                let reqBody;
-                if ((typeof event.body) === "string") {
-                    reqBody = JSON.parse(event.body);
-                } else {
-                    reqBody = event.body;
-                }
+            } else {
+                let reqUser;
+                let reqPass;
 
-                p = auth(reqBody.user, reqBody.pass);
+                if (conf.runFromGET) { // Run http GET request on behalf of invoking user.
+                    reqUser = event.queryStringParameters.user;
+                    reqPass = event.queryStringParameters.pass;
+                    if (conf.userPassForIFCOnly) {
+                        delete event.queryStringParameters.user;
+                        delete event.queryStringParameters.pass;
+                    }
+                } else { // Run http POST request on behalf of invoking user.
+                    let reqBody;
+                    if ((typeof event.body) === "string") {
+                        reqBody = JSON.parse(event.body);
+                    } else {
+                        reqBody = event.body;
+                    }
+                    reqUser = reqBody.user;
+                    reqPass = reqBody.pass;
+
+                }
+                p = auth(reqUser, reqPass);
             }
             const processEnv = {};
 
