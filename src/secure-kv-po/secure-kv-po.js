@@ -33,7 +33,7 @@ CREATE TABLE ${this.table} (
         `;
 
         console.log("** DEBUG: Secure K-V (PO) - Call to init.");
-        this.con.connectAsync()
+        return this.con.connectAsync()
             .then(() => console.log("** DEBUG: Secure K-V (PO) - Connection successful."))
             .then(() => this.con.queryAsync(tableSql, [this.table]))
             .then((result) => {
