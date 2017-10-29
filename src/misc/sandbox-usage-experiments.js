@@ -151,11 +151,15 @@ const vmNoConsole = new NodeVM({
     }
 });
 
+// vmNoConsole.run(`
+//     const m = require('mysql');
+//     m.connect();
+//     // const fs = require('fs');
+//     const {A} = require('a');
+//     const a = new A();
+//     console.log(a.b);
+// `);
 vmNoConsole.run(`
-    const m = require('mysql');
-    m.connect();
-    // const fs = require('fs');
-    const {A} = require('a');
-    const a = new A();
-    console.log(a.b);
+    const p = Promise.resolve(10101010);
+    p.then(ten => console.log(ten));
 `);

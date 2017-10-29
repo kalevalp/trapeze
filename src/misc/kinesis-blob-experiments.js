@@ -1,0 +1,10 @@
+
+const data = 'eyJzY2hlbWEiOiJjb20ubm9yZHN0cm9tL3JldGFpbC1zdHJlYW0taW5ncmVzcy8xLTAtMCIsInRpbWVPcmlnaW4iOiIyMDE3LTEwLTI4VDE5OjI5OjUwLjc2MloiLCJkYXRhIjp7InNjaGVtYSI6ImNvbS5ub3Jkc3Ryb20vcHJvZHVjdC9jcmVhdGUvMS0wLTAiLCJpZCI6IjEyMzQ1Njc4OTAiLCJjYXRlZ29yeSI6IlRoaW5ncyIsIm5hbWUiOiJBIHNvcnQgb2YgdGhpbmciLCJicmFuZCI6IkFDTUUiLCJkZXNjcmlwdGlvbiI6IkEgc29ydCBvZiB0aGluZyBmcm9tIGEgY29tcGFueSB0aGF0IG1ha2VzIGV2ZXJ5dGhpbmciLCJwcmljZSI6IjEwIiwidXNlciI6Ik93ZW4iLCJwYXNzIjoib3dlbnNwYXNzd29yZCJ9LCJvcmlnaW4iOiJoZWxsby1yZXRhaWwvdGVzdC1zY3JpcHQtY3JlYXRlLXByb2R1Y3QvdGVzdGlkL3Rlc3RuYW1lIiwiaWZjTGFiZWwiOiJvd25lciJ9'
+
+const payload = new Buffer(data, 'base64').toString();
+console.log(payload);
+const parsed = JSON.parse(payload);
+console.log(parsed);
+const newData = Buffer(JSON.stringify(parsed)).toString('base64');
+console.log(newData);
+console.log(data === newData);
