@@ -8,6 +8,7 @@ const {auth} = require("auth");
 const {SecureKV_PO} = require("secure-kv-po");
 const {SecureKV_TO} = require("secure-kv-to");
 const aws = require("aws-sdk");
+const nodemailer = require("nodemailer");
 
 const rmFilesInDir = function (dirPath) {
     try {
@@ -52,7 +53,7 @@ module.exports.makeShim = function (exp, allowExtReq) {
             if (conf.runFromKinesis) { // Handle events originating from AWS Kinesis.
 
                 let ifcLabel;
-                event.Records = event.Records.map((record) => {
+                strippedEvent.Records = event.Records.map((record) => {
                     const payload = new Buffer(record.kinesis.data, 'base64').toString();
                     const parsed = JSON.parse(payload);
                     if (!ifcLabel) {
@@ -74,7 +75,7 @@ module.exports.makeShim = function (exp, allowExtReq) {
                 console.log(`Running kinesis event with label: ${ifcLabel}`);
 
                 p = Promise.resolve(ifcLabel);
-            } else if (conf.runFromSF && event.ifcLabel) { // Handle events originating from AWS Step Functions.
+            } else if (conf.runFromSF /* && event.ifcLabel*/) { // Handle events originating from AWS Step Functions.
                 const sfLabel = event.ifcLabel;
                 delete strippedEvent.label;
                 p = Promise.resolve(sfLabel);
@@ -118,15 +119,22 @@ module.exports.makeShim = function (exp, allowExtReq) {
                     externalContext: context,
                     externalCallback:
                         function (err, value) {
-                            if (conf.declassifier &&
-                                labelOrdering.lte(label, conf.declassifier.maxLabel) &&
-                                labelOrdering.lte(conf.declassifier.minLabel, conf.securityBound)) {
-                                declf.declassifier(err, value, callback);
+                            if (conf.runFromSF) { // Add label to the callback to the stepfunction, which in turn becomes the input to the next lambda.
+                                if (value) {
+                                    value.ifcLabel = label;
+                                }
+                                return callback(err, value);
                             } else {
-                                if (labelOrdering.lte(label, conf.securityBound)) {
-                                    callback(err, value);
+                                if (conf.declassifier &&
+                                    labelOrdering.lte(label, conf.declassifier.maxLabel) &&
+                                    labelOrdering.lte(conf.declassifier.minLabel, conf.securityBound)) {
+                                    declf.declassifier(err, value, callback);
                                 } else {
-                                    callback(null);
+                                    if (labelOrdering.lte(label, conf.securityBound)) {
+                                        return callback(err, value);
+                                    } else {
+                                        return callback(null);
+                                    }
                                 }
                             }
                         },
@@ -159,7 +167,10 @@ module.exports.makeShim = function (exp, allowExtReq) {
                                     init: () => skv.init(),
                                     close: () => skv.close(),
                                     put: (k, v) => skv.put(k, v, label),
-                                    get: (k) => skv.get(k, label),
+                                    get: (k) => {
+                                        return skv.get(k, label)
+                                            .then(res => res[0].rowvalues); // Arbitrary choice (?)
+                                    },
                                     del: (k) => skv.del(k, label),
                                     keys: () => skv.keys(label),
                                     entries: () => skv.entries(label),
@@ -167,6 +178,8 @@ module.exports.makeShim = function (exp, allowExtReq) {
                             }
                         },
                         'aws-sdk': {
+                            config: aws.config,
+
                             Kinesis: function () {
                                 const kinesis = new aws.Kinesis();
                                 return {
@@ -181,7 +194,50 @@ module.exports.makeShim = function (exp, allowExtReq) {
                                         }
                                     },
                                 }
+                            },
+
+                            StepFunctions: function () {
+                                const stepfunctions = new aws.StepFunctions();
+                                return {
+                                    startExecution: (params, callback) => {
+                                        // Can add additional security measures here.
+                                        // e.g. check the stream name against a valid stream name in the configuration.
+
+                                        const transParams = params;
+                                        const input = JSON.parse(params.input);
+                                        input.ifcLabel = label;
+                                        transParams.input = JSON.stringify(input);
+                                        return stepfunctions.startExecution(transParams, callback);
+                                    },
+                                    getActivityTask: (params, callback) => stepfunctions.getActivityTask(params, callback),
+                                    sendTaskFailure: (params, callback) => stepfunctions.sendTaskFailure(params, callback),
+                                    sendTaskSuccess: (params, callback) => stepfunctions.sendTaskSuccess(params, callback),
+                                }
                             }
+                        },
+                        'nodemailer' : {
+                            createTestAccount: () => {
+                                if (labelOrdering.lte(label, conf.securityBound)) {
+                                    return nodemailer.createTestAccount();
+                                } else {
+                                    throw "Attempting to create test account in violation with security policy"
+                                }
+                            },
+                            createTransport: (params) => {
+                                const mailer = nodemailer.createTransport(params);
+
+                                return {
+                                    sendMail: (mailOptions) => {
+                                        if (labelOrdering.lte(label, conf.securityBound)) {
+                                            return mailer.sendMail(mailOptions);
+                                        } else {
+                                            throw "Attempting to send in violation with security policy"
+                                        }
+
+                                    }
+                                }
+                            },
+                            getTestMessageUrl: (info) => nodemailer.getTestMessageUrl(info),
                         }
                     }
                 }
