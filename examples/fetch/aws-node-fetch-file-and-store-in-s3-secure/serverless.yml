@@ -1,0 +1,22 @@
+service: secure-fetch-file-and-store
+
+frameworkVersion: ">=1.1.0"
+
+custom:
+  tableName: "StoredFilesTable"
+
+provider:
+  name: aws
+  runtime: nodejs6.10
+  stage: dev
+  region: us-west-2
+
+functions:
+  save:
+    handler: secure-handler.save
+    environment:
+      TABLE_NAME: ${self:custom.tableName}
+    events:
+      - http:
+          path: storefile
+          method: post
