@@ -7,6 +7,18 @@ const fs = require ("fs");
 
 const conf = JSON.parse(fs.readFileSync('conf.json', 'utf8'));
 
+const util = {
+    response: (statusCode, body) => ({
+        statusCode,
+        headers: {
+            'Access-Control-Allow-Origin': '*', // Required for CORS support to work
+            'Access-Control-Allow-Credentials': true, // Required for cookies, authorization headers with HTTPS
+        },
+        body,
+    }),
+    success: response => util.response(200, JSON.stringify(response)),
+}
+
 
 module.exports.save = (event, context, callback) => {
 
@@ -26,6 +38,6 @@ module.exports.save = (event, context, callback) => {
         .then(buffer => kv.init().then(() => buffer))
         .then(buffer => kv.put(eventBody.key, buffer))
         .then(() => kv.close())
-        .then(() => callback(null))
+        .then(() => callback(null, util.success("Success!")))
         .catch(callback);
 };
