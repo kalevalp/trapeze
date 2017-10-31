@@ -9,6 +9,7 @@ const {SecureKV_PO} = require("secure-kv-po");
 const {SecureKV_TO} = require("secure-kv-to");
 const aws = require("aws-sdk");
 const nodemailer = require("nodemailer");
+const got = require('got');
 
 const rmFilesInDir = function (dirPath) {
     try {
@@ -154,7 +155,7 @@ module.exports.makeShim = function (exp, allowExtReq) {
                 },
                 require: {
                     external: allowExtReq,
-                    builtin: ['fs'],
+                    builtin: ['fs', 'url'],
                     root: "./",
                     mock: {
                         'kv-store': {
@@ -169,7 +170,13 @@ module.exports.makeShim = function (exp, allowExtReq) {
                                     put: (k, v) => skv.put(k, v, label),
                                     get: (k) => {
                                         return skv.get(k, label)
-                                            .then(res => res[0].rowvalues); // Arbitrary choice (?)
+                                            .then((res) => {
+                                                if (res.length > 0) {
+                                                    return res[0].rowvalues;
+                                                } else {
+                                                    return res;
+                                                }
+                                            }); // Arbitrary choice (?)
                                     },
                                     del: (k) => skv.del(k, label),
                                     keys: () => skv.keys(label),
@@ -238,6 +245,15 @@ module.exports.makeShim = function (exp, allowExtReq) {
                                 }
                             },
                             getTestMessageUrl: (info) => nodemailer.getTestMessageUrl(info),
+                        },
+                        'got' : {
+                            get: (uri, params) => {
+                                if (labelOrdering.lte(label, conf.securityBound)) {
+                                    return got.get(uri, params);
+                                } else {
+                                    return Promise.reject("Attempting to access a url in violation with security policy");
+                                }
+                            }
                         }
                     }
                 }
