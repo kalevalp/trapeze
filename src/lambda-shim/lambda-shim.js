@@ -10,6 +10,7 @@ const {SecureKV_TO} = require("secure-kv-to");
 const aws = require("aws-sdk");
 const nodemailer = require("nodemailer");
 const got = require('got');
+const fetch = require('node-fetch');
 
 const rmFilesInDir = function (dirPath) {
     try {
@@ -48,12 +49,14 @@ module.exports.makeShim = function (exp, allowExtReq) {
         exp[handlerName] = function (event, context, callback) {
 
             let label;
+            let securityBound;
 
             let p;
             const strippedEvent = event;
             if (conf.runFromKinesis) { // Handle events originating from AWS Kinesis.
 
                 let ifcLabel;
+                let storedSecurityBound;
                 strippedEvent.Records = event.Records.map((record) => {
                     const payload = new Buffer(record.kinesis.data, 'base64').toString();
                     const parsed = JSON.parse(payload);
@@ -64,6 +67,15 @@ module.exports.makeShim = function (exp, allowExtReq) {
                         return callback("Batch of kinesis event with different labels unsupported.");
                     }
                     delete parsed.ifcLabel;
+
+                    if (!storedSecurityBound) {
+                        storedSecurityBound = parsed.securityBound;
+                    } else if (storedSecurityBound !== parsed.securityBound) {
+                        console.log("Batch of kinesis event with different security bounds unsupported.");
+                        return callback("Batch of kinesis event with different security bounds unsupported.");
+                    }
+                    delete parsed.securityBound;
+
                     record.kinesis.data = new Buffer(JSON.stringify(parsed)).toString('base64');
                     return record;
                 });
@@ -72,13 +84,24 @@ module.exports.makeShim = function (exp, allowExtReq) {
                     console.log("Could not resolve an ifcLabel in kinesis event.")
                     return callback("Could not resolve an ifcLabel in kinesis event.")
                 }
+                if (!storedSecurityBound) {
+                    console.log("Could not resolve a securityBound in kinesis event.")
+                    return callback("Could not resolve a securityBound in kinesis event.")
+                }
 
                 console.log(`Running kinesis event with label: ${ifcLabel}`);
+
+                securityBound = storedSecurityBound;
+                console.log(`Running kinesis event with securityBound: ${securityBound}`);
 
                 p = Promise.resolve(ifcLabel);
             } else if (conf.runFromSF /* && event.ifcLabel*/) { // Handle events originating from AWS Step Functions.
                 const sfLabel = event.ifcLabel;
-                delete strippedEvent.label;
+                delete strippedEvent.ifcLabel;
+
+                securityBound = event.securityBound;
+                delete strippedEvent.securityBound;
+
                 p = Promise.resolve(sfLabel);
             } else {
                 let reqUser;
@@ -123,15 +146,16 @@ module.exports.makeShim = function (exp, allowExtReq) {
                             if (conf.runFromSF) { // Add label to the callback to the stepfunction, which in turn becomes the input to the next lambda.
                                 if (value) {
                                     value.ifcLabel = label;
+                                    value.securityBound = securityBound;
                                 }
                                 return callback(err, value);
                             } else {
                                 if (conf.declassifier &&
                                     labelOrdering.lte(label, conf.declassifier.maxLabel) &&
-                                    labelOrdering.lte(conf.declassifier.minLabel, conf.securityBound)) {
+                                    labelOrdering.lte(conf.declassifier.minLabel, securityBound)) {
                                     declf.declassifier(err, value, callback);
                                 } else {
-                                    if (labelOrdering.lte(label, conf.securityBound)) {
+                                    if (labelOrdering.lte(label, securityBound)) {
                                         return callback(err, value);
                                     } else {
                                         return callback(null);
@@ -194,8 +218,12 @@ module.exports.makeShim = function (exp, allowExtReq) {
                                         const data = JSON.parse(event.Data);
                                         if (data.ifcLabel) { // && event.Data.ifcLabel !== label) {
                                             throw `Unexpected security label. Event written to kinesis should not have an ifcLabel field. Has label: ${event.ifcLabel}`;
+                                        } else if (data.securityBound) {
+                                            throw `Unexpected security bound. Event written to kinesis should not have a securityBound field. Has label: ${event.securityBound}`;
                                         } else {
                                             data.ifcLabel = label;
+                                            data.securityBound = securityBound;
+
                                             event.Data = JSON.stringify(data);
                                             return kinesis.putRecord(event, callback);
                                         }
@@ -213,6 +241,7 @@ module.exports.makeShim = function (exp, allowExtReq) {
                                         const transParams = params;
                                         const input = JSON.parse(params.input);
                                         input.ifcLabel = label;
+                                        input.securityBound = securityBound;
                                         transParams.input = JSON.stringify(input);
                                         return stepfunctions.startExecution(transParams, callback);
                                     },
@@ -224,7 +253,7 @@ module.exports.makeShim = function (exp, allowExtReq) {
                         },
                         'nodemailer' : {
                             createTestAccount: () => {
-                                if (labelOrdering.lte(label, conf.securityBound)) {
+                                if (labelOrdering.lte(label, securityBound)) {
                                     return nodemailer.createTestAccount();
                                 } else {
                                     throw "Attempting to create test account in violation with security policy"
@@ -235,7 +264,7 @@ module.exports.makeShim = function (exp, allowExtReq) {
 
                                 return {
                                     sendMail: (mailOptions) => {
-                                        if (labelOrdering.lte(label, conf.securityBound)) {
+                                        if (labelOrdering.lte(label, securityBound)) {
                                             return mailer.sendMail(mailOptions);
                                         } else {
                                             throw "Attempting to send in violation with security policy"
@@ -248,11 +277,18 @@ module.exports.makeShim = function (exp, allowExtReq) {
                         },
                         'got' : {
                             get: (uri, params) => {
-                                if (labelOrdering.lte(label, conf.securityBound)) {
+                                if (labelOrdering.lte(label, securityBound)) {
                                     return got.get(uri, params);
                                 } else {
                                     return Promise.reject("Attempting to access a url in violation with security policy");
                                 }
+                            }
+                        },
+                        'node-fetch' : (params) => {
+                            if (labelOrdering.lte(label, securityBound)) {
+                                return fetch(params);
+                            } else {
+                                return Promise.reject("Attempting to access a url in violation with security policy");
                             }
                         }
                     }
@@ -269,6 +305,22 @@ module.exports.makeShim = function (exp, allowExtReq) {
                     label = labelOrdering.getBottom();
                 } else {
                     label = l;
+                }
+
+                if (conf.securityBound) { // Statically defined security bound
+                    securityBound = conf.securityBound;
+                } else if (conf.runFromKinesis) {
+                    if (!securityBound) {
+                        console.log("Kinesis event with no security bound.");
+                        return callback("Kinesis event with no security bound.");
+                    }
+                } else if (conf.runFromSF) {
+                    if (!securityBound) {
+                        console.log("StepFunctions event with no security bound.");
+                        return callback("StepFunctions event with no security bound.");
+                    }
+                } else { // Running an http request - the security bound is the same as the invoking user's label.
+                    securityBound = label;
                 }
 
                 let declf;
@@ -301,7 +353,7 @@ ${unsecuredLambda}
 module.exports.${handlerName}(externalEvent, externalContext, externalCallback);
         `, conf.secLambdaFullPath);
             })
-                .catch(err => console.log(err));
+                .catch(err => {console.log(err)});
         };
     }
 };
