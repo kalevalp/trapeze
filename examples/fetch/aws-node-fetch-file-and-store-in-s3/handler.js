@@ -1,26 +1,31 @@
 'use strict';
 
 const fetch = require('node-fetch');
-const AWS = require('aws-sdk'); // eslint-disable-line import/no-extraneous-dependencies
 
-const s3 = new AWS.S3();
+const {KV_Store} = require ("kv-store");
+const fs = require ("fs");
+
+const conf = JSON.parse(fs.readFileSync('conf.json', 'utf8'));
+
 
 module.exports.save = (event, context, callback) => {
-  fetch(event.image_url)
-    .then((response) => {
-      if (response.ok) {
-        return response;
-      }
-      return Promise.reject(new Error(
-            `Failed to fetch ${response.url}: ${response.status} ${response.statusText}`));
-    })
-    .then(response => response.buffer())
-    .then(buffer => (
-      s3.putObject({
-        Bucket: process.env.BUCKET,
-        Key: event.key,
-        Body: buffer,
-      }).promise()
-    ))
-    .then(v => callback(null, v), callback);
+
+    const eventBody = JSON.parse(event.body);
+
+    let kv = new KV_Store(conf.host, conf.user, conf.pass, process.env.StoredFilesTable);
+
+    fetch(eventBody.image_url)
+        .then((response) => {
+            if (response.ok) {
+                return response;
+            }
+            return Promise.reject(new Error(
+                `Failed to fetch ${response.url}: ${response.status} ${response.statusText}`));
+        })
+        .then(response => response.buffer())
+        .then(buffer => kv.init().then(() => buffer))
+        .then(buffer => kv.put(eventBody.key, buffer))
+        .then(() => kv.close())
+        .then(() => callback(null))
+        .catch(callback);
 };

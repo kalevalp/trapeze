@@ -1,23 +1,22 @@
-service: fetch-file-and-store-in-s3
+service: fetch-file-and-store
 
 frameworkVersion: ">=1.1.0"
 
 custom:
-  bucket: <your-bucket-name>
+  tableName: "StoredFilesTable"
 
 provider:
   name: aws
-  runtime: nodejs4.3
+  runtime: nodejs6.10
   stage: dev
-  region: us-west-1
-  iamRoleStatements:
-    - Effect: Allow
-      Action:
-        - s3:PutObject
-      Resource: "arn:aws:s3:::${self:custom.bucket}/*"
+  region: us-west-2
 
 functions:
   save:
     handler: handler.save
     environment:
-      BUCKET: ${self:custom.bucket}
+      TABLE_NAME: ${self:custom.tableName}
+    events:
+      - http:
+          path: storefile
+          method: post
