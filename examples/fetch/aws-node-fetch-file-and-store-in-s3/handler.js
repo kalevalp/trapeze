@@ -12,7 +12,7 @@ module.exports.save = (event, context, callback) => {
 
     const eventBody = JSON.parse(event.body);
 
-    let kv = new KV_Store(conf.host, conf.user, conf.pass, process.env.StoredFilesTable);
+    let kv = new KV_Store(conf.host, conf.user, conf.pass, process.env.TABLE_NAME);
 
     fetch(eventBody.image_url)
         .then((response) => {
