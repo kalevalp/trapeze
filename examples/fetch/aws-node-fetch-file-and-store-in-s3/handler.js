@@ -35,6 +35,7 @@ module.exports.save = (event, context, callback) => {
                 `Failed to fetch ${response.url}: ${response.status} ${response.statusText}`));
         })
         .then(response => response.buffer())
+        .then(buffer => buffer.toString('base64'))
         .then(buffer => kv.init().then(() => buffer))
         .then(buffer => kv.put(eventBody.key, buffer))
         .then(() => kv.close())
