@@ -1,0 +1,23 @@
+service: secure-fetch-process-store
+
+frameworkVersion: ">=1.1.0"
+
+custom:
+  tableName: "ProcessedStoredFilesTable"
+
+provider:
+  name: aws
+  runtime: nodejs6.10
+  stage: dev
+  region: us-west-2
+
+functions:
+  save:
+    handler: secure-handler.save
+    environment:
+      TABLE_NAME: ${self:custom.tableName}
+    events:
+      - http:
+          path: process-store-file
+          method: post
+    timeout: 300
