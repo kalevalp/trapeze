@@ -1,4 +1,4 @@
-service: rekognition-analysis-s3-image
+service: secure-rekognition-analysis-s3-image
 
 frameworkVersion: ">=1.10.0"
 
@@ -6,15 +6,11 @@ provider:
   name: aws
   runtime: nodejs6.10
   memorySize: 512
-  timeout: 10
+  timeout: 60
   stage: dev
-  region: us-east-1
+  region: us-west-2
 
   iamRoleStatements:
-    - Effect: Allow
-      Action:
-        - s3:*
-      Resource: "*"
     - Effect: "Allow"
       Action:
         - "rekognition:*"
@@ -22,7 +18,7 @@ provider:
 
 functions:
   imageAnalysis:
-    handler: handler.imageAnalysis
+    handler: secure-handler.imageAnalysis
     events:
       - http:
           path: analysis

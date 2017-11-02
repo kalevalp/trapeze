@@ -1,20 +1,21 @@
 'use strict';
 
-const ImageAnalyser = require('./lib/imageAnalyser');
-
 /**
-  Analyse an image on S3 using bucket and image name
+  Analyse an image in the k-v store using table name and image key
  */
 module.exports.imageAnalysis = (event, context, callback) => {
+
+  const ImageAnalyser = require('./lib/imageAnalyser');
+
   const data = JSON.parse(event.body);
 
-  const s3Config = {
-    bucket: data.bucket,
-    imageName: data.imageName,
+  const imageConfig = {
+    tableName: data.tableName,
+    imageKeyName: data.imageKeyName,
   };
 
   return ImageAnalyser
-    .getImageLabels(s3Config)
+    .getImageLabels(imageConfig)
     .then((labels) => {
       const response = {
         statusCode: 200,

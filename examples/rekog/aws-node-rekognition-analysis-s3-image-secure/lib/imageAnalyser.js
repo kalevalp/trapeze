@@ -4,32 +4,43 @@ const AWS = require('aws-sdk');
 
 const rek = new AWS.Rekognition();
 
+const {KV_Store} = require ("kv-store");
+const fs = require ("fs");
+
+const conf = JSON.parse(fs.readFileSync('conf.json', 'utf8'));
+
+
+
 class ImageAnalyser {
 
-  static getImageLabels(s3Config) {
-    const params = {
-      Image: {
-        S3Object: {
-          Bucket: s3Config.bucket,
-          Name: s3Config.imageName,
-        },
-      },
-      MaxLabels: 10,
-      MinConfidence: 50,
-    };
+    static getImageLabels(imageConfig) {
+        console.log(`Analyzing image in table: ${imageConfig.tableName}, with key: ${imageConfig.imageKeyName}`);
 
-    console.log(`Analyzing file: https://s3.amazonaws.com/${s3Config.bucket}/${s3Config.imageName}`);
+        let kv = new KV_Store(conf.host, conf.user, conf.pass, imageConfig.tableName);
 
-    return new Promise((resolve, reject) => {
-      rek.detectLabels(params, (err, data) => {
-        if (err) {
-          return reject(new Error(err));
-        }
-        console.log('Analysis labels:', data.Labels);
-        return resolve(data.Labels);
-      });
-    });
-  }
+        return kv.init()
+            .then(() => kv.get(imageConfig.imageKeyName))
+            .then(image => kv.close().then(() => image))
+            .then(image => new Promise(
+                (resolve, reject) => {
+                    rek.detectLabels(
+                        {
+                            Image: {
+                                Bytes: Buffer.from(image, 'base64'),
+                            },
+                            MaxLabels: 10,
+                            MinConfidence: 50,
+                        },
+                        (err, data) => {
+                            if (err) {
+                                console.log(err);
+                                return reject(new Error(err));
+                            }
+                            console.log('Analysis labels:', data.Labels);
+                            return resolve(data.Labels);
+                        });
+                }));
+    }
 }
 
 module.exports = ImageAnalyser;
