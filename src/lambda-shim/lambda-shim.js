@@ -178,6 +178,7 @@ module.exports.makeShim = function (exp, allowExtReq) {
                         }
                 },
                 require: {
+                    context: 'sandbox',
                     external: allowExtReq,
                     builtin: ['fs', 'url'],
                     root: "./",
@@ -249,7 +250,23 @@ module.exports.makeShim = function (exp, allowExtReq) {
                                     sendTaskFailure: (params, callback) => stepfunctions.sendTaskFailure(params, callback),
                                     sendTaskSuccess: (params, callback) => stepfunctions.sendTaskSuccess(params, callback),
                                 }
-                            }
+                            },
+
+                            Rekognition: function () {
+                                const rek = new aws.Rekognition();
+                                return rek;
+
+                                // NOTE: Might want to uncomment this code, to secure outgoing call to rekognition.
+                                // return {
+                                //     detectLabels: function (params, callback) {
+                                //         if (labelOrdering.lte(label, securityBound)) {
+                                //             return rek.detectLabels(params, callback);
+                                //         } else {
+                                //             return callback("Attempting to call detectLabels in violation with security policy");
+                                //         }
+                                //     }
+                                // }
+                            },
                         },
                         'nodemailer' : {
                             createTestAccount: () => {
@@ -292,7 +309,7 @@ module.exports.makeShim = function (exp, allowExtReq) {
                             }
                         }
                     }
-                }
+                },
             };
 
             if (notEmptyDir('/tmp/')) {
