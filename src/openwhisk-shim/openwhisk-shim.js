@@ -203,7 +203,7 @@ ${unsecuredLambda}
 //  ***********************************
 
 module.exports = module.exports.main(externalParams);
-        `, conf.secLambdaFullPath);
+        `, __dirname + "/" + conf.secLambda);
         })
             .then((executionResult) => {
                 if (conf.declassifier &&
