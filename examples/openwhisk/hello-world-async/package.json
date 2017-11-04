@@ -1,0 +1,17 @@
+{
+  "name": "hello-world-async",
+  "version": "1.0.0",
+  "description": "",
+  "main": "hello-world-async.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "pack": "zip -r hello-world-async hello-world-async.js package.json",
+    "clean": "rm hello-world-async.zip",
+    "deploy": "bx wsk action create hello-world-async hello-world-async.zip --kind nodejs:6 --memory 128 --timeout 5000",
+    "remove": "bx wsk action delete hello-world-async",
+    "update": "bx wsk action update hello-world-async hello-world-async.zip --kind nodejs:6 --memory 128 --timeout 5000",
+    "invoke": "bx wsk action invoke hello-world-async --param name Kalev --result"
+  },
+  "author": "",
+  "license": "ISC"
+}
