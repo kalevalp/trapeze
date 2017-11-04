@@ -1,6 +1,6 @@
 "use strict";
 
-const {NodeVM} = require("vm2");
+const {NodeVM,VMScript} = require("vm2");
 const fs = require("fs");
 const {PartialOrder} = require("po-utils");
 const {TotalOrder} = require("to-utils");
@@ -44,6 +44,15 @@ const labelOrdering = conf.usingPO ? new PartialOrder(conf.labels) : new TotalOr
 
 module.exports.makeShim = function (exp, allowExtReq) {
     for (let handlerName of conf.handlers) {
+        const originalLambdaScript = new VMScript(`
+//  ***********************************
+//  ** Original Lambda Code:
+${unsecuredLambda}
+//  ** End of Original Lambda Code:
+//  ***********************************
+
+module.exports.${handlerName}(externalEvent, externalContext, externalCallback);
+        `);
 
 
         exp[handlerName] = function (event, context, callback) {
@@ -349,26 +358,18 @@ module.exports.makeShim = function (exp, allowExtReq) {
 
                 const vm = new NodeVM(executionEnv);
 
-                console.log(`
-//  ***********************************
-//  ** Original Lambda Code:
-${unsecuredLambda}
-//  ** End of Original Lambda Code:
-//  ***********************************
+//                 console.log(`
+// //  ***********************************
+// //  ** Original Lambda Code:
+// ${unsecuredLambda}
+// //  ** End of Original Lambda Code:
+// //  ***********************************
+//
+// module.exports.${handlerName}(externalEvent, externalContext, externalCallback);
+//
+//         `);
 
-module.exports.${handlerName}(externalEvent, externalContext, externalCallback);
-
-        `);
-
-                vm.run(`
-//  ***********************************
-//  ** Original Lambda Code:
-${unsecuredLambda}
-//  ** End of Original Lambda Code:
-//  ***********************************
-
-module.exports.${handlerName}(externalEvent, externalContext, externalCallback);
-        `, conf.secLambdaFullPath);
+                vm.run(originalLambdaScript, conf.secLambdaFullPath);
             })
                 .catch(err => {console.log(err)});
         };
