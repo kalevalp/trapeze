@@ -9,17 +9,30 @@ if (fs.existsSync('conf.json')) { // (probably) running on AWS Lambda
     conf = JSON.parse(fs.readFileSync(__dirname.split('node_modules')[0] + 'conf.json', 'utf8'));
 }
 
+const kv = new KV_Store(conf.host, conf.user, conf.pass, 'userLabelMappingTable');
+
+const authMapPromise = kv.init()
+    .then(() => kv.entries())
+    .then(res => kv.close().then(() => res))
+    .then(res => {
+        "use strict";
+
+        const map = {};
+        for (let entry of res) {
+            map[entry.key] = entry.val;
+        }
+
+        return map;
+
+    });
 
 function auth(user, pass) {
     const md5sum = crypto.createHash('md5');
     md5sum.update(user + pass, 'utf8');
     const h = md5sum.digest('hex');
 
-    let kv = new KV_Store(conf.host, conf.user, conf.pass, 'userLabelMappingTable');
-
-    return kv.init()
-        .then(() => kv.get(h))
-        .then(res => kv.close().then(() => res))
+    return authMapPromise
+        .then(map => map[h])
         .catch(err => Promise.reject(err));
 }
 
