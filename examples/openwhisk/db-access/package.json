@@ -1,0 +1,21 @@
+{
+  "name": "db-access",
+  "version": "1.0.0",
+  "description": "",
+  "main": "db-access.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "pack": "zip -r db-access db-access.js package.json node_modules conf.json",
+    "clean": "rm db-access.zip",
+    "deploy": "bx wsk action create db-access db-access.zip --kind nodejs:6 --memory 128 --timeout 5000",
+    "remove": "bx wsk action delete db-access",
+    "update": "bx wsk action update db-access db-access.zip --kind nodejs:6 --memory 128 --timeout 5000",
+    "invoke": "bx wsk action invoke db-access --result"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bluebird": "^3.5.1",
+    "mysql": "^2.15.0"
+  }
+}
