@@ -2,7 +2,13 @@ const {KV_Store} = require("kv-store");
 const fs = require("fs");
 const crypto = require('crypto');
 
-const conf = JSON.parse(fs.readFileSync('conf.json', 'utf8'));
+let conf;
+if (fs.existsSync('conf.json')) { // (probably) running on AWS Lambda
+    conf = JSON.parse(fs.readFileSync('conf.json', 'utf8'));
+} else { // (probably) running on OpenWhisk
+    conf = JSON.parse(fs.readFileSync(__dirname.split('node_modules')[0] + 'conf.json', 'utf8'));
+}
+
 
 function auth(user, pass) {
     const md5sum = crypto.createHash('md5');

@@ -39,9 +39,8 @@ const notEmptyDir = function (dirPath) {
     catch(e) { return true; }
 };
 
-const conf = JSON.parse(fs.readFileSync('conf.json', 'utf8'));
-const unsecuredLambda = fs.readFileSync(conf.unsecLambda, 'utf8');
-
+const conf = JSON.parse(fs.readFileSync(__dirname.split('node_modules')[0] + 'conf.json', 'utf8'));
+const unsecuredLambda = fs.readFileSync(__dirname.split('node_modules')[0] + conf.unsecLambda, 'utf8');
 
 const labelOrdering = conf.usingPO ? new PartialOrder(conf.labels) : new TotalOrder(conf.min, conf.max);
 
@@ -175,7 +174,7 @@ module.exports.makeShim = function (allowExtReq) {
         //     console.log("WARNING : /tmp/ dir not empty on fresh invocation of lambda. Might lead to data leak.")
         // }
 
-        p.then((l) => {
+        return p.then((l) => {
             if (l === undefined) {
                 // In case getting the label failed, run on behalf of 'bottom' (completely unprivileged).
                 label = labelOrdering.getBottom();
@@ -192,7 +191,7 @@ ${unsecuredLambda}
 //  ** End of Original Lambda Code:
 //  ***********************************
 
-module.exports = main(externalParams);
+module.exports = module.exports.main(externalParams);
 
         `);
 
@@ -203,7 +202,7 @@ ${unsecuredLambda}
 //  ** End of Original Lambda Code:
 //  ***********************************
 
-module.exports = main(externalParams);
+module.exports = module.exports.main(externalParams);
         `, conf.secLambdaFullPath);
         })
             .then((executionResult) => {
