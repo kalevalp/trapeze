@@ -1,0 +1,17 @@
+{
+  "name": "hello-world",
+  "version": "1.0.0",
+  "description": "",
+  "main": "hello-world.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "pack": "zip -r hello-world hello-world.js package.json",
+    "clean": "rm hello-world.zip",
+    "deploy": "bx wsk action create hello-world hello-world.zip --kind nodejs:6 --memory 128 --timeout 5000",
+    "remove": "bx wsk action delete hello-world",
+    "update": "bx wsk action update hello-world hello-world.zip --kind nodejs:6 --memory 128 --timeout 5000",
+    "invoke": "bx wsk action invoke hello-world --param name Kalev --result"
+  },
+  "author": "",
+  "license": "ISC"
+}
