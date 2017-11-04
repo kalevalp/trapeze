@@ -1,0 +1,20 @@
+{
+  "name": "hello-world-secure",
+  "version": "1.0.0",
+  "description": "",
+  "main": "secure-hello-world.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "pack": "zip -r secure-hello-world secure-hello-world.js hello-world.js package.json node_modules conf.json",
+    "clean": "rm secure-hello-world.zip",
+    "deploy": "bx wsk action create secure-hello-world secure-hello-world.zip --kind nodejs:6 --memory 128 --timeout 5000",
+    "remove": "bx wsk action delete secure-hello-world",
+    "update": "bx wsk action update secure-hello-world secure-hello-world.zip --kind nodejs:6 --memory 128 --timeout 5000",
+    "invoke": "bx wsk action invoke secure-hello-world --param-file invocation-input.json --result"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "openwhisk-shim": "file:../../../src/openwhisk-shim"
+  }
+}

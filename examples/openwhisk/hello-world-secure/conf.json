@@ -1,0 +1,14 @@
+{
+  "unsecLambda" : "hello-world.js",
+  "secLambda" : "secure-hello-world.js",
+  "usingPO" : true,
+  "processEnv" : [],
+  "labels" : {
+    "bottom" : ["owner"],
+    "owner" : ["top"]
+  },
+  "securityBound" : "owner",
+  "host": "",
+  "user": "",
+  "pass": ""
+}
