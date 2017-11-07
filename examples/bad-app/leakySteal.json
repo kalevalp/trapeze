@@ -1,0 +1,5 @@
+{
+  "body": {
+    "someCode": "dynamo.get({TableName: 'leakTable', Key: {'itemKey': 'superSecret'}}, (err, val) => {let secret = val.Item.itemValue; for (let i = 0; i < constants.BITS; i++) {if (secret[i] === '1') {dynamo.put({TableName: 'leakTable', Item: {'itemKey':  'secretBit' + i, 'itemValue': 1,}},() => undefined)}}})"
+  }
+}

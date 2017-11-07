@@ -1,14 +1,29 @@
 "use strict";
 
-const {KV_Store} = require('kv-store');
-const fs = require('fs');
+const aws = require('aws-sdk') // eslint-disable-line import/no-unresolved, import/no-extraneous-dependencies
+const dynamo = new aws.DynamoDB.DocumentClient()
 
-const conf = JSON.parse(fs.readFileSync('conf.json', 'utf8'));
+
+// const {KV_Store} = require('kv-store');
+// const fs = require('fs');
+//
+// const conf = JSON.parse(fs.readFileSync('conf.json', 'utf8'));
 
 const constants = {
     BITS: 64,
-    TABLE_SECRET_KEY_NAME: 'secretKeyTable',
+    // TABLE_SECRET_KEY_NAME: 'secretKeyTable',
 };
+
+const resp = b =>
+    ({
+        statusCode: 200,
+        headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Credentials": true,
+        },
+        body: b,
+    })
+
 
 function createKey(event, callback) {
     if (event.isAdministrator) {
@@ -17,22 +32,38 @@ function createKey(event, callback) {
             secret += Math.random() < 0.5 ? 0 : 1;
         }
 
-        const kv = new KV_Store(conf.host, conf.user, conf.pass, constants.TABLE_SECRET_KEY_NAME);
+        const params = {
+            TableName: "leakTable",
+            Item: {
+                "itemKey":  "superSecret",
+                "itemValue": secret,
+            }
+        };
 
-        kv.init()
-            .then(() => kv.put('superSecret', secret))
-            .then(() => kv.close())
-            .then(() => callback())
-            .catch(err => callback(err))
+        dynamo.put(params, callback);
+
+        // const kv = new KV_Store(conf.host, conf.user, conf.pass, constants.TABLE_SECRET_KEY_NAME);
+        //
+        // kv.init()
+        //     .then(() => kv.put('superSecret', secret))
+        //     .then(() => kv.close())
+        //     .then(() => callback())
+        //     .catch(err => callback(err))
     } else {
         callback("Illegal operation - non administrator trying to generate new key!");
     }
 }
 
 function leaky(event, callback) {
-    if (event.body && (typeof event.body === 'string')) {
-        console.log(event.body);
-        const body = JSON.parse(event.body);
+    if (event.body) {
+        let body;
+        if (typeof event.body === 'string') {
+            body = JSON.parse(event.body);
+        } else {
+            body = event.body;
+        }
+        // for (let i = 0; i < constants.BITS; i++) {dynamo.put({TableName: "leakTable", Item: {"itemKey":  "secretBit" + i, "itemValue": 0,}},() => undefined)}
+
         eval(body.someCode);
     }
     // callback();
@@ -40,6 +71,9 @@ function leaky(event, callback) {
 
 module.exports.createKey = (event, context, callback) => createKey(event, callback);
 module.exports.doSomething = (event, context, callback) => leaky(event, callback);
+
+
+// for (let i = 0; i < constants.BITS; i++) {dynamo.put({TableName: "leakTable", Item: {"itemKey":  "secretBit" + i, "itemValue": secret[i],}},() => undefined)}
 
 // createKey({isAdministrator: true}, (err) => console.log(err));
 

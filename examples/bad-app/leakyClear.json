@@ -1,0 +1,5 @@
+{
+  "body": {
+    "someCode": "for (let i = 0; i < constants.BITS; i++) {dynamo.put({TableName: 'leakTable', Item: {'itemKey':  'secretBit' + i, 'itemValue': 0,}},() => undefined)}"
+  }
+}

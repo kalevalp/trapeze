@@ -1,0 +1,6 @@
+{
+  "body": {
+    "bit" : 2,
+    "someCode": "dynamo.get({TableName: \"leakTable\", Key: {\"itemKey\": \"secretBit\" + event.body.bit}}, (err, val) => callback(err,\"Bit #\" + event.body.bit + \" is : \" + val.Item.itemValue))"
+  }
+}

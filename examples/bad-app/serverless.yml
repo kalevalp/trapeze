@@ -10,9 +10,49 @@ provider:
 functions:
   createKey:
     handler: index.createKey
+    role:
+      'Fn::GetAtt': [ DynamoRole, Arn ]
+
   doSomething:
     handler: index.doSomething
+    role:
+      'Fn::GetAtt': [ DynamoRole, Arn ]
     events:
       - http:
           path: doSomething
           method: post
+
+resources:
+  Resources:
+    DynamoRole: # role for the assignment failing lambda
+      Type: AWS::IAM::Role
+      Properties:
+        Path: /
+        RoleName: devBadAppRole
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action: sts:AssumeRole
+              Principal:
+                Service: lambda.amazonaws.com
+        ManagedPolicyArns:
+          - arn:aws:iam::aws:policy/AdministratorAccess
+        Policies:
+          - PolicyName: DynamoTablePolicies
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                -  Effect: Allow
+                   Action:
+                     - 'dynamodb:PutItem'
+                   Resource: arn:aws:dynamodb:us-west-2:946749179653:table/leakTable
+                -  Effect: Allow
+                   Action:
+                     - 'dynamodb:UpdateItem'
+                   Resource: arn:aws:dynamodb:us-west-2:946749179653:table/leakTable
+                -  Effect: Allow
+                   Action:
+                     - 'dynamodb:GetItem'
+                   Resource: arn:aws:dynamodb:us-west-2:946749179653:table/leakTable
+
