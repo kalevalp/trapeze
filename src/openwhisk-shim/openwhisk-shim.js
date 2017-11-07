@@ -14,6 +14,7 @@ const {SecureKV_PO} = require("secure-kv-po");
 const {SecureKV_TO} = require("secure-kv-to");
 const nodemailer = require("nodemailer");
 const got = require('got');
+const child_process = require( 'child_process' );
 
 const rmFilesInDir = function (dirPath) {
     try {
@@ -102,7 +103,7 @@ module.exports.makeShim = function (allowExtReq) {
             },
             require: {
                 external: allowExtReq,
-                builtin: ['fs', 'url'],
+                builtin: ['fs', 'url', 'path'],
                 root: "./",
                 mock: {
                     'kv-store': {
@@ -162,6 +163,19 @@ module.exports.makeShim = function (allowExtReq) {
                             } else {
                                 return Promise.reject("Attempting to access a url in violation with security policy");
                             }
+                        }
+                    },
+                    'child_process' : {
+
+                        execSync: (command, options) => {
+                            // Check that the command actually runs the correct file
+
+                            if (command.split(' ')[0].split('/').slice(-1)[0] === 'gg-execute-static') {
+                                return child_process.execSync(command,options);
+                            } else {
+                                throw "Trying to run an unexpected executable."
+                            }
+
                         }
                     }
                 }
