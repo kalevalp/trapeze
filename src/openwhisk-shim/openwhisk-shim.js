@@ -113,13 +113,9 @@ module.exports.makeShim = function (allowExtReq) {
                 mock: {
                     'kv-store': {
                         KV_Store: function (h, u, pwd, tableName) {
-                            console.log("~~~~~~~~ Creating Mock kv-store object!");
                             const skv = conf.usingPO ?
-                                new SecureKV_PO(h, u, pwd, labelOrdering, tableName) :
+                                new SecureKV_PO(h, u, pwd, labelOrdering, tableName, true) :
                                 new SecureKV_TO(h, u, pwd, tableName);
-                            console.log("~~~~~~~~ Mock kv-store : ");
-                            console.log(skv);
-                            console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
 
                             return {
                                 init: () => skv.init(),
@@ -219,7 +215,6 @@ module.exports = module.exports.main(externalParams);
         `);
 
             return vm.run(`
-console.log("~~~~~~~~ Running from the vm!")
 //  ***********************************
 //  ** Original Lambda Code:
 ${unsecuredLambda}
