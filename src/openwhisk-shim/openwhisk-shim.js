@@ -49,6 +49,7 @@ module.exports.makeShim = function (allowExtReq) {
     return function (params) {
 
         let label;
+        let securityBound;
 
         let reqUser;
         let reqPass;
@@ -152,7 +153,7 @@ module.exports.makeShim = function (allowExtReq) {
 
                             return {
                                 upload : (data, callback) => {
-                                    if (labelOrdering.lte(label, conf.securityBound)) {
+                                    if (labelOrdering.lte(label, securityBound)) {
                                         return s3.upload(data, callback);
                                     } else {
                                         throw ("Attempting store a file in an S3 bucket, in violation of security policy");
@@ -164,7 +165,7 @@ module.exports.makeShim = function (allowExtReq) {
                     },
                     'https' : {
                         get : (url, callback)  => {
-                            if (labelOrdering.lte(label, conf.securityBound)) {
+                            if (labelOrdering.lte(label, securityBound)) {
                                 return https.get(url, callback);
                             } else {
                                 throw ("Attempting to access a url in violation of security policy");
@@ -191,7 +192,11 @@ module.exports.makeShim = function (allowExtReq) {
             } else {
                 label = l;
             }
-
+            if (conf.securityBound) {
+                securityBound = conf.securityBound;
+            } else {
+                securityBound = l;
+            }
             const vm = new NodeVM(executionEnv);
 
             console.log(`
@@ -218,11 +223,11 @@ module.exports = module.exports.main(externalParams);
             .then((executionResult) => {
                 if (conf.declassifier &&
                     labelOrdering.lte(label, conf.declassifier.maxLabel) &&
-                    labelOrdering.lte(conf.declassifier.minLabel, conf.securityBound)) {
+                    labelOrdering.lte(conf.declassifier.minLabel, securityBound)) {
                     const declf = require("../../decl");
                     declf.declassifier(err, value, callback);
                 } else {
-                    if (labelOrdering.lte(label, conf.securityBound)) {
+                    if (labelOrdering.lte(label, securityBound)) {
                         return executionResult;
                     } else {
                         return Promise.reject("Attempting to return a dict/promise in violation with security policy");
