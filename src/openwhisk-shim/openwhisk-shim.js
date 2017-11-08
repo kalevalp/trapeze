@@ -12,9 +12,9 @@ const {TotalOrder} = require("to-utils");
 const {auth} = require("auth");
 const {SecureKV_PO} = require("secure-kv-po");
 const {SecureKV_TO} = require("secure-kv-to");
-const nodemailer = require("nodemailer");
-const got = require('got');
 const child_process = require( 'child_process' );
+const aws = require( 'aws-sdk' );
+const https = require( 'https' );
 
 const rmFilesInDir = function (dirPath) {
     try {
@@ -132,39 +132,6 @@ module.exports.makeShim = function (allowExtReq) {
                             }
                         }
                     },
-                    'nodemailer': {
-                        createTestAccount: () => {
-                            if (labelOrdering.lte(label, conf.securityBound)) {
-                                return nodemailer.createTestAccount();
-                            } else {
-                                throw "Attempting to create test account in violation with security policy"
-                            }
-                        },
-                        createTransport: (params) => {
-                            const mailer = nodemailer.createTransport(params);
-
-                            return {
-                                sendMail: (mailOptions) => {
-                                    if (labelOrdering.lte(label, conf.securityBound)) {
-                                        return mailer.sendMail(mailOptions);
-                                    } else {
-                                        throw "Attempting to send in violation with security policy"
-                                    }
-
-                                }
-                            }
-                        },
-                        getTestMessageUrl: (info) => nodemailer.getTestMessageUrl(info),
-                    },
-                    'got': {
-                        get: (uri, params) => {
-                            if (labelOrdering.lte(label, conf.securityBound)) {
-                                return got.get(uri, params);
-                            } else {
-                                return Promise.reject("Attempting to access a url in violation with security policy");
-                            }
-                        }
-                    },
                     'child_process' : {
 
                         execSync: (command, options) => {
@@ -177,7 +144,36 @@ module.exports.makeShim = function (allowExtReq) {
                             }
 
                         }
+                    },
+                    'aws-sdk' : {
+                        config: aws.config,
+                        S3: () => {
+                            const s3 = new aws.S3();
+
+                            return {
+                                upload : (data, callback) => {
+                                    if (labelOrdering.lte(label, conf.securityBound)) {
+                                        return s3.upload(data, callback);
+                                    } else {
+                                        throw ("Attempting store a file in an S3 bucket, in violation of security policy");
+                                    }
+
+                                }
+                            }
+                        }
+                    },
+                    'https' : {
+                        get : (url, callback)  => {
+                            if (labelOrdering.lte(label, conf.securityBound)) {
+                                return https.get(url, callback);
+                            } else {
+                                throw ("Attempting to access a url in violation of security policy");
+                            }
+
+                        }
+
                     }
+
                 }
             }
         };
