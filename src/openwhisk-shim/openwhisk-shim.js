@@ -222,7 +222,7 @@ ${unsecuredLambda}
 //  ***********************************
 
 module.exports = module.exports.main(externalParams);
-        `, __dirname + "/" + conf.secLambda);
+        `, '/nodejsAction/' + _dirname.split('/')[2] + "/" + conf.secLambda);
         })
             .then((executionResult) => {
                 if (conf.declassifier &&
