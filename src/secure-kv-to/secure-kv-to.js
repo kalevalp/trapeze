@@ -2,7 +2,7 @@ const mysql = require("mysql");
 const bbPromise = require('bluebird');
 
 class SecureKV_TO {
-    constructor(h, u, pwd, tbl) {
+    constructor(h, u, pwd, tbl, forOpenWhisk) {
         this.con = bbPromise.promisifyAll(mysql.createConnection({
             host: h,
             user: u,
@@ -14,14 +14,14 @@ class SecureKV_TO {
         } else {
             this.table = 'kvstore';
         }
-
+        this.forOpenWhisk = forOpenWhisk;
     }
 
     init() {
         const createTableSql = `
 CREATE TABLE ${this.table} (
-    rowkey VARCHAR(32) NOT NULL,
-    rowvalues MEDIUMTEXT,
+    rowkey VARCHAR(256) NOT NULL,
+    rowvalues ${this.forOpenWhisk ? 'LONGBLOB' : 'MEDIUMTEXT'},
     label INTEGER NOT NULL,
     PRIMARY KEY (rowkey)
 );
@@ -83,8 +83,8 @@ INSERT INTO ${this.table} (rowkey,rowvalues,label)
         `;
 
         console.log("** DEBUG: Secure K-V (TO) - Call to put.");
-        console.log("** DEBUG: Secure K-V (TO) -   Key:   " + k + ".");
-        console.log("** DEBUG: Secure K-V (TO) -   Value: " + v + ".");
+        // console.log("** DEBUG: Secure K-V (TO) -   Key:   " + k + ".");
+        // console.log("** DEBUG: Secure K-V (TO) -   Value: " + v + ".");
 
         return this.con.queryAsync(sql,[k,v,l])
             .then((result) => {
@@ -112,9 +112,9 @@ WHERE rowkey = ? AND
         return this.con.queryAsync(sql, [k,l])
             .then((result) => {
                 console.log("** DEBUG: Secure K-V (TO) - Query successful - getting values.");
-                console.log("** DEBUG: Secure K-V (TO) - Query result:");
-                console.log(result);
-                console.log("** DEBUG: Secure K-V (TO) - Query result />");
+                // console.log("** DEBUG: Secure K-V (TO) - Query result:");
+                // console.log(result);
+                // console.log("** DEBUG: Secure K-V (TO) - Query result />");
 
                 if (result.length === 0) return "";
                 if (result.length === 1) return result[0]["rowvalues"];
@@ -182,9 +182,9 @@ WHERE label <= ?;
         return this.con.queryAsync(sql, [l])
             .then((result) => {
                 console.log("** DEBUG: Secure K-V (TO) - Query successful - getting entries.");
-                console.log("** DEBUG: Secure K-V (TO) - Query result:");
-                console.log(result);
-                console.log("** DEBUG: Secure K-V (TO) - Query result />");
+                // console.log("** DEBUG: Secure K-V (TO) - Query result:");
+                // console.log(result);
+                // console.log("** DEBUG: Secure K-V (TO) - Query result />");
 
                 return result.map((row) => ({
                     key: row["rowkey"],

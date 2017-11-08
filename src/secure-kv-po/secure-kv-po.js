@@ -3,7 +3,7 @@ const {PartialOrder} = require ("po-utils");
 const bbPromise = require('bluebird');
 
 class SecureKV_PO {
-    constructor(h, u, pwd, partialOrder, tbl) {
+    constructor(h, u, pwd, partialOrder, tbl, forOpenWhisk) {
         this.con = bbPromise.promisifyAll(mysql.createConnection({
             host: h,
             user: u,
@@ -16,6 +16,7 @@ class SecureKV_PO {
         } else {
             this.table = 'kvstore';
         }
+        this.forOpenWhisk = forOpenWhisk;
     }
 
     init() {
@@ -26,7 +27,7 @@ SHOW TABLES like ?;
         const createTableSql = `
 CREATE TABLE ${this.table} (
     rowkey VARCHAR(256) NOT NULL,
-    rowvalues LONGBLOB,
+    rowvalues ${this.forOpenWhisk ? 'LONGBLOB' : 'MEDIUMTEXT'},
     label VARCHAR(32) NOT NULL,
     PRIMARY KEY (rowkey, label)
 );
@@ -76,21 +77,21 @@ CREATE TABLE ${this.table} (
     put (k, v, l) {
         let cond = getCondFromPOTC(this.po.potc, l);
 
-        // console.log("** DEBUG: Secure K-V (PO) - Call to put.");
+        console.log("** DEBUG: Secure K-V (PO) - Call to put.");
         // console.log("** DEBUG: Secure K-V (PO) -   Key:   " + k + ".");
         // console.log("** DEBUG: Secure K-V (PO) -   Value: " + v + ".");
         //
-        // console.log("** DEBUG: Secure K-V (PO) - Starting transaction.");
+        console.log("** DEBUG: Secure K-V (PO) - Starting transaction.");
         return this.con.beginTransactionAsync()
-            // .then(() => console.log("** DEBUG: Secure K-V (PO) - Successfully started transaction."))
+            .then(() => console.log("** DEBUG: Secure K-V (PO) - Successfully started transaction."))
             .then(() => this.con.queryAsync(`DELETE FROM ${this.table} WHERE rowkey = ? AND ${cond}`, [k]))
-            // .then(() => console.log("** DEBUG: Secure K-V (PO) - Delete successful."))
+            .then(() => console.log("** DEBUG: Secure K-V (PO) - Delete successful."))
             .then(() => this.con.queryAsync(`INSERT INTO ${this.table} (rowkey,rowvalues,label) VALUES (?, ?, ?)`, [k,v,l]))
-            // .then(() => console.log("** DEBUG: Secure K-V (PO) - Insert successful."))
+            .then(() => console.log("** DEBUG: Secure K-V (PO) - Insert successful."))
             .then(() => this.con.commitAsync())
-            // .then(() => console.log("** DEBUG: Secure K-V (PO) - Transaction committed successfully."))
+            .then(() => console.log("** DEBUG: Secure K-V (PO) - Transaction committed successfully."))
             .catch((err) => {
-                // console.log("** DEBUG: Secure K-V (PO) - Failed putting value.");
+                console.log("** DEBUG: Secure K-V (PO) - Failed putting value.");
                 return bbPromise.reject(err);
             });
     }
@@ -104,19 +105,19 @@ WHERE rowkey = ? AND
       label IN ${"('" + [...leLabels].join("', '") + "')"};
     `;
 
-        // console.log("** DEBUG: Secure K-V (PO) - Call to get.");
-        // console.log("** DEBUG: Secure K-V (PO) -   Key:   " + k + ".");
-        // console.log("** DEBUG: Secure K-V (PO) - Get Query:");
-        // console.log(sql);
-        // console.log("** DEBUG: Secure K-V (PO) - Get Query /> ");
+        console.log("** DEBUG: Secure K-V (PO) - Call to get.");
+        console.log("** DEBUG: Secure K-V (PO) -   Key:   " + k + ".");
+        console.log("** DEBUG: Secure K-V (PO) - Get Query:");
+        console.log(sql);
+        console.log("** DEBUG: Secure K-V (PO) - Get Query /> ");
         return this.con.queryAsync(sql, [k])
             .then((result) => {
-                // console.log("** DEBUG: Secure K-V (PO) - Query successful - getting values.");
+                console.log("** DEBUG: Secure K-V (PO) - Query successful - getting values.");
                 // console.log("** DEBUG: Secure K-V (PO) - Query result:");
                 // console.log(result);
                 // console.log("** DEBUG: Secure K-V (PO) - Query result />");
 
-                return result[0]["rowvalues"];;
+                return result;
 
                 // if (result.length === 0) callback(null,"");
                 // else {
@@ -131,7 +132,7 @@ WHERE rowkey = ? AND
                 // }
             })
             .catch((err) => {
-                // console.log("** DEBUG: Secure K-V (PO) - Query failed - getting values.");
+                console.log("** DEBUG: Secure K-V (PO) - Query failed - getting values.");
                 return bbPromise.reject(err);
             });
     }
@@ -153,20 +154,20 @@ WHERE rowkey = ? AND
       label IN ${"('" + [...geLabels].join("', '") + "')"};
     `;
 
-        // console.log("** DEBUG: Secure K-V (PO) - Call to del.");
-        // console.log("** DEBUG: Secure K-V (PO) -   Key:   " + k + ".");
-        // console.log("** DEBUG: Secure K-V (PO) - Del Query:");
-        // console.log(sql);
-        // console.log("** DEBUG: Secure K-V (PO) - Del Query /> ");
+        console.log("** DEBUG: Secure K-V (PO) - Call to del.");
+        console.log("** DEBUG: Secure K-V (PO) -   Key:   " + k + ".");
+        console.log("** DEBUG: Secure K-V (PO) - Del Query:");
+        console.log(sql);
+        console.log("** DEBUG: Secure K-V (PO) - Del Query /> ");
         return this.con.queryAsync(sql, [k])
-            // .then((result) => {
-                // console.log("** DEBUG: Secure K-V (PO) - Query successful - deleting value.");
-                // console.log("** DEBUG: Secure K-V (PO) - Query result:");
-                // console.log(result);
-                // console.log("** DEBUG: Secure K-V (PO) - Query result />");
-            // })
+            .then((result) => {
+                console.log("** DEBUG: Secure K-V (PO) - Query successful - deleting value.");
+                console.log("** DEBUG: Secure K-V (PO) - Query result:");
+                console.log(result);
+                console.log("** DEBUG: Secure K-V (PO) - Query result />");
+            })
             .catch((err) => {
-                // console.log("** DEBUG: Secure K-V (PO) - Query failed - deleting value.");
+                console.log("** DEBUG: Secure K-V (PO) - Query failed - deleting value.");
                 return bbPromise.reject(err);
             });
     }
@@ -179,13 +180,13 @@ FROM ${this.table}
 WHERE label IN ${"('" + [...leLabels].join("', '") + "')"};
     `;
 
-        // console.log("** DEBUG: Secure K-V (PO) - Call to keys.");
-        // console.log("** DEBUG: Secure K-V (PO) - Keys Query:");
-        // console.log(sql);
-        // console.log("** DEBUG: Secure K-V (PO) - Keys Query /> ");
+        console.log("** DEBUG: Secure K-V (PO) - Call to keys.");
+        console.log("** DEBUG: Secure K-V (PO) - Keys Query:");
+        console.log(sql);
+        console.log("** DEBUG: Secure K-V (PO) - Keys Query /> ");
         return this.con.queryAsync(sql)
             .then((result) => {
-                // console.log("** DEBUG: Secure K-V (PO) - Query successful - getting keys.");
+                console.log("** DEBUG: Secure K-V (PO) - Query successful - getting keys.");
                 // console.log("** DEBUG: Secure K-V (PO) - Query result:");
                 // console.log(result);
                 // console.log("** DEBUG: Secure K-V (PO) - Query result />");
@@ -193,7 +194,7 @@ WHERE label IN ${"('" + [...leLabels].join("', '") + "')"};
                 return result;
             })
             .catch((err) => {
-                // console.log("** DEBUG: Secure K-V (PO) - Query failed - getting keys.");
+                console.log("** DEBUG: Secure K-V (PO) - Query failed - getting keys.");
                 return bbPromise.reject(err);
             });
     }
@@ -206,13 +207,13 @@ FROM ${this.table}
 WHERE label IN ${"('" + [...leLabels].join("', '") + "')"};
     `;
 
-        // console.log("** DEBUG: Secure K-V (PO) - Call to entries.");
-        // console.log("** DEBUG: Secure K-V (PO) - Entries Query:");
-        // console.log(sql);
-        // console.log("** DEBUG: Secure K-V (PO) - Entries Query /> ");
+        console.log("** DEBUG: Secure K-V (PO) - Call to entries.");
+        console.log("** DEBUG: Secure K-V (PO) - Entries Query:");
+        console.log(sql);
+        console.log("** DEBUG: Secure K-V (PO) - Entries Query /> ");
         return this.con.queryAsync(sql)
             .then((result) => {
-                // console.log("** DEBUG: Secure K-V (PO) - Query successful - getting entries.");
+                console.log("** DEBUG: Secure K-V (PO) - Query successful - getting entries.");
                 // console.log("** DEBUG: Secure K-V (PO) - Query result:");
                 // console.log(result);
                 // console.log("** DEBUG: Secure K-V (PO) - Query result />");
@@ -224,7 +225,7 @@ WHERE label IN ${"('" + [...leLabels].join("', '") + "')"};
                 }));
             })
             .catch((err) => {
-                // console.log("** DEBUG: Secure K-V (PO) - Query failed - getting entries.");
+                console.log("** DEBUG: Secure K-V (PO) - Query failed - getting entries.");
                 return bbPromise.reject(err);
             });
     }

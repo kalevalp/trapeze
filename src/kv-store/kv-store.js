@@ -2,7 +2,7 @@ const mysql = require("mysql");
 const bbPromise = require('bluebird');
 
 class KV_Store {
-    constructor(h, u, pwd, tbl) {
+    constructor(h, u, pwd, tbl, forOpenWhisk) {
         this.con = bbPromise.promisifyAll(mysql.createConnection({
             host: h,
             user: u,
@@ -14,6 +14,7 @@ class KV_Store {
         } else {
             this.table = 'kvstore';
         }
+        this.forOpenWhisk = forOpenWhisk;
     }
 
 
@@ -24,8 +25,8 @@ SHOW TABLES like ?;
         `;
         const createTableSql = `
 CREATE TABLE ${this.table} (
-    rowkey VARCHAR(32) NOT NULL,
-    rowvalues MEDIUMTEXT,
+    rowkey VARCHAR(256) NOT NULL,
+    rowvalues ${this.forOpenWhisk ? 'LONGBLOB' : 'MEDIUMTEXT'},
     PRIMARY KEY (rowkey)
 );
             `;
@@ -71,8 +72,8 @@ INSERT INTO ${this.table} (rowkey,rowvalues)
         rowvalues = VALUES(rowvalues);
         `;
         console.log("** DEBUG: Call to put.");
-        console.log("** DEBUG:   Key:   " + k + ".");
-        console.log("** DEBUG:   Value: " + v + ".");
+        // console.log("** DEBUG:   Key:   " + k + ".");
+        // console.log("** DEBUG:   Value: " + v + ".");
 
         return this.con.queryAsync(putQuerySql,[k,v])
             .then((result) => {
@@ -99,9 +100,9 @@ WHERE rowkey = ?;
         return this.con.queryAsync(getQuerySql, [k])
             .then((result) => {
                 console.log("** DEBUG: Query successful - getting values.");
-                console.log("** DEBUG: Query result:");
-                console.log(result);
-                console.log("** DEBUG: Query result />");
+                // console.log("** DEBUG: Query result:");
+                // console.log(result);
+                // console.log("** DEBUG: Query result />");
 
                 if (result.length === 0) return "";
                 if (result.length === 1) return result[0]["rowvalues"];
@@ -166,9 +167,9 @@ FROM ${this.table};
         return this.con.queryAsync(entriesQuerySql)
             .then((result) => {
                 console.log("** DEBUG: Query successful - getting entries.");
-                console.log("** DEBUG: Query result:");
-                console.log(result);
-                console.log("** DEBUG: Query result />");
+                // console.log("** DEBUG: Query result:");
+                // console.log(result);
+                // console.log("** DEBUG: Query result />");
 
                 return result.map( x => {
                     return {
