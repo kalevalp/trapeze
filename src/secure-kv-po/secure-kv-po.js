@@ -32,32 +32,32 @@ CREATE TABLE ${this.table} (
 );
         `;
 
-        // console.log("** DEBUG: Secure K-V (PO) - Call to init.");
+        console.log("** DEBUG: Secure K-V (PO) - Call to init.");
         return this.con.connectAsync()
-            // .then(() => console.log("** DEBUG: Secure K-V (PO) - Connection successful."))
+            .then(() => console.log("** DEBUG: Secure K-V (PO) - Connection successful."))
             .then(() => this.con.queryAsync(tableSql, [this.table]))
             .then((result) => {
-                // console.log("** DEBUG: Secure K-V (PO) - Succeeded getting list of tables.");
+                console.log("** DEBUG: Secure K-V (PO) - Succeeded getting list of tables.");
                 if (result.length === 0) {
-                    // console.log("** DEBUG: Secure K-V (PO) - Table does not exists in database. Creating table.");
+                    console.log("** DEBUG: Secure K-V (PO) - Table does not exists in database. Creating table.");
                     return this.con.queryAsync(createTableSql)
-                        // .then(() => console.log("** DEBUG: Secure K-V (PO) - Successfully created table."))
-                // } else {
-                //     console.log("** DEBUG: Secure K-V (PO) - Table exists in database.");
+                        .then(() => console.log("** DEBUG: Secure K-V (PO) - Successfully created table."))
+                } else {
+                    console.log("** DEBUG: Secure K-V (PO) - Table exists in database.");
                 }
             })
             .catch((err) => {
-                // console.log("** DEBUG: Secure K-V (PO) - Failed init.");
+                console.log("** DEBUG: Secure K-V (PO) - Failed init.");
                 return bbPromise.reject(err);
             });
     }
 
     close() {
-        // console.log("** DEBUG: Secure K-V (PO) - Call to close.");
+        console.log("** DEBUG: Secure K-V (PO) - Call to close.");
         return this.con.endAsync()
-            // .then(() => console.log("** DEBUG: Secure K-V (PO) - Connection close successful."))
+            .then(() => console.log("** DEBUG: Secure K-V (PO) - Connection close successful."))
             .catch(() => {
-                // console.log("** DEBUG: Secure K-V (PO) - Failed closing connection.");
+                console.log("** DEBUG: Secure K-V (PO) - Failed closing connection.");
                 return bbPromise.reject(err);
             });
     }
