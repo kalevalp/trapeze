@@ -152,7 +152,7 @@ module.exports.makeShim = function (allowExtReq) {
                     },
                     'aws-sdk' : {
                         config: aws.config,
-                        S3: () => {
+                        S3: function () {
                             const s3 = new aws.S3();
 
                             return {
