@@ -152,8 +152,8 @@ module.exports.makeShim = function (allowExtReq) {
                     },
                     'aws-sdk' : {
                         configCredentials: (awsAccessKey, awsSecretKey) => {
-                            aws.conf.accessKeyId = awsAccessKey;
-                            aws.conf.secretAccessKey = awsSecretKey;
+                            aws.config.accessKeyId = awsAccessKey;
+                            aws.config.secretAccessKey = awsSecretKey;
                         },
                         S3: function () {
                             const s3 = new aws.S3();
