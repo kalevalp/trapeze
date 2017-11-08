@@ -1,6 +1,6 @@
 {
   "name": "openwhisk-shim",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "description": "A secure execution shim for running Apache OpenWhisk functions while monitoring and maintaining IFC",
   "main": "openwhisk-shim.js",
   "dependencies": {
