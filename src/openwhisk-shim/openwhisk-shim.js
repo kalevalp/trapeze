@@ -109,8 +109,8 @@ module.exports.makeShim = function (allowExtReq) {
                     'kv-store': {
                         KV_Store: function (h, u, pwd, tableName) {
                             const skv = conf.usingPO ?
-                                new SecureKV_PO(conf.host, conf.user, conf.pass, labelOrdering, tableName) :
-                                new SecureKV_TO(conf.host, conf.user, conf.pass, tableName);
+                                new SecureKV_PO(h, u, pwd, labelOrdering, tableName) :
+                                new SecureKV_TO(h, u, pwd, tableName);
 
                             return {
                                 init: () => skv.init(),
