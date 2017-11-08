@@ -48,6 +48,8 @@ const labelOrdering = conf.usingPO ? new PartialOrder(conf.labels) : new TotalOr
 module.exports.makeShim = function (allowExtReq) {
     return function (params) {
 
+        console.log(params);
+
         let label;
         let securityBound;
 
@@ -62,15 +64,17 @@ module.exports.makeShim = function (allowExtReq) {
                 delete params.queryStringParameters.pass;
             }
         } else { // Run http POST request on behalf of invoking user.
-            let reqBody;
-            if ((typeof params.body) === "string") {
-                reqBody = JSON.parse(params.body);
-            } else {
-                reqBody = params.body;
-            }
-            reqUser = reqBody.user;
-            reqPass = reqBody.pass;
+            // let reqBody;
+            // if ((typeof params.body) === "string") {
+            //     reqBody = JSON.parse(params.body);
+            // } else {
+            //     reqBody = params.body;
+            // }
+            // reqUser = reqBody.user;
+            // reqPass = reqBody.pass;
 
+            reqUser = params.user;
+            reqPass = params.pass;
         }
 
         const p = auth(reqUser, reqPass);
