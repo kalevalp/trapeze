@@ -9,12 +9,14 @@ class SecureKV_TO {
             password: pwd,
             database: "securekvto"
         }));
-        if (tbl) {
+        if (tbl && typeof tbl === 'string') {
             this.table = tbl;
         } else {
             this.table = 'kvstore';
         }
-        this.forOpenWhisk = forOpenWhisk;
+        if (forOpenWhisk || (tbl && typeof tbl === 'boolean')) {
+            this.forOpenWhisk = true;
+        }
     }
 
     init() {

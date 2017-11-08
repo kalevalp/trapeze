@@ -9,12 +9,14 @@ class KV_Store {
             password: pwd,
             database: "unsecurekv"
         }));
-        if (tbl) {
+        if (tbl && typeof tbl === 'string') {
             this.table = tbl;
         } else {
             this.table = 'kvstore';
         }
-        this.forOpenWhisk = forOpenWhisk;
+        if (forOpenWhisk || (tbl && typeof tbl === 'boolean')) {
+            this.forOpenWhisk = true;
+        }
     }
 
 

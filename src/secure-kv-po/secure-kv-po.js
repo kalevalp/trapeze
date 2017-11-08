@@ -11,12 +11,14 @@ class SecureKV_PO {
             database: "securekvpo"
         }));
         this.po = partialOrder;
-        if (tbl) {
+        if (tbl && typeof tbl === 'string') {
             this.table = tbl;
         } else {
             this.table = 'kvstore';
         }
-        this.forOpenWhisk = forOpenWhisk;
+        if (forOpenWhisk || (tbl && typeof tbl === 'boolean')) {
+            this.forOpenWhisk = true;
+        }
     }
 
     init() {
