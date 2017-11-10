@@ -59,6 +59,7 @@ module.exports.${handlerName}(externalEvent, externalContext, externalCallback);
 
             let label;
             let callbackSecurityBound;
+            let labelHistory = [];
 
             let p;
             const strippedEvent = event;
@@ -157,14 +158,22 @@ module.exports.${handlerName}(externalEvent, externalContext, externalCallback);
                                     value.ifcLabel = label;
                                     value.callbackSecurityBound = callbackSecurityBound;
                                 }
-                                return callback(err, value);
+                                if (conf.declassifiers &&
+                                    conf.declassifiers.callback &&
+                                    labelOrdering.lte(label, conf.declassifiers.callback.maxLabel) &&
+                                    labelOrdering.lte(conf.declassifiers.callback.minLabel, callbackSecurityBound)) {
+
+                                    return callback(eval(conf.declassifiers.callback.errCode)(err), eval(conf.declassifiers.callback.valueCode)(value));
+                                } else {
+                                    return callback(err, value);
+                                }
                             } else {
                                 if (conf.declassifiers &&
-                                    conf.declassifiers.nodemailer &&
-                                    labelOrdering.lte(label, conf.declassifiers.nodemailer.maxLabel) &&
-                                    labelOrdering.lte(conf.declassifiers.nodemailer.minLabel, callbackSecurityBound)) {
+                                    conf.declassifiers.callback &&
+                                    labelOrdering.lte(label, conf.declassifiers.callback.maxLabel) &&
+                                    labelOrdering.lte(conf.declassifiers.callback.minLabel, callbackSecurityBound)) {
 
-                                    return callback(eval(conf.declassifiers.nodemailer.errCode)(err),eval(conf.declassifiers.nodemailer.valueCode)(value));
+                                    return callback(eval(conf.declassifiers.callback.errCode)(err),eval(conf.declassifiers.callback.valueCode)(value));
 
                                 } else {
                                     if (labelOrdering.lte(label, callbackSecurityBound)) {
@@ -178,6 +187,7 @@ module.exports.${handlerName}(externalEvent, externalContext, externalCallback);
                     bumpLabelTo:
                         function (newLabel) {
                             if (labelOrdering.lte(label, newLabel)) {
+                                labelHistory.push(label)
                                 label = newLabel;
                                 return true;
                             } else {
@@ -186,7 +196,11 @@ module.exports.${handlerName}(externalEvent, externalContext, externalCallback);
                         },
                     bumpLabelToTop:
                         function () {
-                            label = labelOrdering.getTop();
+                            label = this.bumpLabelTo(labelOrdering.getTop());
+                        },
+                    getCurrentLabel:
+                        function () {
+                            return label;
                         }
                 },
                 require: {
