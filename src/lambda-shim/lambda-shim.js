@@ -58,7 +58,7 @@ module.exports.${handlerName}(externalEvent, externalContext, externalCallback);
         exp[handlerName] = function (event, context, callback) {
 
             let label;
-            let securityBound;
+            let callbackSecurityBound;
 
             let p;
             const strippedEvent = event;
@@ -78,12 +78,12 @@ module.exports.${handlerName}(externalEvent, externalContext, externalCallback);
                     delete parsed.ifcLabel;
 
                     if (!storedSecurityBound) {
-                        storedSecurityBound = parsed.securityBound;
-                    } else if (storedSecurityBound !== parsed.securityBound) {
+                        storedSecurityBound = parsed.callbackSecurityBound;
+                    } else if (storedSecurityBound !== parsed.callbackSecurityBound) {
                         console.log("Batch of kinesis event with different security bounds unsupported.");
                         return callback("Batch of kinesis event with different security bounds unsupported.");
                     }
-                    delete parsed.securityBound;
+                    delete parsed.callbackSecurityBound;
 
                     record.kinesis.data = new Buffer(JSON.stringify(parsed)).toString('base64');
                     return record;
@@ -94,22 +94,22 @@ module.exports.${handlerName}(externalEvent, externalContext, externalCallback);
                     return callback("Could not resolve an ifcLabel in kinesis event.")
                 }
                 if (!storedSecurityBound) {
-                    console.log("Could not resolve a securityBound in kinesis event.")
-                    return callback("Could not resolve a securityBound in kinesis event.")
+                    console.log("Could not resolve a callbackSecurityBound in kinesis event.")
+                    return callback("Could not resolve a callbackSecurityBound in kinesis event.")
                 }
 
                 console.log(`Running kinesis event with label: ${ifcLabel}`);
 
-                securityBound = storedSecurityBound;
-                console.log(`Running kinesis event with securityBound: ${securityBound}`);
+                callbackSecurityBound = storedSecurityBound;
+                console.log(`Running kinesis event with callbackSecurityBound: ${callbackSecurityBound}`);
 
                 p = Promise.resolve(ifcLabel);
             } else if (conf.runFromSF /* && event.ifcLabel*/) { // Handle events originating from AWS Step Functions.
                 const sfLabel = event.ifcLabel;
                 delete strippedEvent.ifcLabel;
 
-                securityBound = event.securityBound;
-                delete strippedEvent.securityBound;
+                callbackSecurityBound = event.callbcakSecurityBound;
+                delete strippedEvent.callbcakSecurityBound;
 
                 p = Promise.resolve(sfLabel);
             } else {
@@ -155,16 +155,19 @@ module.exports.${handlerName}(externalEvent, externalContext, externalCallback);
                             if (conf.runFromSF) { // Add label to the callback to the stepfunction, which in turn becomes the input to the next lambda.
                                 if (value) {
                                     value.ifcLabel = label;
-                                    value.securityBound = securityBound;
+                                    value.callbackSecurityBound = callbackSecurityBound;
                                 }
                                 return callback(err, value);
                             } else {
-                                if (conf.declassifier &&
-                                    labelOrdering.lte(label, conf.declassifier.maxLabel) &&
-                                    labelOrdering.lte(conf.declassifier.minLabel, securityBound)) {
-                                    declf.declassifier(err, value, callback);
+                                if (conf.declassifiers &&
+                                    conf.declassifiers.nodemailer &&
+                                    labelOrdering.lte(label, conf.declassifiers.nodemailer.maxLabel) &&
+                                    labelOrdering.lte(conf.declassifiers.nodemailer.minLabel, callbackSecurityBound)) {
+
+                                    return callback(eval(conf.declassifiers.nodemailer.errCode)(err),eval(conf.declassifiers.nodemailer.valueCode)(value));
+
                                 } else {
-                                    if (labelOrdering.lte(label, securityBound)) {
+                                    if (labelOrdering.lte(label, callbackSecurityBound)) {
                                         return callback(err, value);
                                     } else {
                                         return callback(null);
@@ -227,12 +230,12 @@ module.exports.${handlerName}(externalEvent, externalContext, externalCallback);
                                     putRecord: (event, callback) => {
                                         const data = JSON.parse(event.Data);
                                         if (data.ifcLabel) { // && event.Data.ifcLabel !== label) {
-                                            throw `Unexpected security label. Event written to kinesis should not have an ifcLabel field. Has label: ${event.ifcLabel}`;
-                                        } else if (data.securityBound) {
-                                            throw `Unexpected security bound. Event written to kinesis should not have a securityBound field. Has label: ${event.securityBound}`;
+                                            throw `Unexpected security label. Event written to kinesis should not have an ifcLabel field. Has label: ${data.ifcLabel}`;
+                                        } else if (data.callbackSecurityBound) {
+                                            throw `Unexpected security bound. Event written to kinesis should not have a callbackSecurityBound field. Has label: ${data.callbackSecurityBound}`;
                                         } else {
                                             data.ifcLabel = label;
-                                            data.securityBound = securityBound;
+                                            data.callbackSecurityBound = callbackSecurityBound;
 
                                             event.Data = JSON.stringify(data);
                                             return kinesis.putRecord(event, callback);
@@ -251,7 +254,7 @@ module.exports.${handlerName}(externalEvent, externalContext, externalCallback);
                                         const transParams = params;
                                         const input = JSON.parse(params.input);
                                         input.ifcLabel = label;
-                                        input.securityBound = securityBound;
+                                        input.callbackSecurityBound = callbackSecurityBound;
                                         transParams.input = JSON.stringify(input);
                                         return stepfunctions.startExecution(transParams, callback);
                                     },
@@ -268,7 +271,7 @@ module.exports.${handlerName}(externalEvent, externalContext, externalCallback);
                                 // NOTE: Might want to uncomment this code, to secure outgoing call to rekognition.
                                 // return {
                                 //     detectLabels: function (params, callback) {
-                                //         if (labelOrdering.lte(label, securityBound)) {
+                                //         if (labelOrdering.lte(label, callbackSecurityBound)) {
                                 //             return rek.detectLabels(params, callback);
                                 //         } else {
                                 //             return callback("Attempting to call detectLabels in violation with security policy");
@@ -278,19 +281,26 @@ module.exports.${handlerName}(externalEvent, externalContext, externalCallback);
                             },
                         },
                         'nodemailer' : {
-                            createTestAccount: () => {
-                                if (labelOrdering.lte(label, securityBound)) {
-                                    return nodemailer.createTestAccount();
-                                } else {
-                                    throw "Attempting to create test account in violation with security policy"
-                                }
-                            },
                             createTransport: (params) => {
                                 const mailer = nodemailer.createTransport(params);
 
                                 return {
                                     sendMail: (mailOptions) => {
-                                        if (labelOrdering.lte(label, securityBound)) {
+                                        let nmSecLabel;
+                                        if (conf.securityBounds &&
+                                            conf.securityBounds.nodemailer) {
+                                            nmSecLabel = conf.securityBounds.nodemailer;
+                                        } else {
+                                            nmSecLabel = "bottom";
+                                        }
+                                        if (conf.declassifiers &&
+                                            conf.declassifiers.nodemailer &&
+                                            labelOrdering.lte(label, conf.declassifiers.nodemailer.maxLabel) &&
+                                            labelOrdering.lte(conf.declassifiers.nodemailer.minLabel, nmSecLabel)) {
+
+                                            mailer.sendMail(eval(conf.declassifiers.nodemailer.code)(mailOptions));
+
+                                        } else if (labelOrdering.lte(label, nmSecLabel)) {
                                             return mailer.sendMail(mailOptions);
                                         } else {
                                             throw "Attempting to send in violation with security policy"
@@ -303,7 +313,19 @@ module.exports.${handlerName}(externalEvent, externalContext, externalCallback);
                         },
                         'got' : {
                             get: (uri, params) => {
-                                if (labelOrdering.lte(label, securityBound)) {
+                                let gotSecLabel;
+                                if (conf.securityBounds &&
+                                    conf.securityBounds.got) {
+                                    gotSecLabel = conf.securityBounds.got;
+                                } else {
+                                    gotSecLabel = 'bottom';
+                                }
+                                if (conf.declassifiers &&
+                                    conf.declassifiers.got &&
+                                    labelOrdering.lte(label, conf.declassifiers.got.maxLabel) &&
+                                    labelOrdering.lte(conf.declassifiers.got.minLabel, gotSecLabel)) {
+                                    return got.get(eval(conf.declassifiers.got.uri)(uri), eval(conf.declassifiers.got.params)(params));
+                                } else if (labelOrdering.lte(label, gotSecLabel)) {
                                     return got.get(uri, params);
                                 } else {
                                     return Promise.reject("Attempting to access a url in violation with security policy");
@@ -311,7 +333,19 @@ module.exports.${handlerName}(externalEvent, externalContext, externalCallback);
                             }
                         },
                         'node-fetch' : (params) => {
-                            if (labelOrdering.lte(label, securityBound)) {
+                            let nodeFetchSecLabel;
+                            if (conf.securityBounds &&
+                                conf.securityBounds.nodeFetch) {
+                                nodeFetchSecLabel = conf.securityBounds.nodeFetch;
+                            } else {
+                                nodeFetchSecLabel = 'bottom';
+                            }
+                            if (conf.declassifiers &&
+                                conf.declassifiers.nodeFetch &&
+                                labelOrdering.lte(label, conf.declassifiers.nodeFetch.maxLabel) &&
+                                labelOrdering.lte(conf.declassifiers.nodeFetch.minLabel, nodeFetchSecLabel)) {
+                                return fetch(eval(conf.declassifiers.nodeFetch.params)(params));
+                            } else if (labelOrdering.lte(label, nodeFetchSecLabel)) {
                                 return fetch(params);
                             } else {
                                 return Promise.reject("Attempting to access a url in violation with security policy");
@@ -333,27 +367,21 @@ module.exports.${handlerName}(externalEvent, externalContext, externalCallback);
                     label = l;
                 }
 
-                if (conf.securityBound) { // Statically defined security bound
-                    securityBound = conf.securityBound;
-                } else if (conf.runFromKinesis) {
-                    if (!securityBound) {
+                if (conf.callbackSecurityBound) { // Statically defined security bound
+                    callbackSecurityBound = conf.callbackSecurityBound;
+                } else if (conf.runFromKinesis) { // Not entirely sure what callback security bounds mean in the context
+                                                  // of kinesis and step functions.
+                    if (!callbackSecurityBound) {
                         console.log("Kinesis event with no security bound.");
                         return callback("Kinesis event with no security bound.");
                     }
                 } else if (conf.runFromSF) {
-                    if (!securityBound) {
+                    if (!callbackSecurityBound) {
                         console.log("StepFunctions event with no security bound.");
                         return callback("StepFunctions event with no security bound.");
                     }
                 } else { // Running an http request - the security bound is the same as the invoking user's label.
-                    securityBound = label;
-                }
-
-                let declf;
-                if (conf.declassifier) {
-                    // The relative path part of the next require is a very dangerous workaround to model load issues.
-                    // TODO: KALEV - Should change to something more robust.
-                    declf = require("../../decl");
+                    callbackSecurityBound = label;
                 }
 
                 const vm = new NodeVM(executionEnv);
