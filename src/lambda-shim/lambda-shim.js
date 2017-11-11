@@ -109,8 +109,8 @@ module.exports.${handlerName}(externalEvent, externalContext, externalCallback);
                 const sfLabel = event.ifcLabel;
                 delete strippedEvent.ifcLabel;
 
-                callbackSecurityBound = event.callbcakSecurityBound;
-                delete strippedEvent.callbcakSecurityBound;
+                callbackSecurityBound = event.callbackSecurityBound;
+                delete strippedEvent.callbackSecurityBound;
 
                 p = Promise.resolve(sfLabel);
             } else {
