@@ -67,27 +67,42 @@ CREATE TABLE ${this.table} (
     }
 
     put (k, v) {
-        const putQuerySql = `
-INSERT INTO ${this.table} (rowkey,rowvalues) 
-    VALUES (?, ?)
-    ON DUPLICATE KEY UPDATE 
-        rowvalues = VALUES(rowvalues);
-        `;
+//         const putQuerySql = `
+// INSERT INTO ${this.table} (rowkey,rowvalues)
+//     VALUES (?, ?)
+//     ON DUPLICATE KEY UPDATE
+//         rowvalues = VALUES(rowvalues);
+//         `;
         console.log("** DEBUG: Call to put.");
         // console.log("** DEBUG:   Key:   " + k + ".");
         // console.log("** DEBUG:   Value: " + v + ".");
 
-        return this.con.queryAsync(putQuerySql,[k,v])
-            .then((result) => {
-                console.log("** DEBUG: Query successful - inserting values.");
-                console.log("** DEBUG: Query result:");
-                console.log(result);
-                console.log("** DEBUG: Query result />");
-            })
-            .catch( (err) => {
-                console.log("** DEBUG: Query failed - inserting values.");
+        // return this.con.queryAsync(putQuerySql,[k,v])
+        //     .then((result) => {
+        //         console.log("** DEBUG: Query successful - inserting values.");
+        //         console.log("** DEBUG: Query result:");
+        //         console.log(result);
+        //         console.log("** DEBUG: Query result />");
+        //     })
+        //     .catch( (err) => {
+        //         console.log("** DEBUG: Query failed - inserting values.");
+        //         return bbPromise.reject(err);
+        //     })
+
+        console.log("** DEBUG: Starting transaction.");
+        return this.con.beginTransactionAsync()
+            .then(() => console.log("** DEBUG: Successfully started transaction."))
+            .then(() => this.con.queryAsync(`DELETE FROM ${this.table} WHERE rowkey = ?`, [k]))
+            .then(() => console.log("** DEBUG: Delete successful."))
+            .then(() => this.con.queryAsync(`INSERT INTO ${this.table} (rowkey,rowvalues) VALUES (?, ?)`, [k,v]))
+            .then(() => console.log("** DEBUG: Insert successful."))
+            .then(() => this.con.commitAsync())
+            .then(() => console.log("** DEBUG: Transaction committed successfully."))
+            .catch((err) => {
+                console.log("** DEBUG: Failed putting value.");
                 return bbPromise.reject(err);
-            })
+            });
+
     }
 
     get (k) {
