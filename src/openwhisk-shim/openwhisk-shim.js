@@ -90,6 +90,7 @@ module.exports.makeShim = function (allowExtReq) {
             sandbox: {
                 process: {
                     env: processEnv,
+                    hrtime: process.hrtime,
                 },
                 externalParams: params,
                 bumpLabelTo:
