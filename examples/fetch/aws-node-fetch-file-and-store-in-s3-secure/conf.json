@@ -6,6 +6,16 @@
   "processEnv" : [
     "TABLE_NAME"
   ],
+  "declassifiers" : {
+    "nodeFetch" : {
+      "maxLabel" : "top",
+      "minLabel" : "bottom",
+      "params" : "params => params"
+    }
+  },
+  "securityBounds" : {
+    "nodeFetch" : "bottom"
+  },
   "labels" : {
     "bottom" : ["catowner", "dogowner"],
     "catowner" : ["top"],
