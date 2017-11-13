@@ -1,5 +1,5 @@
 {
-  "host": "",
-  "user": "",
-  "pass": ""
+  "host": "serverless-experiments.c2goyownwhfz.us-west-2.rds.amazonaws.com",
+  "user": "vmwuser",
+  "pass": "sSv6edrUozZ9RipM87GKpF42"
 }

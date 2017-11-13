@@ -1,3 +1,42 @@
 #!/usr/bin/env bash
 
-curl -X POST --data '{"imageKeyName": "cat1", "tableName" : "StoredFilesTable"}' $1
+time curl -X POST --data '{"imageKeyName": "cat1", "tableName" : "StoredFilesTable", "user" : "dogowner", "pass" : "dogownerpassword"}' $1
+time curl -X POST --data '{"imageKeyName": "cat2", "tableName" : "StoredFilesTable", "user" : "catowner", "pass" : "catownerpassword"}' $1
+time curl -X POST --data '{"imageKeyName": "cat3", "tableName" : "StoredFilesTable", "user" : "dogowner", "pass" : "dogownerpassword"}' $1
+time curl -X POST --data '{"imageKeyName": "cat4", "tableName" : "StoredFilesTable", "user" : "catowner", "pass" : "catownerpassword"}' $1
+time curl -X POST --data '{"imageKeyName": "cat5", "tableName" : "StoredFilesTable", "user" : "dogowner", "pass" : "dogownerpassword"}' $1
+time curl -X POST --data '{"imageKeyName": "cat1", "tableName" : "StoredFilesTable", "user" : "dogowner", "pass" : "dogownerpassword"}' $1
+time curl -X POST --data '{"imageKeyName": "cat2", "tableName" : "StoredFilesTable", "user" : "catowner", "pass" : "catownerpassword"}' $1
+time curl -X POST --data '{"imageKeyName": "cat3", "tableName" : "StoredFilesTable", "user" : "dogowner", "pass" : "dogownerpassword"}' $1
+time curl -X POST --data '{"imageKeyName": "cat4", "tableName" : "StoredFilesTable", "user" : "catowner", "pass" : "catownerpassword"}' $1
+time curl -X POST --data '{"imageKeyName": "cat5", "tableName" : "StoredFilesTable", "user" : "dogowner", "pass" : "dogownerpassword"}' $1
+time curl -X POST --data '{"imageKeyName": "cat1", "tableName" : "StoredFilesTable", "user" : "dogowner", "pass" : "dogownerpassword"}' $1
+time curl -X POST --data '{"imageKeyName": "cat2", "tableName" : "StoredFilesTable", "user" : "catowner", "pass" : "catownerpassword"}' $1
+time curl -X POST --data '{"imageKeyName": "cat3", "tableName" : "StoredFilesTable", "user" : "dogowner", "pass" : "dogownerpassword"}' $1
+time curl -X POST --data '{"imageKeyName": "cat4", "tableName" : "StoredFilesTable", "user" : "catowner", "pass" : "catownerpassword"}' $1
+time curl -X POST --data '{"imageKeyName": "cat5", "tableName" : "StoredFilesTable", "user" : "dogowner", "pass" : "dogownerpassword"}' $1
+time curl -X POST --data '{"imageKeyName": "cat1", "tableName" : "StoredFilesTable", "user" : "dogowner", "pass" : "dogownerpassword"}' $1
+time curl -X POST --data '{"imageKeyName": "cat2", "tableName" : "StoredFilesTable", "user" : "catowner", "pass" : "catownerpassword"}' $1
+time curl -X POST --data '{"imageKeyName": "cat3", "tableName" : "StoredFilesTable", "user" : "dogowner", "pass" : "dogownerpassword"}' $1
+time curl -X POST --data '{"imageKeyName": "cat4", "tableName" : "StoredFilesTable", "user" : "catowner", "pass" : "catownerpassword"}' $1
+time curl -X POST --data '{"imageKeyName": "cat5", "tableName" : "StoredFilesTable", "user" : "dogowner", "pass" : "dogownerpassword"}' $1
+time curl -X POST --data '{"imageKeyName": "cat1", "tableName" : "StoredFilesTable", "user" : "dogowner", "pass" : "dogownerpassword"}' $1
+time curl -X POST --data '{"imageKeyName": "cat2", "tableName" : "StoredFilesTable", "user" : "catowner", "pass" : "catownerpassword"}' $1
+time curl -X POST --data '{"imageKeyName": "cat3", "tableName" : "StoredFilesTable", "user" : "dogowner", "pass" : "dogownerpassword"}' $1
+time curl -X POST --data '{"imageKeyName": "cat4", "tableName" : "StoredFilesTable", "user" : "catowner", "pass" : "catownerpassword"}' $1
+time curl -X POST --data '{"imageKeyName": "cat5", "tableName" : "StoredFilesTable", "user" : "dogowner", "pass" : "dogownerpassword"}' $1
+time curl -X POST --data '{"imageKeyName": "cat1", "tableName" : "StoredFilesTable", "user" : "dogowner", "pass" : "dogownerpassword"}' $1
+time curl -X POST --data '{"imageKeyName": "cat2", "tableName" : "StoredFilesTable", "user" : "catowner", "pass" : "catownerpassword"}' $1
+time curl -X POST --data '{"imageKeyName": "cat3", "tableName" : "StoredFilesTable", "user" : "dogowner", "pass" : "dogownerpassword"}' $1
+time curl -X POST --data '{"imageKeyName": "cat4", "tableName" : "StoredFilesTable", "user" : "catowner", "pass" : "catownerpassword"}' $1
+time curl -X POST --data '{"imageKeyName": "cat5", "tableName" : "StoredFilesTable", "user" : "dogowner", "pass" : "dogownerpassword"}' $1
+time curl -X POST --data '{"imageKeyName": "cat1", "tableName" : "StoredFilesTable", "user" : "dogowner", "pass" : "dogownerpassword"}' $1
+time curl -X POST --data '{"imageKeyName": "cat2", "tableName" : "StoredFilesTable", "user" : "catowner", "pass" : "catownerpassword"}' $1
+time curl -X POST --data '{"imageKeyName": "cat3", "tableName" : "StoredFilesTable", "user" : "dogowner", "pass" : "dogownerpassword"}' $1
+time curl -X POST --data '{"imageKeyName": "cat4", "tableName" : "StoredFilesTable", "user" : "catowner", "pass" : "catownerpassword"}' $1
+time curl -X POST --data '{"imageKeyName": "cat5", "tableName" : "StoredFilesTable", "user" : "dogowner", "pass" : "dogownerpassword"}' $1
+time curl -X POST --data '{"imageKeyName": "cat1", "tableName" : "StoredFilesTable", "user" : "dogowner", "pass" : "dogownerpassword"}' $1
+time curl -X POST --data '{"imageKeyName": "cat2", "tableName" : "StoredFilesTable", "user" : "catowner", "pass" : "catownerpassword"}' $1
+time curl -X POST --data '{"imageKeyName": "cat3", "tableName" : "StoredFilesTable", "user" : "dogowner", "pass" : "dogownerpassword"}' $1
+time curl -X POST --data '{"imageKeyName": "cat4", "tableName" : "StoredFilesTable", "user" : "catowner", "pass" : "catownerpassword"}' $1
+time curl -X POST --data '{"imageKeyName": "cat5", "tableName" : "StoredFilesTable", "user" : "dogowner", "pass" : "dogownerpassword"}' $1
