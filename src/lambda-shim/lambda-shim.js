@@ -231,7 +231,25 @@ module.exports.${handlerName}(externalEvent, externalContext, externalCallback);
                                     },
                                     del: (k) => skv.del(k, label),
                                     keys: () => skv.keys(label),
-                                    entries: () => skv.entries(label),
+                                    entries: () => skv.entries(label)
+                                        .then(entries => {
+                                            let filteredEntries = [];
+
+                                            for (let entry of entries) {
+                                                let entryMax = true;
+                                                for (let compared of entries) {
+                                                    if (entry.key === compared.key &&
+                                                        entry.lab !== compared.lab &&
+                                                        labelOrdering.lte(entry.lab, compared.lab)) {
+                                                        entryMax = false;
+                                                    }
+                                                }
+                                                if (entryMax) {
+                                                    filteredEntries.push(entry);
+                                                }
+                                            }
+                                            return filteredEntries;
+                                        }),
                                 }
                             }
                         },
