@@ -1,0 +1,15 @@
+{
+  "unsecLambda" : "handler.js",
+  "secLambdaFullPath" : "/var/task/secure-handler.js",
+  "handlers" : ["hello"],
+  "usingPO" : true,
+  "processEnv" : [],
+  "labels" : {
+    "bottom" : ["catowner", "dogowner"],
+    "catowner" : ["top"],
+    "dogowner" : ["top"]
+  },
+  "host": "",
+  "user": "",
+  "pass": ""
+}

@@ -1,0 +1,12 @@
+service: empty-lambda-safe
+
+provider:
+  name: aws
+  runtime: nodejs6.10
+
+  stage: dev
+  region: us-west-2
+
+functions:
+  safe-empty:
+    handler: secure-handler.hello

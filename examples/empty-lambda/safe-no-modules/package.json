@@ -1,0 +1,14 @@
+{
+  "name": "unsafe-empty-lambda",
+  "version": "1.0.0",
+  "description": "",
+  "main": "secure-handler.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "lambda-shim": "file:../../../src/lambda-shim"
+  }
+}

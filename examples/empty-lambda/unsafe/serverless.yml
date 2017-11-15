@@ -1,0 +1,12 @@
+service: empty-lambda # NOTE: update this with your service name
+
+provider:
+  name: aws
+  runtime: nodejs6.10
+
+  stage: dev
+  region: us-west-2
+
+functions:
+  empty:
+    handler: handler.hello
