@@ -1,0 +1,9 @@
+[submodule "examples/hello-retail/hello-retail-baseline"]
+	path = examples/hello-retail/hello-retail-baseline
+	url = https://github.com/kalevalp/hello-retail-baseline
+[submodule "examples/hello-retail/hello-retail-secure"]
+	path = examples/hello-retail/hello-retail-secure
+	url = https://github.com/kalevalp/hello-retail-secure
+[submodule "examples/hello-retail/hello-retail-secure-prop"]
+	path = examples/hello-retail/hello-retail-secure-prop
+	url = https://github.com/kalevalp/hello-retail-secure-prop
