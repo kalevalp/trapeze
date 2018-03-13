@@ -5,6 +5,7 @@
   "main": "lambda-shim.js",
   "dependencies": {
     "auth": "file:../auth",
+    "fork": "file:../../../node-fork",
     "got": "^6.7.1",
     "node-fetch": "^1.7.3",
     "nodemailer": "^4.3.1",

@@ -18,14 +18,14 @@
 //   console.log(file);
 // })
 
-const aws = {
-    conf: {
-        a: 10,
-        b: 20
-    },
-}
+// const aws = {
+//     conf: {
+//         a: 10,
+//         b: 20
+//     },
+// }
 
-const {NodeVM} = require('vm2');
+const {NodeVM, VMScript} = require('vm2');
 
 // const vm = new NodeVM({
 //     console: 'inherit',
@@ -138,40 +138,40 @@ const {NodeVM} = require('vm2');
 //     `)
 // a.foo()
 
-const vmNoConsole = new NodeVM({
-    console: 'inherit',
-    sandbox: {},
-    // wrapper: 'none',
-    require: {
-        external: false,
-        builtin: [],
-        // root: "./",
-        context: 'sandbox',
-        mock: {
-            // 'a' : {
-            //     A: class {
-            //         constructor() {this.b = 10}
-            //     }
-            // },
-            // mysql: {
-            //     connect() { console.log("Nope!"); }
-            // },
-            'aws' : {
-                conf: aws.conf,
-                // conf: new Proxy(aws.conf, {
-                //     set(target, property, value, receiver) {
-                //         console.log(target);
-                //         console.log(property);
-                //         console.log(value);
-                //         console.log(receiver);
-                //     }
-                // }),
+// const vmNoConsole = new NodeVM({
+//     console: 'inherit',
+//     sandbox: {},
+//     // wrapper: 'none',
+//     require: {
+//         external: false,
+//         builtin: [],
+//         // root: "./",
+//         context: 'sandbox',
+//         mock: {
+//             // 'a' : {
+//             //     A: class {
+//             //         constructor() {this.b = 10}
+//             //     }
+//             // },
+//             // mysql: {
+//             //     connect() { console.log("Nope!"); }
+//             // },
+//             'aws' : {
+//                 conf: aws.conf,
+//                 // conf: new Proxy(aws.conf, {
+//                 //     set(target, property, value, receiver) {
+//                 //         console.log(target);
+//                 //         console.log(property);
+//                 //         console.log(value);
+//                 //         console.log(receiver);
+//                 //     }
+//                 // }),
 
-                addc: () => {aws.conf.c = 100},
-            }
-        }
-    }
-});
+//                 addc: () => {aws.conf.c = 100},
+//             }
+//         }
+//     }
+// });
 
 // vmNoConsole.run(`
 //     const m = require('mysql');
@@ -186,15 +186,58 @@ const vmNoConsole = new NodeVM({
 //     p.then(ten => console.log(ten));
 // `);
 
-vmNoConsole.run(`
-    'use strict';
+// vmNoConsole.run(`
+//     'use strict';
     
-    const aws = require('aws');
-    console.log(aws);
-    // aws.c = 111;
-    // console.log(aws.c);
-    aws.conf.c = 100;
-    console.log(aws);
-    // aws.addc();
-    // console.log(aws);
-`);
+//     const aws = require('aws');
+//     console.log(aws);
+//     // aws.c = 111;
+//     // console.log(aws.c);
+//     aws.conf.c = 100;
+//     console.log(aws);
+//     // aws.addc();
+//     // console.log(aws);
+// `);
+
+
+// const scr = new VMScript(`
+//         `);
+
+
+const vm = new NodeVM({
+    console: 'inherit',
+    sandbox: {},
+    // wrapper: 'none',
+    require: {
+        external: false,
+        builtin: [],
+        // root: "./",
+        context: 'sandbox',
+        mock: {}
+    }
+});
+
+console.x = 10;
+
+const {foo} = vm.run(`
+		     const x = 100;
+		     console.log('First invocation of vm');
+		     console.y = 20;
+		     module.exports.foo = function () {
+			 console.log('Call from within foo');
+			 console.log('Value of x is:');
+			 console.log(console.y);	  
+		     }
+		     `);
+
+foo();
+
+console.log(console.y)
+ 
+// vm.run(`
+//        const y = 200;
+//        console.log('Second invocation of vm');
+//        console.log();
+//        console.log('Value of y is:');
+//        console.log(y);
+//        `);
