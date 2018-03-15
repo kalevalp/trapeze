@@ -5,7 +5,7 @@ provider:
   runtime: nodejs6.10
 
   stage: dev
-  region: us-west-2
+  region: eu-central-1
 
 functions:
   empty:
