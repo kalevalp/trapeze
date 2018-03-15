@@ -279,9 +279,15 @@ module.exports.makeShim = function (exp, allowExtReq) {
     for (let handlerName of conf.handlers) {
 
         exp[handlerName] = function (event, context, callback) {
+	    console.log(`$$$ Calling handler ${handlerName} in lambda-shim.js`);
+	    console.log('$$$ Event is:');
+	    console.log(event);
+	    console.log('$$$ $$$');
+	    
             const isChild = fork();
 
             if (isChild) {
+		console.log('$$$ Running in child in lambda-shim.js');
                 // Parse event + context
 
                 const strippedEvent = event;
@@ -423,8 +429,8 @@ module.exports.makeShim = function (exp, allowExtReq) {
                         callbackSecurityBound = label;
                     }
 
+		    console.log('$$$ Calling sandboxed handler as child in lambda-shim.js');
                     vm_module[handlerName](strippedEvent, context, secureCallback);
-
                     // vm.run(originalLambdaScript, conf.secLambdaFullPath);
                 })
                     .catch(err => {console.log(err)});
@@ -432,14 +438,10 @@ module.exports.makeShim = function (exp, allowExtReq) {
 
 
             } else {
+		console.log('$$$ Running in parent in lambda-shim.js');
                 wait();
+		console.log('$$$ Finished wait as parent in lambda-shim.js');
             }
-
-        };
-
-
-
-        exp[handlerName] = function (event, context, callback) {
 
         };
     }

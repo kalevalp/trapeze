@@ -1,0 +1,33 @@
+Unsafe E2E:
+real	0m5.638s
+real	0m4.214s
+real	0m4.182s
+real	0m4.215s
+real	0m4.203s
+real	0m4.212s
+real	0m4.216s
+real	0m4.210s
+real	0m4.334s
+real	0m4.343s
+
+Unsafe Lambda time:
+2.29 ms 
+4.79 ms 
+0.34 ms 
+15.09 ms 
+0.62 ms 
+2.17 ms 
+9.88 ms 
+0.28 ms 
+5.12 ms 
+0.61 ms 
+
+Safe E2E:
+
+real	0m5.542s
+real	0m4.332s
+real	0m4.307s
+
+
+
+Safe Lambda time:
