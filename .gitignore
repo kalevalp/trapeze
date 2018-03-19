@@ -18,6 +18,7 @@
 #######
 .idea
 *.sublime-workspace
+*~
 
 # Node.JS stuff
 ###############
