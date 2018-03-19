@@ -12,6 +12,8 @@ const nodemailer = require("nodemailer");
 const {fork, wait} = require('fork');
 const got = require('got');
 const fetch = require('node-fetch');
+const {log} = require('logger');
+
 
 const rmFilesInDir = function (dirPath) {
     try {
