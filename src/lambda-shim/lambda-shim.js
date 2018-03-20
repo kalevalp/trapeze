@@ -54,11 +54,15 @@ module.exports.makeShim = function (exp, allowExtReq) {
 
     const processEnv = {};
 
+    log('### Started shim construction', 3);
+    
     for (let envVar of conf.processEnv) {
         processEnv[envVar] = process.env[envVar];
+	log(`### Added environment variable ${envVar}, with value ${process.env[envVar]}`, 3);
     }
-
-
+    
+    log('### Creating executionEnv', 3);
+	
     let executionEnv = {
         console: 'inherit',
         sandbox: {
@@ -267,107 +271,171 @@ module.exports.makeShim = function (exp, allowExtReq) {
         },
     };
 
+    log('### Finished creating executionEnv', 3);
 
-
+    log('### Creating NodeVM', 3);
 
     const vm = new NodeVM(executionEnv);
-    //
-    //
-    // let vm = new NodeVM();
 
+    log('### Executing unsecured lambda in vm', 3);
+    
     const vm_module = vm.run(unsecuredLambda, conf.secLambdaFullPath);
 
+    log('### Finished execution of original lambda code within vm scope', 3);
+    log('### Created a vm_module:', 3);
+    log(vm_module, 3);
 
     for (let handlerName of conf.handlers) {
 
         exp[handlerName] = function (event, context, callback) {
-	    console.log(`$$$ Calling handler ${handlerName} in lambda-shim.js`);
-	    console.log('$$$ Event is:');
-	    console.log(event);
-	    console.log('$$$ $$$');
-	    
-            const isChild = fork();
+	    log(`$$$ Calling handler ${handlerName} in lambda-shim.js`, 2);
+	    log('$$$ Event is:', 2);
+	    log(event, 2);
+	    log('$$$ $$$', 2);
 
+	    log ('$$$ Forking the process', 2);
+            const isChild = fork();
+	    log ('$$$ Forked the process', 2);
+	    
             if (isChild) {
-		console.log('$$$ Running in child in lambda-shim.js');
+		log('$#$ Running in child in lambda-shim.js', 2); 
                 // Parse event + context
 
                 const strippedEvent = event;
                 if (conf.runFromKinesis) { // Handle events originating from AWS Kinesis.
-
+		    log('$#$ Event originated in AWS Kinesis', 3);
+		    
                     let ifcLabel;
                     let storedSecurityBound;
+		    log('$#$ Getting a process label from Kinesis event record, and stripping event records of label information.', 3);
                     strippedEvent.Records = event.Records.map((record) => {
+			log('$#$ Analyzing record: ', 4);
+			log(record, 4);
+		
                         const payload = new Buffer(record.kinesis.data, 'base64').toString();
+			log(`$#$ Record payload is: \n$#$ ${payload}`, 4);
+
+			log('$#$ Attempting to parse the payload as a JSON object ', 4);
                         const parsed = JSON.parse(payload);
-                        if (!ifcLabel) {
+			log('$#$ Parsed payload: ', 4);
+			log(parsed, 4);
+
+			if (!ifcLabel) {
                             ifcLabel = parsed.ifcLabel;
+			    log(`$#$ First label encountered. New label is ${ifcLabel} `, 4);
                         } else if (ifcLabel !== parsed.ifcLabel) {
-                            console.log("Batch of kinesis event with different labels unsupported.");
+                            log("$#$ Encoutered a batch of kinesis event with different labels. \nTerminating.", 1);
                             return callback("Batch of kinesis event with different labels unsupported.");
                         }
-                        delete parsed.ifcLabel;
+		        delete parsed.ifcLabel;
+			log('$#$ Removed ifcLabel from the parsed payload', 4);
 
                         if (!storedSecurityBound) {
                             storedSecurityBound = parsed.callbackSecurityBound;
+			    log(`$#$ First security bound encountered. New security bound is ${storedSecurityBound} `, 4);
                         } else if (storedSecurityBound !== parsed.callbackSecurityBound) {
-                            console.log("Batch of kinesis event with different security bounds unsupported.");
+                            log("$#$ Encountered a batch of kinesis event with different security bounds. \n Terminating.", 1);
                             return callback("Batch of kinesis event with different security bounds unsupported.");
                         }
                         delete parsed.callbackSecurityBound;
+			log('$#$ Removed callbackSecurityBound from the parsed payload', 4);
+
+			log('$#$ Processed record is: ',4);
+			log(parsed, 4);
 
                         record.kinesis.data = new Buffer(JSON.stringify(parsed)).toString('base64');
+			log(`$#$ Rewriting the kinesis.data field of the record with the processed payload.\n$#$ New payload is ${record.kinesis.data}`, 4);
+			
                         return record;
                     });
 
                     if (!ifcLabel) {
-                        console.log("Could not resolve an ifcLabel in kinesis event.");
+                        log("$#$ Could not resolve an ifcLabel in kinesis event.", 1);
                         return callback("Could not resolve an ifcLabel in kinesis event.")
                     }
                     if (!storedSecurityBound) {
-                        console.log("Could not resolve a callbackSecurityBound in kinesis event.");
+                        log("$#$ Could not resolve a callbackSecurityBound in kinesis event.", 1);
                         return callback("Could not resolve a callbackSecurityBound in kinesis event.")
                     }
 
-                    console.log(`Running kinesis event with label: ${ifcLabel}`);
+                    log(`$#$ Running kinesis event with label: ${ifcLabel}`, 1);
 
                     callbackSecurityBound = storedSecurityBound;
-                    console.log(`Running kinesis event with callbackSecurityBound: ${callbackSecurityBound}`);
-
+                    log(`$#$ Running kinesis event with callbackSecurityBound: ${callbackSecurityBound}`, 1);
+		    
                     p = Promise.resolve(ifcLabel);
+
+		    log('$#$ Initiated the promise with the ifc value derived from the Kinesis event.', 3);
                 } else if (conf.runFromSF /* && event.ifcLabel*/) { // Handle events originating from AWS Step Functions.
-                    const sfLabel = event.ifcLabel;
+		    log('$#$ Event originated in AWS Step Functions', 3);
+		    
+		    const sfLabel = event.ifcLabel;
+
+		    log(`$#$ Derived label is ${sfLabel}`, 3);
+
                     delete strippedEvent.ifcLabel;
 
-                    callbackSecurityBound = event.callbackSecurityBound;
-                    delete strippedEvent.callbackSecurityBound;
+		    log('$#$ Removed label from event', 3);
+		    
 
+		    callbackSecurityBound = event.callbackSecurityBound;
+
+		    log(`$#$ Derived security bound is ${callbackSecurityBound}`, 3);
+
+		    delete strippedEvent.callbackSecurityBound;
+
+		    log('$#$ Removed security bound from event', 3);
+		    log('$#$ Stripped event is: ', 3);
+		    log(strippedEvent, 3);
+		    
                     p = Promise.resolve(sfLabel);
+
+		    log('$#$ Initiated the promise with the ifc value derived from the Step Function event.', 3);
                 } else {
+
+		    log('$#$ Event originated in an HTTP request', 3);
+		    
                     let reqUser;
                     let reqPass;
 
                     if (conf.runFromGET) { // Run http GET request on behalf of invoking user.
+			log('$#$ Event is a GET request', 3);
                         reqUser = event.queryStringParameters.user;
                         reqPass = event.queryStringParameters.pass;
+			log(`$#$ Request username is ${reqUser}, and password is ${reqPass}`, 3);
                         if (conf.userPassForIFCOnly) {
+			    log('$#$ Function configured to purge username and password before passing them to the sandbox.', 3);
                             delete event.queryStringParameters.user;
                             delete event.queryStringParameters.pass;
                         }
                     } else { // Run http POST request on behalf of invoking user.
+			log('$#$ Event is a POST request', 3);
+			
                         let reqBody;
                         if ((typeof event.body) === "string") {
+			    log('$#$ Request body is a string', 3);
                             reqBody = JSON.parse(event.body);
                         } else {
+			    log('$#$ Request body is a JSON object', 3);
                             reqBody = event.body;
                         }
+
+			log('$#$ Request body is:', 3);
+			log(reqBody, 3);
+			
                         reqUser = reqBody.user;
                         reqPass = reqBody.pass;
 
+			log(`$#$ Request username is ${reqUser}, and password is ${reqPass}`, 3);
                     }
+		    
                     p = auth(reqUser, reqPass);
+		    
+		    log('$#$ Initiated the promise with the ifc value derived from a call to the authentication module with the derived credentials.', 3);
                 }
 
+		log('$#$ Creating the secure callback function.', 3);
+		
                 let secureCallback = function (err, value) {
                     if (conf.runFromSF) { // Add label to the callback to the stepfunction, which in turn becomes the input to the next lambda.
                         if (value) {
@@ -401,8 +469,10 @@ module.exports.makeShim = function (exp, allowExtReq) {
                     }
                 };
 
+		log('$#$ Created the secure callback function.', 3);
+
                 if (notEmptyDir('/tmp/')) {
-                    console.log("WARNING : /tmp/ dir not empty on fresh invocation of lambda. Might lead to data leak.")
+                    log("WARNING : /tmp/ dir not empty on fresh invocation of lambda. Might lead to data leak.", 0)
                 }
 
 
@@ -419,19 +489,19 @@ module.exports.makeShim = function (exp, allowExtReq) {
                     } else if (conf.runFromKinesis) { // Not entirely sure what callback security bounds mean in the context
                         // of kinesis and step functions.
                         if (!callbackSecurityBound) {
-                            console.log("Kinesis event with no security bound.");
+                            log("Kinesis event with no security bound.", 1);
                             return callback("Kinesis event with no security bound.");
                         }
                     } else if (conf.runFromSF) {
                         if (!callbackSecurityBound) {
-                            console.log("StepFunctions event with no security bound.");
+                            log("StepFunctions event with no security bound.", 1);
                             return callback("StepFunctions event with no security bound.");
                         }
                     } else { // Running an http request - the security bound is the same as the invoking user's label.
                         callbackSecurityBound = label;
                     }
 
-		    console.log('$$$ Calling sandboxed handler as child in lambda-shim.js');
+		    log('$#$ Calling sandboxed handler as child in lambda-shim.js', 2);
                     vm_module[handlerName](strippedEvent, context, secureCallback);
                     // vm.run(originalLambdaScript, conf.secLambdaFullPath);
                 })
@@ -440,9 +510,9 @@ module.exports.makeShim = function (exp, allowExtReq) {
 
 
             } else {
-		console.log('$$$ Running in parent in lambda-shim.js');
+		log('$$# Running in parent in lambda-shim.js', 2);
                 wait();
-		console.log('$$$ Finished wait as parent in lambda-shim.js');
+		log('$$# Finished wait as parent in lambda-shim.js', 2);
             }
 
         };
