@@ -14,6 +14,9 @@ const got = require('got');
 const fetch = require('node-fetch');
 const {log} = require('logger');
 
+if (process.env.TRPZ_DEBUG_SHIM) {
+    var { execSync } = require('child_process');
+}
 
 const rmFilesInDir = function (dirPath) {
     try {
@@ -46,6 +49,12 @@ const labelOrdering = conf.usingPO ? new PartialOrder(conf.labels) : new TotalOr
 
 module.exports.makeShim = function (exp, allowExtReq) {
 
+    if (process.env.TRPZ_DEBUG_SHIM) {
+	log('### State of processes in system when starting construction of shim', 5);
+	let stdout = execSync('ps -ef');
+	log(stdout.toString('utf8'), 5)
+    }
+    
     // NodeVM configuration
     let label;
     let callbackSecurityBound;
@@ -288,6 +297,13 @@ module.exports.makeShim = function (exp, allowExtReq) {
     for (let handlerName of conf.handlers) {
 
         exp[handlerName] = function (event, context, callback) {
+
+	    if (process.env.TRPZ_DEBUG_SHIM) {
+		log('### State of processes in system when starting handler execution', 5);
+		let stdout = execSync('ps -ef');
+		log(stdout.toString('utf8'), 5)
+	    }
+	    
             log(`$$$ Calling handler ${handlerName} in lambda-shim.js`, 2);
             log('$$$ Event is:', 2);
             log(event, 2);
@@ -298,6 +314,13 @@ module.exports.makeShim = function (exp, allowExtReq) {
             log ('$$$ Forked the process', 2);
 
             if (isChild) {
+
+		if (process.env.TRPZ_DEBUG_SHIM) {
+		    log('$#$ State of processes in system when starting child execution', 5);
+		    let stdout = execSync('ps -ef');
+		    log(stdout.toString('utf8'), 5)
+		}
+		
                 log('$#$ Running in child in lambda-shim.js', 2);
                 // Parse event + context
 
@@ -532,6 +555,14 @@ module.exports.makeShim = function (exp, allowExtReq) {
 
                     log('$#$ Calling sandboxed handler as child in lambda-shim.js', 2);
                     vm_module[handlerName](strippedEvent, context, secureCallback);
+
+		if (process.env.TRPZ_DEBUG_SHIM) {
+  		    log('$$# State of processes in system when following the call to the sandboxed handler', 5);
+		    let stdout = execSync('ps -ef');
+		    log(stdout.toString('utf8'), 5)
+		}
+
+
                     // vm.run(originalLambdaScript, conf.secLambdaFullPath);
                 })
                     .catch(err => {
@@ -542,8 +573,22 @@ module.exports.makeShim = function (exp, allowExtReq) {
 
 
             } else {
+		if (process.env.TRPZ_DEBUG_SHIM) {
+		    log('$$# State of processes in system when "starting" parent execution', 5);
+		    let stdout = execSync('ps -ef');
+		    log(stdout.toString('utf8'), 5)
+		}
+
+
                 log('$$# Running in parent in lambda-shim.js', 2);
                 wait();
+
+		if (process.env.TRPZ_DEBUG_SHIM) {
+		    log('$$# State of processes in system when wait terminates in parent execution', 5);
+		    let stdout = execSync('ps -ef');
+		    log(stdout.toString('utf8'), 5)
+		}
+
                 log('$$# Finished wait as parent in lambda-shim.js', 2);
             }
 
