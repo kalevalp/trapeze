@@ -10,3 +10,6 @@ provider:
 functions:
   safe-empty:
     handler: secure-handler.hello
+    environment:
+      TRPZ_DEBUG_SHIM: 1
+      TRPZ_DEBUG: 10
