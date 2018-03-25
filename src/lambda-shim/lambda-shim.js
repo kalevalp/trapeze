@@ -9,7 +9,7 @@ const {SecureKV_PO} = require("secure-kv-po");
 const {SecureKV_TO} = require("secure-kv-to");
 const aws = require("aws-sdk");
 const nodemailer = require("nodemailer");
-const {fork, wait} = require('fork');
+const {fork, wait, pipe, read, write, close} = require('fork');
 const got = require('got');
 const fetch = require('node-fetch');
 const {log} = require('logger');
@@ -310,11 +310,13 @@ module.exports.makeShim = function (exp, allowExtReq) {
             log('$$$ $$$', 2);
 
             log ('$$$ Forking the process', 2);
+	    const pipe = pipe();
             const isChild = fork();
             log ('$$$ Forked the process', 2);
 
             if (isChild) {
-
+		close(pipe.read_end);
+		
 		if (process.env.TRPZ_DEBUG_SHIM) {
 		    log('$#$ State of processes in system when starting child execution', 5);
 		    let stdout = execSync('ps -ef');
@@ -466,6 +468,8 @@ module.exports.makeShim = function (exp, allowExtReq) {
                     log('$#$ Value is: ', 3);
                     log(value, 3);
 
+		    var message;
+		    
                     if (conf.runFromSF) { // Add label to the callback to the stepfunction, which in turn becomes the input to the next lambda.
                         log('$#$ Function executed from StepFunctions. Adding label and security bound to callback value.', 3);
                         if (value) {
@@ -477,13 +481,21 @@ module.exports.makeShim = function (exp, allowExtReq) {
                             labelOrdering.lte(label, conf.declassifiers.callback.maxLabel) &&
                             labelOrdering.lte(conf.declassifiers.callback.minLabel, callbackSecurityBound)) {
 
-                            log('$#$ Callback value and error message are going through a declassifier. Executing callback.', 3);
+                            log('$#$ Callback value and error message are going through a declassifier. Building message for parent process.', 3);
 
-                            return callback(eval(conf.declassifiers.callback.errCode)(err), eval(conf.declassifiers.callback.valueCode)(value));
+			    message = {
+				'error': eval(conf.declassifiers.callback.errCode)(err),
+				'value': eval(conf.declassifiers.callback.valueCode)(value),
+			    }			    			    
+                            // return callback(eval(conf.declassifiers.callback.errCode)(err), eval(conf.declassifiers.callback.valueCode)(value));
                         } else {
-                            log('$#$ Executing callback.', 3);
+                            log('$#$ Building message for parent process.', 3);
 
-                            return callback(err, value); // Not an external channel, no need to check against security label.
+			    message = {
+				'error': err,
+				'value': value,
+			    }			   
+                            // return callback(err, value); // Not an external channel, no need to check against security label.
                         }
                     } else {
                         log('$#$ Function executed from HTTP or Kinesis.', 3);
@@ -493,22 +505,38 @@ module.exports.makeShim = function (exp, allowExtReq) {
                             labelOrdering.lte(label, conf.declassifiers.callback.maxLabel) &&
                             labelOrdering.lte(conf.declassifiers.callback.minLabel, callbackSecurityBound)) {
 
-                            log('$#$ Callback value and error message are going through a declassifier. Executing callback.', 3);
+                            log('$#$ Callback value and error message are going through a declassifier. Building message for parent.', 3);
 
-                            return callback(eval(conf.declassifiers.callback.errCode)(err),eval(conf.declassifiers.callback.valueCode)(value));
+			    message = {
+				'error': eval(conf.declassifiers.callback.errCode)(err),
+				'value': eval(conf.declassifiers.callback.valueCode)(value),
+			    }			   
+
+                            // return callback(eval(conf.declassifiers.callback.errCode)(err),eval(conf.declassifiers.callback.valueCode)(value));
 
                         } else {
                             if (labelOrdering.lte(label, callbackSecurityBound)) {
-                                log('$#$ Labels match security policy. Executing callback.', 3);
+                                log('$#$ Labels match security policy. Building message for parent.', 3);
 
-                                return callback(err, value);
+				message = {
+				    'error': err,
+				    'value': value,
+				};
+				
+                                // return callback(err, value);
                             } else {
-                                log('$#$ Labels do not match security policy. Executing an empty callback.', 3);
+                                log('$#$ Labels do not match security policy. Building empty message for parent.', 3);
 
-                                return callback(null);
+				message = {};
+                                // return callback(null);
                             }
                         }
                     }
+		    
+		    write(pipe.write_end, JSON.stringify(message));
+		    close(pipe.write_end);
+
+		    process.exit();	    
                 };
 
                 log('$#$ Created the secure callback function.', 3);
@@ -549,7 +577,7 @@ module.exports.makeShim = function (exp, allowExtReq) {
                             return callback("StepFunctions event with no security bound.");
                         }
                     } else { // Running an http request - the security bound is the same as the invoking user's label.
-                        log(`$#$ Running as an HTTP request. Setting security bound to the requesting user's security label. Security bound is ${label}`, 2);
+                        log(`$#$ Running as an HTTP request. Setting security bound to the requesting user\'s security label. Security bound is ${label}`, 2);
                         callbackSecurityBound = label;
                     }
 
@@ -572,7 +600,9 @@ module.exports.makeShim = function (exp, allowExtReq) {
 
 
 
-            } else {
+            } else { // Parent
+                close(pipe.write_end);
+
 		if (process.env.TRPZ_DEBUG_SHIM) {
 		    log('$$# State of processes in system when "starting" parent execution', 5);
 		    let stdout = execSync('ps -ef');
@@ -581,7 +611,13 @@ module.exports.makeShim = function (exp, allowExtReq) {
 
 
                 log('$$# Running in parent in lambda-shim.js', 2);
+
+		const message_str = read(pipe.read_end);
                 wait();
+
+		close(pipe.read_end);
+
+		const message = JSON.parse(message_str);		
 
 		if (process.env.TRPZ_DEBUG_SHIM) {
 		    log('$$# State of processes in system when wait terminates in parent execution', 5);
@@ -590,6 +626,8 @@ module.exports.makeShim = function (exp, allowExtReq) {
 		}
 
                 log('$$# Finished wait as parent in lambda-shim.js', 2);
+
+		callback(message.error, message.value);
             }
 
         };
