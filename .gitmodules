@@ -7,3 +7,6 @@
 [submodule "examples/hello-retail/hello-retail-secure-prop"]
 	path = examples/hello-retail/hello-retail-secure-prop
 	url = https://github.com/kalevalp/hello-retail-secure-prop
+[submodule "src/node-fork"]
+	path = src/node-fork
+	url = https://github.com/kalevalp/node-fork
