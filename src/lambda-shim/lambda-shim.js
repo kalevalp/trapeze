@@ -4,12 +4,12 @@ const {NodeVM} = require("vm2");
 const fs = require("fs");
 const {PartialOrder} = require("po-utils");
 const {TotalOrder} = require("to-utils");
-const {auth} = require("auth");
+const {auth, fence} = require("auth");
 const {SecureKV_PO} = require("secure-kv-po");
 const {SecureKV_TO} = require("secure-kv-to");
 const aws = require("aws-sdk");
 const nodemailer = require("nodemailer");
-const {fork, wait, pipe, read, write, close} = require('fork');
+const fork = require('fork');
 const got = require('got');
 const fetch = require('node-fetch');
 const {log} = require('logger');
@@ -50,11 +50,11 @@ const labelOrdering = conf.usingPO ? new PartialOrder(conf.labels) : new TotalOr
 module.exports.makeShim = function (exp, allowExtReq) {
 
     if (process.env.TRPZ_DEBUG_SHIM) {
-	log('### State of processes in system when starting construction of shim', 5);
-	let stdout = execSync('ps -ef');
-	log(stdout.toString('utf8'), 5)
+        log('### State of processes in system when starting construction of shim', 5);
+        let stdout = execSync('ps -ef');
+        log(stdout.toString('utf8'), 5)
     }
-    
+
     // NodeVM configuration
     let label;
     let callbackSecurityBound;
@@ -298,340 +298,346 @@ module.exports.makeShim = function (exp, allowExtReq) {
 
         exp[handlerName] = function (event, context, callback) {
 
-	    if (process.env.TRPZ_DEBUG_SHIM) {
-		log('### State of processes in system when starting handler execution', 5);
-		let stdout = execSync('ps -ef');
-		log(stdout.toString('utf8'), 5)
-	    }
-	    
-            log(`$$$ Calling handler ${handlerName} in lambda-shim.js`, 2);
-            log('$$$ Event is:', 2);
-            log(event, 2);
-            log('$$$ $$$', 2);
+            fence()
+                .then(() => {
 
-            log ('$$$ Forking the process', 2);
-	    const pipe = pipe();
-            const isChild = fork();
-            log ('$$$ Forked the process', 2);
 
-            if (isChild) {
-		close(pipe.read_end);
-		
-		if (process.env.TRPZ_DEBUG_SHIM) {
-		    log('$#$ State of processes in system when starting child execution', 5);
-		    let stdout = execSync('ps -ef');
-		    log(stdout.toString('utf8'), 5)
-		}
-		
-                log('$#$ Running in child in lambda-shim.js', 2);
-                // Parse event + context
-
-                const strippedEvent = event;
-                if (conf.runFromKinesis) { // Handle events originating from AWS Kinesis.
-                    log('$#$ Event originated in AWS Kinesis', 3);
-
-                    let ifcLabel;
-                    let storedSecurityBound;
-                    log('$#$ Getting a process label from Kinesis event record, and stripping event records of label information.', 3);
-                    strippedEvent.Records = event.Records.map((record) => {
-                        log('$#$ Analyzing record: ', 4);
-                        log(record, 4);
-
-                        const payload = new Buffer(record.kinesis.data, 'base64').toString();
-                        log(`$#$ Record payload is: \n$#$ ${payload}`, 4);
-
-                        log('$#$ Attempting to parse the payload as a JSON object ', 4);
-                        const parsed = JSON.parse(payload);
-                        log('$#$ Parsed payload: ', 4);
-                        log(parsed, 4);
-
-                        if (!ifcLabel) {
-                            ifcLabel = parsed.ifcLabel;
-                            log(`$#$ First label encountered. New label is ${ifcLabel} `, 4);
-                        } else if (ifcLabel !== parsed.ifcLabel) {
-                            log("$#$ Encoutered a batch of kinesis event with different labels. \nTerminating.", 1);
-                            return callback("Batch of kinesis event with different labels unsupported.");
-                        }
-                        delete parsed.ifcLabel;
-                        log('$#$ Removed ifcLabel from the parsed payload', 4);
-
-                        if (!storedSecurityBound) {
-                            storedSecurityBound = parsed.callbackSecurityBound;
-                            log(`$#$ First security bound encountered. New security bound is ${storedSecurityBound} `, 4);
-                        } else if (storedSecurityBound !== parsed.callbackSecurityBound) {
-                            log("$#$ Encountered a batch of kinesis event with different security bounds. \n Terminating.", 1);
-                            return callback("Batch of kinesis event with different security bounds unsupported.");
-                        }
-                        delete parsed.callbackSecurityBound;
-                        log('$#$ Removed callbackSecurityBound from the parsed payload', 4);
-
-                        log('$#$ Processed record is: ',4);
-                        log(parsed, 4);
-
-                        record.kinesis.data = new Buffer(JSON.stringify(parsed)).toString('base64');
-                        log(`$#$ Rewriting the kinesis.data field of the record with the processed payload.\n$#$ New payload is ${record.kinesis.data}`, 4);
-
-                        return record;
-                    });
-
-                    if (!ifcLabel) {
-                        log("$#$ Could not resolve an ifcLabel in kinesis event.", 1);
-                        return callback("Could not resolve an ifcLabel in kinesis event.")
-                    }
-                    if (!storedSecurityBound) {
-                        log("$#$ Could not resolve a callbackSecurityBound in kinesis event.", 1);
-                        return callback("Could not resolve a callbackSecurityBound in kinesis event.")
+                    if (process.env.TRPZ_DEBUG_SHIM) {
+                        log('### State of processes in system when starting handler execution', 5);
+                        let stdout = execSync('ps -ef');
+                        log(stdout.toString('utf8'), 5)
                     }
 
-                    log(`$#$ Running kinesis event with label: ${ifcLabel}`, 1);
+                    log(`$$$ Calling handler ${handlerName} in lambda-shim.js`, 2);
+                    log('$$$ Event is:', 2);
+                    log(event, 2);
+                    log('$$$ $$$', 2);
 
-                    callbackSecurityBound = storedSecurityBound;
-                    log(`$#$ Running kinesis event with callbackSecurityBound: ${callbackSecurityBound}`, 1);
+                    log('$$$ Creating pipe', 2);
+                    const pipe = fork.pipe();
+                    log('$$$ Created pipe', 2);
+                    log('$$$ Forking the process', 2);
+                    const isChild = fork.fork();
+                    log('$$$ Forked the process', 2);
 
-                    p = Promise.resolve(ifcLabel);
+                    if (isChild) {
+                        fork.close(pipe.read_end);
 
-                    log('$#$ Initiated the promise with the ifc value derived from the Kinesis event.', 3);
-                } else if (conf.runFromSF /* && event.ifcLabel*/) { // Handle events originating from AWS Step Functions.
-                    log('$#$ Event originated in AWS Step Functions', 3);
-
-                    const sfLabel = event.ifcLabel;
-
-                    log(`$#$ Derived label is ${sfLabel}`, 3);
-
-                    delete strippedEvent.ifcLabel;
-
-                    log('$#$ Removed label from event', 3);
-
-
-                    callbackSecurityBound = event.callbackSecurityBound;
-
-                    log(`$#$ Derived security bound is ${callbackSecurityBound}`, 3);
-
-                    delete strippedEvent.callbackSecurityBound;
-
-                    log('$#$ Removed security bound from event', 3);
-                    log('$#$ Stripped event is: ', 3);
-                    log(strippedEvent, 3);
-
-                    p = Promise.resolve(sfLabel);
-
-                    log('$#$ Initiated the promise with the ifc value derived from the Step Function event.', 3);
-                } else {
-
-                    log('$#$ Event originated in an HTTP request', 3);
-
-                    let reqUser;
-                    let reqPass;
-
-                    if (conf.runFromGET) { // Run http GET request on behalf of invoking user.
-                        log('$#$ Event is a GET request', 3);
-                        reqUser = event.queryStringParameters.user;
-                        reqPass = event.queryStringParameters.pass;
-                        log(`$#$ Request username is ${reqUser}, and password is ${reqPass}`, 3);
-                        if (conf.userPassForIFCOnly) {
-                            log('$#$ Function configured to purge username and password before passing them to the sandbox.', 3);
-                            delete event.queryStringParameters.user;
-                            delete event.queryStringParameters.pass;
-                        }
-                    } else { // Run http POST request on behalf of invoking user.
-                        log('$#$ Event is a POST request', 3);
-
-                        let reqBody;
-                        if ((typeof event.body) === "string") {
-                            log('$#$ Request body is a string', 3);
-                            reqBody = JSON.parse(event.body);
-                        } else {
-                            log('$#$ Request body is a JSON object', 3);
-                            reqBody = event.body;
+                        if (process.env.TRPZ_DEBUG_SHIM) {
+                            log('$#$ State of processes in system when starting child execution', 5);
+                            let stdout = execSync('ps -ef');
+                            log(stdout.toString('utf8'), 5)
                         }
 
-                        log('$#$ Request body is:', 3);
-                        log(reqBody, 3);
+                        log('$#$ Running in child in lambda-shim.js', 2);
+                        // Parse event + context
 
-                        reqUser = reqBody.user;
-                        reqPass = reqBody.pass;
+                        const strippedEvent = event;
+                        if (conf.runFromKinesis) { // Handle events originating from AWS Kinesis.
+                            log('$#$ Event originated in AWS Kinesis', 3);
 
-                        log(`$#$ Request username is ${reqUser}, and password is ${reqPass}`, 3);
-                    }
+                            let ifcLabel;
+                            let storedSecurityBound;
+                            log('$#$ Getting a process label from Kinesis event record, and stripping event records of label information.', 3);
+                            strippedEvent.Records = event.Records.map((record) => {
+                                log('$#$ Analyzing record: ', 4);
+                                log(record, 4);
 
-                    p = auth(reqUser, reqPass);
+                                const payload = new Buffer(record.kinesis.data, 'base64').toString();
+                                log(`$#$ Record payload is: \n$#$ ${payload}`, 4);
 
-                    log('$#$ Initiated the promise with the ifc value derived from a call to the authentication module with the derived credentials.', 3);
-                }
+                                log('$#$ Attempting to parse the payload as a JSON object ', 4);
+                                const parsed = JSON.parse(payload);
+                                log('$#$ Parsed payload: ', 4);
+                                log(parsed, 4);
 
-                log('$#$ Creating the secure callback function.', 3);
+                                if (!ifcLabel) {
+                                    ifcLabel = parsed.ifcLabel;
+                                    log(`$#$ First label encountered. New label is ${ifcLabel} `, 4);
+                                } else if (ifcLabel !== parsed.ifcLabel) {
+                                    log("$#$ Encoutered a batch of kinesis event with different labels. \nTerminating.", 1);
+                                    return callback("Batch of kinesis event with different labels unsupported.");
+                                }
+                                delete parsed.ifcLabel;
+                                log('$#$ Removed ifcLabel from the parsed payload', 4);
 
-                let secureCallback = function (err, value) {
-                    log('$#$ Executing secureCallback.', 3);
-                    log('$#$ Error is: ', 3);
-                    log(err, 3);
-                    log('$#$ Value is: ', 3);
-                    log(value, 3);
+                                if (!storedSecurityBound) {
+                                    storedSecurityBound = parsed.callbackSecurityBound;
+                                    log(`$#$ First security bound encountered. New security bound is ${storedSecurityBound} `, 4);
+                                } else if (storedSecurityBound !== parsed.callbackSecurityBound) {
+                                    log("$#$ Encountered a batch of kinesis event with different security bounds. \n Terminating.", 1);
+                                    return callback("Batch of kinesis event with different security bounds unsupported.");
+                                }
+                                delete parsed.callbackSecurityBound;
+                                log('$#$ Removed callbackSecurityBound from the parsed payload', 4);
 
-		    var message;
-		    
-                    if (conf.runFromSF) { // Add label to the callback to the stepfunction, which in turn becomes the input to the next lambda.
-                        log('$#$ Function executed from StepFunctions. Adding label and security bound to callback value.', 3);
-                        if (value) {
-                            value.ifcLabel = label;
-                            value.callbackSecurityBound = callbackSecurityBound;
-                        }
-                        if (conf.declassifiers &&
-                            conf.declassifiers.callback &&
-                            labelOrdering.lte(label, conf.declassifiers.callback.maxLabel) &&
-                            labelOrdering.lte(conf.declassifiers.callback.minLabel, callbackSecurityBound)) {
+                                log('$#$ Processed record is: ', 4);
+                                log(parsed, 4);
 
-                            log('$#$ Callback value and error message are going through a declassifier. Building message for parent process.', 3);
+                                record.kinesis.data = new Buffer(JSON.stringify(parsed)).toString('base64');
+                                log(`$#$ Rewriting the kinesis.data field of the record with the processed payload.\n$#$ New payload is ${record.kinesis.data}`, 4);
 
-			    message = {
-				'error': eval(conf.declassifiers.callback.errCode)(err),
-				'value': eval(conf.declassifiers.callback.valueCode)(value),
-			    }			    			    
-                            // return callback(eval(conf.declassifiers.callback.errCode)(err), eval(conf.declassifiers.callback.valueCode)(value));
-                        } else {
-                            log('$#$ Building message for parent process.', 3);
+                                return record;
+                            });
 
-			    message = {
-				'error': err,
-				'value': value,
-			    }			   
-                            // return callback(err, value); // Not an external channel, no need to check against security label.
-                        }
-                    } else {
-                        log('$#$ Function executed from HTTP or Kinesis.', 3);
-
-                        if (conf.declassifiers &&
-                            conf.declassifiers.callback &&
-                            labelOrdering.lte(label, conf.declassifiers.callback.maxLabel) &&
-                            labelOrdering.lte(conf.declassifiers.callback.minLabel, callbackSecurityBound)) {
-
-                            log('$#$ Callback value and error message are going through a declassifier. Building message for parent.', 3);
-
-			    message = {
-				'error': eval(conf.declassifiers.callback.errCode)(err),
-				'value': eval(conf.declassifiers.callback.valueCode)(value),
-			    }			   
-
-                            // return callback(eval(conf.declassifiers.callback.errCode)(err),eval(conf.declassifiers.callback.valueCode)(value));
-
-                        } else {
-                            if (labelOrdering.lte(label, callbackSecurityBound)) {
-                                log('$#$ Labels match security policy. Building message for parent.', 3);
-
-				message = {
-				    'error': err,
-				    'value': value,
-				};
-				
-                                // return callback(err, value);
-                            } else {
-                                log('$#$ Labels do not match security policy. Building empty message for parent.', 3);
-
-				message = {};
-                                // return callback(null);
+                            if (!ifcLabel) {
+                                log("$#$ Could not resolve an ifcLabel in kinesis event.", 1);
+                                return callback("Could not resolve an ifcLabel in kinesis event.")
                             }
+                            if (!storedSecurityBound) {
+                                log("$#$ Could not resolve a callbackSecurityBound in kinesis event.", 1);
+                                return callback("Could not resolve a callbackSecurityBound in kinesis event.")
+                            }
+
+                            log(`$#$ Running kinesis event with label: ${ifcLabel}`, 1);
+
+                            callbackSecurityBound = storedSecurityBound;
+                            log(`$#$ Running kinesis event with callbackSecurityBound: ${callbackSecurityBound}`, 1);
+
+                            p = Promise.resolve(ifcLabel);
+
+                            log('$#$ Initiated the promise with the ifc value derived from the Kinesis event.', 3);
+                        } else if (conf.runFromSF /* && event.ifcLabel*/) { // Handle events originating from AWS Step Functions.
+                            log('$#$ Event originated in AWS Step Functions', 3);
+
+                            const sfLabel = event.ifcLabel;
+
+                            log(`$#$ Derived label is ${sfLabel}`, 3);
+
+                            delete strippedEvent.ifcLabel;
+
+                            log('$#$ Removed label from event', 3);
+
+
+                            callbackSecurityBound = event.callbackSecurityBound;
+
+                            log(`$#$ Derived security bound is ${callbackSecurityBound}`, 3);
+
+                            delete strippedEvent.callbackSecurityBound;
+
+                            log('$#$ Removed security bound from event', 3);
+                            log('$#$ Stripped event is: ', 3);
+                            log(strippedEvent, 3);
+
+                            p = Promise.resolve(sfLabel);
+
+                            log('$#$ Initiated the promise with the ifc value derived from the Step Function event.', 3);
+                        } else {
+
+                            log('$#$ Event originated in an HTTP request', 3);
+
+                            let reqUser;
+                            let reqPass;
+
+                            if (conf.runFromGET) { // Run http GET request on behalf of invoking user.
+                                log('$#$ Event is a GET request', 3);
+                                reqUser = event.queryStringParameters.user;
+                                reqPass = event.queryStringParameters.pass;
+                                log(`$#$ Request username is ${reqUser}, and password is ${reqPass}`, 3);
+                                if (conf.userPassForIFCOnly) {
+                                    log('$#$ Function configured to purge username and password before passing them to the sandbox.', 3);
+                                    delete event.queryStringParameters.user;
+                                    delete event.queryStringParameters.pass;
+                                }
+                            } else { // Run http POST request on behalf of invoking user.
+                                log('$#$ Event is a POST request', 3);
+
+                                let reqBody;
+                                if ((typeof event.body) === "string") {
+                                    log('$#$ Request body is a string', 3);
+                                    reqBody = JSON.parse(event.body);
+                                } else {
+                                    log('$#$ Request body is a JSON object', 3);
+                                    reqBody = event.body;
+                                }
+
+                                log('$#$ Request body is:', 3);
+                                log(reqBody, 3);
+
+                                reqUser = reqBody.user;
+                                reqPass = reqBody.pass;
+
+                                log(`$#$ Request username is ${reqUser}, and password is ${reqPass}`, 3);
+                            }
+
+                            p = auth(reqUser, reqPass);
+
+                            log('$#$ Initiated the promise with the ifc value derived from a call to the authentication module with the derived credentials.', 3);
                         }
-                    }
-		    
-		    write(pipe.write_end, JSON.stringify(message));
-		    close(pipe.write_end);
 
-		    process.exit();	    
-                };
+                        log('$#$ Creating the secure callback function.', 3);
 
-                log('$#$ Created the secure callback function.', 3);
+                        let secureCallback = function (err, value) {
+                            log('$#$ Executing secureCallback.', 3);
+                            log('$#$ Error is: ', 3);
+                            log(err, 3);
+                            log('$#$ Value is: ', 3);
+                            log(value, 3);
 
-                if (notEmptyDir('/tmp/')) {
-                    log("WARNING : /tmp/ dir not empty on fresh invocation of lambda. Might lead to data leak.", 0)
-                }
+                            var message;
 
+                            if (conf.runFromSF) { // Add label to the callback to the stepfunction, which in turn becomes the input to the next lambda.
+                                log('$#$ Function executed from StepFunctions. Adding label and security bound to callback value.', 3);
+                                if (value) {
+                                    value.ifcLabel = label;
+                                    value.callbackSecurityBound = callbackSecurityBound;
+                                }
+                                if (conf.declassifiers &&
+                                    conf.declassifiers.callback &&
+                                    labelOrdering.lte(label, conf.declassifiers.callback.maxLabel) &&
+                                    labelOrdering.lte(conf.declassifiers.callback.minLabel, callbackSecurityBound)) {
 
-                p.then((l) => {
-                    log('$#$ Executing promise after having resolved the label.', 2);
-                    log(`$#$ Label is ${l}.`, 2);
+                                    log('$#$ Callback value and error message are going through a declassifier. Building message for parent process.', 3);
 
-                    if (l === undefined) {
-                        log('$#$ No label assigned. Running as bottom.', 2);
-                        // In case getting the label failed, run on behalf of 'bottom' (completely unprivileged).
-                        label = labelOrdering.getBottom();
-                    } else {
-                        log('$#$ Setting the resolved label to be the global label.', 2);
-                        label = l;
-                    }
+                                    message = {
+                                        'error': eval(conf.declassifiers.callback.errCode)(err),
+                                        'value': eval(conf.declassifiers.callback.valueCode)(value),
+                                    }
+                                    // return callback(eval(conf.declassifiers.callback.errCode)(err), eval(conf.declassifiers.callback.valueCode)(value));
+                                } else {
+                                    log('$#$ Building message for parent process.', 3);
 
-                    log('$#$ Setting the security bound.', 2);
-                    if (conf.callbackSecurityBound) { // Statically defined security bound
-                        log(`$#$ Security bound is statically defined. The bound is ${conf.callbackSecurityBound}`, 2);
-                        callbackSecurityBound = conf.callbackSecurityBound;
-                    } else if (conf.runFromKinesis) { // Not entirely sure what callback security bounds mean in the context
-                        log(`$#$ Running as a Kinesis event. Expecting security bound from the invoking event. Security bound is ${callbackSecurityBound}`, 2);
-                        // of kinesis and step functions.
-                        if (!callbackSecurityBound) {
-                            log("Kinesis event with no security bound.", 1);
-                            return callback("Kinesis event with no security bound.");
+                                    message = {
+                                        'error': err,
+                                        'value': value,
+                                    }
+                                    // return callback(err, value); // Not an external channel, no need to check against security label.
+                                }
+                            } else {
+                                log('$#$ Function executed from HTTP or Kinesis.', 3);
+
+                                if (conf.declassifiers &&
+                                    conf.declassifiers.callback &&
+                                    labelOrdering.lte(label, conf.declassifiers.callback.maxLabel) &&
+                                    labelOrdering.lte(conf.declassifiers.callback.minLabel, callbackSecurityBound)) {
+
+                                    log('$#$ Callback value and error message are going through a declassifier. Building message for parent.', 3);
+
+                                    message = {
+                                        'error': eval(conf.declassifiers.callback.errCode)(err),
+                                        'value': eval(conf.declassifiers.callback.valueCode)(value),
+                                    }
+
+                                    // return callback(eval(conf.declassifiers.callback.errCode)(err),eval(conf.declassifiers.callback.valueCode)(value));
+
+                                } else {
+                                    if (labelOrdering.lte(label, callbackSecurityBound)) {
+                                        log('$#$ Labels match security policy. Building message for parent.', 3);
+
+                                        message = {
+                                            'error': err,
+                                            'value': value,
+                                        };
+
+                                        // return callback(err, value);
+                                    } else {
+                                        log('$#$ Labels do not match security policy. Building empty message for parent.', 3);
+
+                                        message = {};
+                                        // return callback(null);
+                                    }
+                                }
+                            }
+
+                            fork.write(pipe.write_end, JSON.stringify(message));
+                            fork.close(pipe.write_end);
+
+                            process.exit();
+                        };
+
+                        log('$#$ Created the secure callback function.', 3);
+
+                        if (notEmptyDir('/tmp/')) {
+                            log("WARNING : /tmp/ dir not empty on fresh invocation of lambda. Might lead to data leak.", 0)
                         }
-                    } else if (conf.runFromSF) {
-                        log(`$#$ Running as a step functions event. Expect security bound from the invoking event. Security bound is ${callbackSecurityBound}`, 2);
-                        if (!callbackSecurityBound) {
-                            log("StepFunctions event with no security bound.", 1);
-                            return callback("StepFunctions event with no security bound.");
+
+
+                        p.then((l) => {
+                            log('$#$ Executing promise after having resolved the label.', 2);
+                            log(`$#$ Label is ${l}.`, 2);
+
+                            if (l === undefined) {
+                                log('$#$ No label assigned. Running as bottom.', 2);
+                                // In case getting the label failed, run on behalf of 'bottom' (completely unprivileged).
+                                label = labelOrdering.getBottom();
+                            } else {
+                                log('$#$ Setting the resolved label to be the global label.', 2);
+                                label = l;
+                            }
+
+                            log('$#$ Setting the security bound.', 2);
+                            if (conf.callbackSecurityBound) { // Statically defined security bound
+                                log(`$#$ Security bound is statically defined. The bound is ${conf.callbackSecurityBound}`, 2);
+                                callbackSecurityBound = conf.callbackSecurityBound;
+                            } else if (conf.runFromKinesis) { // Not entirely sure what callback security bounds mean in the context
+                                log(`$#$ Running as a Kinesis event. Expecting security bound from the invoking event. Security bound is ${callbackSecurityBound}`, 2);
+                                // of kinesis and step functions.
+                                if (!callbackSecurityBound) {
+                                    log("Kinesis event with no security bound.", 1);
+                                    return callback("Kinesis event with no security bound.");
+                                }
+                            } else if (conf.runFromSF) {
+                                log(`$#$ Running as a step functions event. Expect security bound from the invoking event. Security bound is ${callbackSecurityBound}`, 2);
+                                if (!callbackSecurityBound) {
+                                    log("StepFunctions event with no security bound.", 1);
+                                    return callback("StepFunctions event with no security bound.");
+                                }
+                            } else { // Running an http request - the security bound is the same as the invoking user's label.
+                                log(`$#$ Running as an HTTP request. Setting security bound to the requesting user\'s security label. Security bound is ${label}`, 2);
+                                callbackSecurityBound = label;
+                            }
+
+                            log('$#$ Calling sandboxed handler as child in lambda-shim.js', 2);
+                            vm_module[handlerName](strippedEvent, context, secureCallback);
+
+                            if (process.env.TRPZ_DEBUG_SHIM) {
+                                log('$$# State of processes in system when following the call to the sandboxed handler', 5);
+                                let stdout = execSync('ps -ef');
+                                log(stdout.toString('utf8'), 5)
+                            }
+
+
+                            // vm.run(originalLambdaScript, conf.secLambdaFullPath);
+                        })
+                            .catch(err => {
+                                log("$#$ Error in execution:", 1);
+                                console.log(err)
+                            });
+
+
+                    } else { // Parent
+                        fork.close(pipe.write_end);
+
+                        if (process.env.TRPZ_DEBUG_SHIM) {
+                            log('$$# State of processes in system when "starting" parent execution', 5);
+                            let stdout = execSync('ps -ef');
+                            log(stdout.toString('utf8'), 5)
                         }
-                    } else { // Running an http request - the security bound is the same as the invoking user's label.
-                        log(`$#$ Running as an HTTP request. Setting security bound to the requesting user\'s security label. Security bound is ${label}`, 2);
-                        callbackSecurityBound = label;
+
+
+                        log('$$# Running in parent in lambda-shim.js', 2);
+
+                        const message_str = fork.read(pipe.read_end);
+                        fork.wait();
+
+                        fork.close(pipe.read_end);
+
+                        const message = JSON.parse(message_str);
+
+                        if (process.env.TRPZ_DEBUG_SHIM) {
+                            log('$$# State of processes in system when wait terminates in parent execution', 5);
+                            let stdout = execSync('ps -ef');
+                            log(stdout.toString('utf8'), 5)
+                        }
+
+                        log('$$# Finished wait as parent in lambda-shim.js', 2);
+
+                        callback(message.error, message.value);
                     }
-
-                    log('$#$ Calling sandboxed handler as child in lambda-shim.js', 2);
-                    vm_module[handlerName](strippedEvent, context, secureCallback);
-
-		if (process.env.TRPZ_DEBUG_SHIM) {
-  		    log('$$# State of processes in system when following the call to the sandboxed handler', 5);
-		    let stdout = execSync('ps -ef');
-		    log(stdout.toString('utf8'), 5)
-		}
-
-
-                    // vm.run(originalLambdaScript, conf.secLambdaFullPath);
                 })
-                    .catch(err => {
-                        log("$#$ Error in execution:", 1);
-                        console.log(err)
-                    });
-
-
-
-            } else { // Parent
-                close(pipe.write_end);
-
-		if (process.env.TRPZ_DEBUG_SHIM) {
-		    log('$$# State of processes in system when "starting" parent execution', 5);
-		    let stdout = execSync('ps -ef');
-		    log(stdout.toString('utf8'), 5)
-		}
-
-
-                log('$$# Running in parent in lambda-shim.js', 2);
-
-		const message_str = read(pipe.read_end);
-                wait();
-
-		close(pipe.read_end);
-
-		const message = JSON.parse(message_str);		
-
-		if (process.env.TRPZ_DEBUG_SHIM) {
-		    log('$$# State of processes in system when wait terminates in parent execution', 5);
-		    let stdout = execSync('ps -ef');
-		    log(stdout.toString('utf8'), 5)
-		}
-
-                log('$$# Finished wait as parent in lambda-shim.js', 2);
-
-		callback(message.error, message.value);
-            }
-
         };
     }
+
 };
 
 

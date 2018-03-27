@@ -49,5 +49,11 @@ function storeCredentials(user, pass, label) {
         .catch(err => Promise.reject(err))
 }
 
+function fenceAfterMap() {
+    return authMapPromise
+        .then(() => true);
+}
+
 module.exports.auth = auth;
 module.exports.storeCredentials = storeCredentials;
+module.exports.fence = fenceAfterMap;
