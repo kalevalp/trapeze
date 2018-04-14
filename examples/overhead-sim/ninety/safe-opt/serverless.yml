@@ -1,0 +1,15 @@
+service: overhead-sim-ninety-safe-opt
+
+provider:
+  name: aws
+  runtime: nodejs6.10
+  profile: vmware
+  stage: dev
+  region: eu-central-1
+
+functions:
+  safe-opt-empty:
+    handler: secure-handler.hello
+    # environment:
+    #   TRPZ_DEBUG_SHIM: 1
+    #   TRPZ_DEBUG: 10

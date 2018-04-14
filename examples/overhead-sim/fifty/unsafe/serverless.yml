@@ -1,0 +1,12 @@
+service: overhead-sim-fifty-unsafe
+
+provider:
+  name: aws
+  runtime: nodejs6.10
+  profile: vmware
+  stage: dev
+  region: eu-central-1
+
+functions:
+  empty:
+    handler: handler.hello
