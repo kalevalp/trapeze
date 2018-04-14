@@ -14,7 +14,9 @@ const userLoginSchema = require('./schemas/user-login-schema.json');
 const updatePhoneSchema = require('./schemas/user-update-phone-schema.json');
 const addRoleSchema = require('./schemas/user-add-role-schema.json');
 
+console.log('### Finished all requires in handler.js');
 
 module.exports.hello = (event, context, callback) => {
-  callback(null, { message: 'Success!'});
+    console.log('### Call to hello in handler.js');
+    callback(null, { message: 'Success!'});
 };
