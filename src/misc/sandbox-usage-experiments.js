@@ -217,23 +217,23 @@ const vm = new NodeVM({
     }
 });
 
-console.x = 10;
+// console.x = 10;
 
-const {foo} = vm.run(`
-		     const x = 100;
-		     console.log('First invocation of vm');
-		     console.y = 20;
-		     module.exports.foo = function () {
-			 console.log('Call from within foo');
-			 console.log('Value of x is:');
-			 console.log(console.y);	  
-		     }
-		     `);
+// const {foo} = vm.run(`
+// 		     const x = 100;
+// 		     console.log('First invocation of vm');
+// 		     console.y = 20;
+// 		     module.exports.foo = function () {
+// 			 console.log('Call from within foo');
+// 			 console.log('Value of x is:');
+// 			 console.log(console.y);
+// 		     }
+// 		     `);
+//
+// foo();
 
-foo();
+// console.log(console.y)
 
-console.log(console.y)
- 
 // vm.run(`
 //        const y = 200;
 //        console.log('Second invocation of vm');
@@ -241,3 +241,16 @@ console.log(console.y)
 //        console.log('Value of y is:');
 //        console.log(y);
 //        `);
+
+
+const {foo} = vm.run(`
+let x = 0;
+module.exports.foo = function () {
+    console.log(x);
+    x = x + 1;
+}
+		     `);
+
+foo();
+foo();
+foo();
