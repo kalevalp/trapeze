@@ -314,13 +314,19 @@ module.exports.makeShim = function (exp, allowExtReq) {
                     log('$$$ $$$', 2);
 
                     log('$$$ Creating pipe', 2);
-                    const pipe = fork.pipe();
+		    const prepipe = Date.now();
+                    const pipe = fork.pipe();		    
+		    const postpipe = Date.now();
                     log('$$$ Created pipe', 2);
+		    log(`$$$ Time to create pipe: ${postpipe-prepipe}(ms)`, 2);		   
                     log('$$$ Forking the process', 2);
+		    const prefork = Date.now();
                     const isChild = fork.fork();
+		    const postfork = Date.now();
                     log('$$$ Forked the process', 2);
 
                     if (isChild) {
+			log(`$#$ Time to fork: ${postfork-prefork}(ms)`, 2);		  			
                         fork.close(pipe.read_end);
 
                         if (process.env.TRPZ_DEBUG_SHIM) {
@@ -539,8 +545,17 @@ module.exports.makeShim = function (exp, allowExtReq) {
                                 }
                             }
 
+			    const prewrite = Date.now();
+			    
                             fork.write(pipe.write_end, JSON.stringify(message));
-                            fork.close(pipe.write_end);
+
+			    const postwrite = Date.now();
+			    log(`$$# Call to write took ${postwrite-prewrite}(ms)`, 2);
+			    log(`$$# Time before write was ${prewrite}(ms)`, 2);
+			    log(`$$# Time after write was ${postwrite}(ms)`, 2);
+
+
+			    fork.close(pipe.write_end);
 
                             process.exit();
                         };
@@ -606,6 +621,7 @@ module.exports.makeShim = function (exp, allowExtReq) {
 
 
                     } else { // Parent
+			log(`$$# Time to fork: ${postfork-prefork}(ms)`, 2);
                         fork.close(pipe.write_end);
 
                         if (process.env.TRPZ_DEBUG_SHIM) {
@@ -617,13 +633,31 @@ module.exports.makeShim = function (exp, allowExtReq) {
 
                         log('$$# Running in parent in lambda-shim.js', 2);
 
+			const preread = Date.now();
                         const message_str = fork.read(pipe.read_end);
+			const postread = Date.now();
+			log(`$$# Call to read took ${postread-preread}(ms)`, 2);
+			log(`$$# Time before read was ${preread}(ms)`, 2);
+			log(`$$# Time after read was ${postread}(ms)`, 2);
+
+			const prewait = Date.now();
                         fork.wait();
+			const postwait = Date.now();
+			log(`$$# Call to wait took ${postwait-prewait}(ms)`, 2);
+			log(`$$# Time before wait was ${prewait}(ms)`, 2);
+			log(`$$# Time after wait was ${postwait}(ms)`, 2);
 
+			
+			const preclose = Date.now();
                         fork.close(pipe.read_end);
+			const postclose = Date.now();
+			log(`$$# Call to close took ${postclose-preclose}(ms)`, 2);
 
+			const preparse = Date.now();
                         const message = JSON.parse(message_str);
-
+			const postparse = Date.now();
+			log(`$$# Call to JSON.parse(message_str) took ${postparse-preparse}(ms)`, 2);
+			
                         if (process.env.TRPZ_DEBUG_SHIM) {
                             log('$$# State of processes in system when wait terminates in parent execution', 5);
                             let stdout = execSync('ps -ef');

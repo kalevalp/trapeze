@@ -1,12 +1,16 @@
 [submodule "examples/hello-retail/hello-retail-baseline"]
 	path = examples/hello-retail/hello-retail-baseline
 	url = https://github.com/kalevalp/hello-retail-baseline
+	branch = master
 [submodule "examples/hello-retail/hello-retail-secure"]
 	path = examples/hello-retail/hello-retail-secure
 	url = https://github.com/kalevalp/hello-retail-secure
+	branch = master
 [submodule "examples/hello-retail/hello-retail-secure-prop"]
 	path = examples/hello-retail/hello-retail-secure-prop
 	url = https://github.com/kalevalp/hello-retail-secure-prop
+	branch = master
 [submodule "src/node-fork"]
 	path = src/node-fork
 	url = https://github.com/kalevalp/node-fork
+	branch = master
