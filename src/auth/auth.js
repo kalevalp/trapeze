@@ -57,3 +57,14 @@ function fenceAfterMap() {
 module.exports.auth = auth;
 module.exports.storeCredentials = storeCredentials;
 module.exports.fence = fenceAfterMap;
+
+if (false) {// dog and cat owner example
+    storeCredentials('Catty','cattyspassword','catowner');
+    storeCredentials('Doug','dougspassword','dogowner');
+} else if (false) { // hello, retail! example
+    storeCredentials('Bob','bobspassword','client2');
+    storeCredentials('Alice','alicespassword','client1');
+    storeCredentials('Owen','owenspassword','owner');
+    storeCredentials('Paul','paulspassword','photog2');
+    storeCredentials('Peter','peterspassword','photog1');
+}
