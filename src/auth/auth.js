@@ -51,3 +51,14 @@ function storeCredentials(user, pass, label) {
 
 module.exports.auth = auth;
 module.exports.storeCredentials = storeCredentials;
+
+if (false) {// dog and cat owner example
+    storeCredentials('Catty','cattyspassword','catowner')
+        .then(() => storeCredentials('Doug','dougspassword','dogowner'));
+} else if (false) { // hello, retail! example
+    storeCredentials('Bob','bobspassword','client2')
+        .then(() => storeCredentials('Alice','alicespassword','client1'))
+        .then(() => storeCredentials('Owen','owenspassword','owner'))
+        .then(() => storeCredentials('Paul','paulspassword','photog2'))
+        .then(() => storeCredentials('Peter','peterspassword','photog1'));
+}
