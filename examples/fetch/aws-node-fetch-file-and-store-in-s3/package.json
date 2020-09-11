@@ -6,6 +6,6 @@
   "license": "MIT",
   "dependencies": {
     "kv-store": "file:../../../src/kv-store",
-    "node-fetch": "^1.6.3"
+    "node-fetch": "^2.6.1"
   }
 }
